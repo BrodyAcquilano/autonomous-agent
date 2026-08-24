@@ -1,0 +1,387 @@
+.bottom-tabs {
+  width: 100%;
+
+  display: flex;
+
+  gap: 12px;
+}
+
+
+.bottom-tab {
+  flex: 1;
+  min-width: 0;
+
+  height: 50px;
+
+  position: relative;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.18
+    );
+
+  background:
+    rgba(
+      20,
+      30,
+      44,
+      0.22
+    );
+
+  backdrop-filter:
+    blur(8px);
+
+  color:
+    rgba(
+      225,
+      235,
+      245,
+      0.68
+    );
+
+  font-family:
+    "Courier New",
+    monospace;
+
+  font-size: 10px;
+  letter-spacing: 1.6px;
+
+  text-transform: uppercase;
+
+  cursor: pointer;
+
+  box-shadow:
+    0
+    6px
+    18px
+    rgba(
+      0,
+      0,
+      0,
+      0.3
+    );
+
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+
+.bottom-tab:hover {
+  transform:
+    translateY(-2px);
+}
+
+
+/* Console — Pink */
+
+.bottom-tab.console {
+  border-color:
+    rgba(
+      255,
+      90,
+      184,
+      0.42
+    );
+
+  background:
+    rgba(
+      117,
+      18,
+      72,
+      0.22
+    );
+
+  color:
+    rgba(
+      255,
+      176,
+      221,
+      0.82
+    );
+}
+
+
+.bottom-tab.console.active {
+  background:
+    rgba(
+      152,
+      26,
+      95,
+      0.42
+    );
+
+  border-color:
+    rgba(
+      255,
+      109,
+      196,
+      0.8
+    );
+}
+
+
+/* Models — Purple */
+
+.bottom-tab.models {
+  border-color:
+    rgba(
+      169,
+      106,
+      255,
+      0.42
+    );
+
+  background:
+    rgba(
+      73,
+      35,
+      127,
+      0.23
+    );
+
+  color:
+    rgba(
+      207,
+      174,
+      255,
+      0.82
+    );
+}
+
+
+.bottom-tab.models.active {
+  background:
+    rgba(
+      92,
+      48,
+      151,
+      0.45
+    );
+
+  border-color:
+    rgba(
+      186,
+      129,
+      255,
+      0.85
+    );
+}
+
+
+/* Resources — Blue */
+
+.bottom-tab.resources {
+  border-color:
+    rgba(
+      76,
+      163,
+      255,
+      0.45
+    );
+
+  background:
+    rgba(
+      25,
+      70,
+      127,
+      0.24
+    );
+
+  color:
+    rgba(
+      158,
+      207,
+      255,
+      0.84
+    );
+}
+
+
+.bottom-tab.resources.active {
+  background:
+    rgba(
+      31,
+      91,
+      160,
+      0.44
+    );
+
+  border-color:
+    rgba(
+      103,
+      183,
+      255,
+      0.9
+    );
+}
+
+
+/* Memory — Green */
+
+.bottom-tab.memory {
+  border-color:
+    rgba(
+      74,
+      210,
+      116,
+      0.42
+    );
+
+  background:
+    rgba(
+      26,
+      104,
+      51,
+      0.21
+    );
+
+  color:
+    rgba(
+      147,
+      235,
+      168,
+      0.82
+    );
+}
+
+
+.bottom-tab.memory.active {
+  background:
+    rgba(
+      37,
+      128,
+      66,
+      0.42
+    );
+
+  border-color:
+    rgba(
+      108,
+      232,
+      140,
+      0.86
+    );
+}
+
+
+/* Output — Gold */
+
+.bottom-tab.output {
+  border-color:
+    rgba(
+      229,
+      178,
+      72,
+      0.48
+    );
+
+  background:
+    rgba(
+      119,
+      79,
+      18,
+      0.22
+    );
+
+  color:
+    rgba(
+      242,
+      207,
+      132,
+      0.85
+    );
+}
+
+
+.bottom-tab.output.active {
+  background:
+    rgba(
+      145,
+      97,
+      23,
+      0.45
+    );
+
+  border-color:
+    rgba(
+      244,
+      195,
+      92,
+      0.9
+    );
+}
+
+
+/* Analytics — Red */
+
+.bottom-tab.analytics {
+  border-color:
+    rgba(
+      235,
+      76,
+      83,
+      0.44
+    );
+
+  background:
+    rgba(
+      119,
+      27,
+      34,
+      0.22
+    );
+
+  color:
+    rgba(
+      246,
+      151,
+      155,
+      0.84
+    );
+}
+
+
+.bottom-tab.analytics.active {
+  background:
+    rgba(
+      145,
+      35,
+      43,
+      0.44
+    );
+
+  border-color:
+    rgba(
+      247,
+      96,
+      104,
+      0.9
+    );
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .bottom-tabs {
+    gap: 5px;
+  }
+
+  .bottom-tab {
+    height: 44px;
+
+    padding:
+      0
+      4px;
+
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+}
