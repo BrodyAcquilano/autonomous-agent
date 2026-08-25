@@ -1,0 +1,111 @@
+.light-panel {
+  position: absolute;
+
+  top: 22px;
+  left: 26px;
+
+  z-index: 30;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  min-width: 210px;
+  min-height: 58px;
+
+  padding:
+    12px
+    18px;
+
+  border:
+    1px solid
+    rgba(
+      96,
+      131,
+      173,
+      0.38
+    );
+
+  background:
+    rgba(
+      1,
+      5,
+      13,
+      0.82
+    );
+
+  color:
+    rgba(
+      185,
+      205,
+      232,
+      0.86
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 14px;
+  letter-spacing: 2.6px;
+
+  user-select: none;
+}
+
+
+.light-panel-light {
+  width: 11px;
+  height: 11px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #72ff89;
+
+  box-shadow:
+    0
+    0
+    10px
+    rgba(
+      92,
+      255,
+      116,
+      0.9
+    );
+
+  animation:
+    light-panel-blink
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+.light-panel-label {
+  line-height: 1;
+}
+
+
+@keyframes light-panel-blink {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .light-panel-light {
+    animation: none;
+  }
+}

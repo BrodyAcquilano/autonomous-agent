@@ -1,0 +1,388 @@
+.communication-array {
+  width: 520px;
+  height: 390px;
+
+  position: relative;
+
+  --signal-axis: 50%;
+  --ascii-antenna-column: 25.5ch;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  user-select: none;
+}
+
+
+.communication-array-glow {
+  position: absolute;
+
+  width: 520px;
+  height: 390px;
+
+  inset: 0;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        48,
+        168,
+        73,
+        0.09
+      ),
+      transparent 70%
+    );
+
+  filter:
+    blur(22px);
+}
+
+
+/* --------------------------------
+   SATELLITE
+-------------------------------- */
+
+.communication-array-art {
+  position: absolute;
+
+  left:
+    var(
+      --signal-axis
+    );
+
+  bottom: 0;
+
+  z-index: 2;
+
+  margin: 0;
+
+  transform:
+    translateX(
+      calc(
+        -1 *
+        var(
+          --ascii-antenna-column
+        )
+      )
+    );
+
+  color:
+    rgba(
+      98,
+      255,
+      126,
+      0.78
+    );
+
+  font-family:
+    inherit;
+
+  font-size: 12px;
+  line-height: 1.14;
+
+  white-space: pre;
+
+  text-align: left;
+
+  text-shadow:
+    0
+    0
+    4px
+    rgba(
+      76,
+      255,
+      106,
+      0.44
+    ),
+    0
+    0
+    12px
+    rgba(
+      76,
+      255,
+      106,
+      0.13
+    );
+}
+
+
+/* --------------------------------
+   SIGNAL BEAMS
+-------------------------------- */
+
+.signal-beam {
+  position: absolute;
+
+  left: 50%;
+  top: 132px;
+
+  z-index: 3;
+
+  width: 230px;
+  height: 3px;
+
+  display: flex;
+
+  gap: 22px;
+
+  transform-origin:
+    0
+    50%;
+
+  pointer-events: none;
+}
+
+
+.signal-beam-left {
+  transform:
+    rotate(225deg);
+}
+
+
+.signal-beam-center {
+  transform:
+    rotate(270deg);
+}
+
+
+.signal-beam-right {
+  transform:
+    rotate(315deg);
+}
+
+
+.signal-dash {
+  width: 15px;
+  height: 2px;
+
+  flex-shrink: 0;
+
+  opacity: 0;
+
+  background:
+    rgba(
+      102,
+      255,
+      130,
+      0.95
+    );
+
+  box-shadow:
+    0
+    0
+    6px
+    rgba(
+      78,
+      255,
+      107,
+      0.72
+    );
+
+  animation:
+    signal-dash-pulse
+    4.8s
+    linear
+    infinite;
+
+  animation-delay:
+    calc(
+      var(--dash-index) *
+      0.15s
+    );
+}
+
+
+@keyframes signal-dash-pulse {
+  0% {
+    opacity: 0;
+
+    transform:
+      translateX(0);
+  }
+
+  4% {
+    opacity: 1;
+  }
+
+  10% {
+    opacity: 1;
+
+    transform:
+      translateX(8px);
+  }
+
+  18% {
+    opacity: 0;
+
+    transform:
+      translateX(18px);
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translateX(18px);
+  }
+}
+
+
+/* --------------------------------
+   RADIO WAVES
+-------------------------------- */
+
+.signal-waves {
+  position: absolute;
+
+  top: 12px;
+  left: 50%;
+
+  z-index: 3;
+
+  width: 330px;
+  height: 110px;
+
+  transform:
+    translateX(-50%);
+
+  color:
+    rgba(
+      102,
+      255,
+      130,
+      0.75
+    );
+
+  font-family:
+    inherit;
+
+  font-size: 12px;
+
+  text-shadow:
+    0
+    0
+    5px
+    rgba(
+      78,
+      255,
+      107,
+      0.5
+    );
+
+  pointer-events: none;
+}
+
+
+.signal-wave {
+  position: absolute;
+
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  white-space: pre;
+
+  animation:
+    signal-wave-flicker
+    3.8s
+    steps(1)
+    infinite;
+}
+
+
+.signal-wave-outer {
+  top: 0;
+
+  opacity: 0.32;
+
+  animation-delay:
+    -0.6s;
+}
+
+
+.signal-wave-middle {
+  top: 25px;
+
+  opacity: 0.52;
+
+  animation-delay:
+    -1.3s;
+}
+
+
+.signal-wave-inner {
+  top: 50px;
+
+  opacity: 0.72;
+
+  animation-delay:
+    -2.1s;
+}
+
+
+@keyframes signal-wave-flicker {
+  0% {
+    opacity: 0.15;
+  }
+
+  8% {
+    opacity: 0.8;
+  }
+
+  19% {
+    opacity: 0.35;
+  }
+
+  28% {
+    opacity: 0.95;
+  }
+
+  46% {
+    opacity: 0.3;
+  }
+
+  57% {
+    opacity: 0.72;
+  }
+
+  73% {
+    opacity: 0.18;
+  }
+
+  82% {
+    opacity: 0.88;
+  }
+
+  100% {
+    opacity: 0.25;
+  }
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .communication-array {
+    transform:
+      scale(0.82);
+  }
+}
+
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .signal-dash,
+  .signal-wave {
+    animation: none;
+
+    opacity: 0.65;
+  }
+}

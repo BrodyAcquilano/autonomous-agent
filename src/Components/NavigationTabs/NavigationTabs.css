@@ -1,4 +1,4 @@
-.bottom-tabs {
+.navigation-tabs {
   width: 100%;
 
   display: flex;
@@ -7,7 +7,7 @@
 }
 
 
-.bottom-tab {
+.navigation-tab {
   flex: 1;
   min-width: 0;
 
@@ -73,15 +73,13 @@
 }
 
 
-.bottom-tab:hover {
+.navigation-tab:hover {
   transform:
     translateY(-2px);
 }
 
 
-/* Console — Pink */
-
-.bottom-tab.console {
+.navigation-tab.console {
   border-color:
     rgba(
       255,
@@ -108,7 +106,7 @@
 }
 
 
-.bottom-tab.console.active {
+.navigation-tab.console.active {
   background:
     rgba(
       152,
@@ -127,9 +125,7 @@
 }
 
 
-/* Models — Purple */
-
-.bottom-tab.models {
+.navigation-tab.models {
   border-color:
     rgba(
       169,
@@ -156,7 +152,7 @@
 }
 
 
-.bottom-tab.models.active {
+.navigation-tab.models.active {
   background:
     rgba(
       92,
@@ -175,9 +171,7 @@
 }
 
 
-/* Resources — Blue */
-
-.bottom-tab.resources {
+.navigation-tab.resources {
   border-color:
     rgba(
       76,
@@ -204,7 +198,7 @@
 }
 
 
-.bottom-tab.resources.active {
+.navigation-tab.resources.active {
   background:
     rgba(
       31,
@@ -223,9 +217,7 @@
 }
 
 
-/* Memory — Green */
-
-.bottom-tab.memory {
+.navigation-tab.memory {
   border-color:
     rgba(
       74,
@@ -252,7 +244,7 @@
 }
 
 
-.bottom-tab.memory.active {
+.navigation-tab.memory.active {
   background:
     rgba(
       37,
@@ -271,9 +263,7 @@
 }
 
 
-/* Output — Gold */
-
-.bottom-tab.output {
+.navigation-tab.output {
   border-color:
     rgba(
       229,
@@ -300,7 +290,7 @@
 }
 
 
-.bottom-tab.output.active {
+.navigation-tab.output.active {
   background:
     rgba(
       145,
@@ -319,9 +309,7 @@
 }
 
 
-/* Analytics — Red */
-
-.bottom-tab.analytics {
+.navigation-tab.analytics {
   border-color:
     rgba(
       235,
@@ -348,7 +336,7 @@
 }
 
 
-.bottom-tab.analytics.active {
+.navigation-tab.analytics.active {
   background:
     rgba(
       145,
@@ -370,11 +358,12 @@
 @media (
   max-width: 720px
 ) {
-  .bottom-tabs {
+  .navigation-tabs {
     gap: 5px;
   }
 
-  .bottom-tab {
+
+  .navigation-tab {
     height: 44px;
 
     padding:
