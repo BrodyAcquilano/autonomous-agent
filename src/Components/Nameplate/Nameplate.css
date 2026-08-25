@@ -1,10 +1,25 @@
 .nameplate {
+  position: absolute;
+
+  right: 24px;
+  bottom: 0;
+
+  z-index: 30;
+
   width: 430px;
   min-height: 112px;
 
-  align-self: flex-end;
-
-  margin-right: 10px;
+  transform:
+    translate(
+      var(
+        --drag-x,
+        0px
+      ),
+      var(
+        --drag-y,
+        0px
+      )
+    );
 
   padding:
     15px
@@ -60,6 +75,17 @@
       0,
       0.45
     );
+
+  cursor: grab;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.nameplate:active {
+  cursor: grabbing;
 }
 
 
@@ -121,9 +147,12 @@
   max-width: 720px
 ) {
   .nameplate {
-    width: 100%;
+    width:
+      calc(
+        100% - 24px
+      );
 
-    margin-right: 0;
+    right: 12px;
   }
 
 

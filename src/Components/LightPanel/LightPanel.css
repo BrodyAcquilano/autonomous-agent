@@ -4,7 +4,19 @@
   top: 22px;
   left: 26px;
 
-  z-index: 30;
+  z-index: 20;
+
+  transform:
+    translate(
+      var(
+        --drag-x,
+        0px
+      ),
+      var(
+        --drag-y,
+        0px
+      )
+    );
 
   display: flex;
   align-items: center;
@@ -51,7 +63,16 @@
   font-size: 14px;
   letter-spacing: 2.6px;
 
+  cursor: grab;
+
+  touch-action: none;
+
   user-select: none;
+}
+
+
+.light-panel:active {
+  cursor: grabbing;
 }
 
 

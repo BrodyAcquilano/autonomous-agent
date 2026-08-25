@@ -1,6 +1,12 @@
+import {
+  useRef,
+  useState,
+} from "react";
+
 import CommandShell from "../../Components/CommandShell/CommandShell";
 import CommunicationArray from "../../Components/CommunicationArray/CommunicationArray";
 import LightPanel from "../../Components/LightPanel/LightPanel";
+import MessagePanel from "../../Components/MessagePanel/MessagePanel";
 import Nameplate from "../../Components/Nameplate/Nameplate";
 
 import "./Console.css";
@@ -42,6 +48,16 @@ const STAR_FIELD_TWO = String.raw`
 
 
 function Console() {
+  const [
+    messages,
+    setMessages,
+  ] = useState([]);
+
+
+  const widgetBoundsRef =
+    useRef(null);
+
+
   return (
     <main className="console-page">
       <div
@@ -63,8 +79,6 @@ function Console() {
         <div className="screen-vignette" />
       </div>
 
-      <LightPanel />
-
       <pre
         className="terminal-man-banner"
         aria-hidden="true"
@@ -76,10 +90,40 @@ function Console() {
         <CommunicationArray />
       </section>
 
-      <div className="console-lower-interface">
-        <Nameplate />
+      <div
+        ref={
+          widgetBoundsRef
+        }
+        className="console-widget-layer"
+      >
+        <LightPanel
+          boundsRef={
+            widgetBoundsRef
+          }
+        />
 
-        <CommandShell />
+        <Nameplate
+          boundsRef={
+            widgetBoundsRef
+          }
+        />
+
+        <MessagePanel
+          messages={
+            messages
+          }
+          boundsRef={
+            widgetBoundsRef
+          }
+        />
+      </div>
+
+      <div className="console-lower-interface">
+        <CommandShell
+          setMessages={
+            setMessages
+          }
+        />
       </div>
     </main>
   );

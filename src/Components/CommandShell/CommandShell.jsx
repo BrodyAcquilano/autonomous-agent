@@ -7,7 +7,9 @@ import openAIResponsesApi from "../../Api/Azure/OpenAIResponses";
 import "./CommandShell.css";
 
 
-function CommandShell() {
+function CommandShell({
+  setMessages,
+}) {
   const [
     command,
     setCommand,
@@ -41,10 +43,27 @@ function CommandShell() {
       }
 
 
-      console.log(
-        "You:",
-        input,
+      setMessages(
+        (
+          currentMessages,
+        ) => [
+          ...currentMessages,
+          {
+            id:
+              crypto.randomUUID(),
+
+            role: "user",
+
+            label: "YOU",
+
+            content:
+              input,
+          },
+        ],
       );
+
+
+      setCommand("");
 
 
       setIsSubmitting(
@@ -59,19 +78,53 @@ function CommandShell() {
           });
 
 
-        console.log(
-          "Terminal Man:",
-          response.output,
+        setMessages(
+          (
+            currentMessages,
+          ) => [
+            ...currentMessages,
+            {
+              id:
+                crypto.randomUUID(),
+
+              role:
+                "assistant",
+
+              label:
+                "TERMINAL MAN",
+
+              content:
+                response.output,
+            },
+          ],
         );
-
-
-        setCommand("");
       } catch (
         error
       ) {
-        console.error(
-          "Terminal Man request failed:",
-          error,
+        setMessages(
+          (
+            currentMessages,
+          ) => [
+            ...currentMessages,
+            {
+              id:
+                crypto.randomUUID(),
+
+              role:
+                "error",
+
+              label:
+                "SYSTEM",
+
+              content:
+                error
+                  .response
+                  ?.data
+                  ?.message ||
+                error.message ||
+                "Request failed.",
+            },
+          ],
         );
       } finally {
         setIsSubmitting(
@@ -98,7 +151,11 @@ function CommandShell() {
         value={
           command
         }
-        placeholder="ENTER COMMAND OR TASK..."
+        placeholder={
+          isSubmitting
+            ? "TERMINAL MAN IS PROCESSING..."
+            : "ENTER COMMAND OR TASK..."
+        }
         onChange={(
           event,
         ) =>
@@ -125,7 +182,9 @@ function CommandShell() {
           isSubmitting
         }
       >
-        EXECUTE
+        {isSubmitting
+          ? "WORKING"
+          : "EXECUTE"}
       </button>
     </form>
   );

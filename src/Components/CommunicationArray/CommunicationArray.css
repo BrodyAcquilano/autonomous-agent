@@ -4,6 +4,8 @@
 
   position: relative;
 
+  z-index: 1;
+
   --signal-axis: 50%;
   --ascii-antenna-column: 25.5ch;
 
@@ -14,7 +16,6 @@
 
   user-select: none;
 }
-
 
 .communication-array-glow {
   position: absolute;

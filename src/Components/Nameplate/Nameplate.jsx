@@ -1,9 +1,31 @@
+import useDraggable from "../../Hooks/useDraggable";
+
 import "./Nameplate.css";
 
 
-function Nameplate() {
+function Nameplate({
+  boundsRef,
+}) {
+  const {
+    dragRef,
+    dragHandleProps,
+    dragStyle,
+  } = useDraggable({
+    boundsRef,
+  });
+
+
   return (
-    <section className="nameplate">
+    <section
+      ref={
+        dragRef
+      }
+      className="nameplate"
+      style={
+        dragStyle
+      }
+      {...dragHandleProps}
+    >
       <div className="nameplate-title">
         TERMINAL MAN
       </div>
