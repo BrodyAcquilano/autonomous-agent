@@ -90,9 +90,10 @@ function createAzureClient(
   const {
     baseURL,
     apiKey,
-  } = getAzureConfig(
-    model,
-  );
+  } =
+    getAzureConfig(
+      model,
+    );
 
 
   return new OpenAI({
@@ -102,17 +103,56 @@ function createAzureClient(
 }
 
 
+function addOptionalField(
+  request,
+  key,
+  value,
+) {
+  if (
+    value !==
+      undefined &&
+    value !==
+      null
+  ) {
+    request[
+      key
+    ] =
+      value;
+  }
+}
+
+
 async function createResponse({
   model,
   input,
+
   instructions,
-  maxOutputTokens,
+  reasoning,
+
+  max_output_tokens,
+
+  tools,
+  tool_choice,
+  parallel_tool_calls,
+  max_tool_calls,
+
+  text,
+
+  previous_response_id,
+
+  store,
+  stream,
+  background,
+
+  metadata,
+  include,
 }) {
   const {
     deploymentName,
-  } = getAzureConfig(
-    model,
-  );
+  } =
+    getAzureConfig(
+      model,
+    );
 
 
   const client =
@@ -129,20 +169,102 @@ async function createResponse({
   };
 
 
-  if (
-    instructions
-  ) {
-    request.instructions =
-      instructions;
-  }
+  addOptionalField(
+    request,
+    "instructions",
+    instructions,
+  );
 
 
-  if (
-    maxOutputTokens
-  ) {
-    request.max_output_tokens =
-      maxOutputTokens;
-  }
+  addOptionalField(
+    request,
+    "reasoning",
+    reasoning,
+  );
+
+
+  addOptionalField(
+    request,
+    "max_output_tokens",
+    max_output_tokens,
+  );
+
+
+  addOptionalField(
+    request,
+    "tools",
+    tools,
+  );
+
+
+  addOptionalField(
+    request,
+    "tool_choice",
+    tool_choice,
+  );
+
+
+  addOptionalField(
+    request,
+    "parallel_tool_calls",
+    parallel_tool_calls,
+  );
+
+
+  addOptionalField(
+    request,
+    "max_tool_calls",
+    max_tool_calls,
+  );
+
+
+  addOptionalField(
+    request,
+    "text",
+    text,
+  );
+
+
+  addOptionalField(
+    request,
+    "previous_response_id",
+    previous_response_id,
+  );
+
+
+  addOptionalField(
+    request,
+    "store",
+    store,
+  );
+
+
+  addOptionalField(
+    request,
+    "stream",
+    stream,
+  );
+
+
+  addOptionalField(
+    request,
+    "background",
+    background,
+  );
+
+
+  addOptionalField(
+    request,
+    "metadata",
+    metadata,
+  );
+
+
+  addOptionalField(
+    request,
+    "include",
+    include,
+  );
 
 
   return client.responses.create(

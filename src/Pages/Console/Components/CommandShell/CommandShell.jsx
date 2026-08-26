@@ -1,93 +1,227 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
 
 import openAIResponsesApi from "../../../../Api/Azure/OpenAIResponses";
 
 import "./CommandShell.css";
 
-function CommandShell({ setMessages }) {
-  const [command, setCommand] = useState("");
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+function CommandShell({
+  model,
+  requestSettings,
+  setMessages,
+}) {
+  const [
+    command,
+    setCommand,
+  ] =
+    useState(
+      "",
+    );
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
 
-    const input = command.trim();
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] =
+    useState(
+      false,
+    );
 
-    if (!input || isSubmitting) {
-      return;
-    }
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        id: crypto.randomUUID(),
+  const handleSubmit =
+    async (
+      event,
+    ) => {
+      event.preventDefault();
 
-        role: "user",
 
-        label: "YOU",
+      const input =
+        command.trim();
 
-        content: input,
-      },
-    ]);
 
-    setCommand("");
+      if (
+        !input ||
+        isSubmitting
+      ) {
+        return;
+      }
 
-    setIsSubmitting(true);
 
-    try {
-      const response = await openAIResponsesApi.request({
-        model: "gpt-5.6-terra",
+      setMessages(
+        (
+          currentMessages,
+        ) => [
+          ...currentMessages,
+
+          {
+            id:
+              crypto.randomUUID(),
+
+            role:
+              "user",
+
+            label:
+              "YOU",
+
+            content:
+              input,
+          },
+        ],
+      );
+
+
+      setCommand(
+        "",
+      );
+
+
+      setIsSubmitting(
+        true,
+      );
+
+
+      /*
+       * This is the actual Responses API
+       * request assembled by the Console.
+       *
+       * The frontend intentionally supplies
+       * only the parameters exposed by this
+       * interface.
+       */
+      const request = {
+        model,
 
         input,
-      });
 
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: crypto.randomUUID(),
+        reasoning: {
+          effort:
+            requestSettings
+              .reasoning
+              .effort,
 
-          role: "assistant",
-
-          label: "TERMINAL MAN",
-
-          content: response.output,
+          mode:
+            requestSettings
+              .reasoning
+              .mode,
         },
-      ]);
-    } catch (error) {
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: crypto.randomUUID(),
 
-          role: "error",
+        max_output_tokens:
+          requestSettings
+            .max_output_tokens,
 
-          label: "SYSTEM",
-
-          content:
-            error.response?.data?.message || error.message || "Request failed.",
+        text: {
+          verbosity:
+            requestSettings
+              .text
+              .verbosity,
         },
-      ]);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      };
+
+
+      try {
+        const response =
+          await openAIResponsesApi.request(
+            request,
+          );
+
+
+        const output =
+          response.output_text ||
+          "Request completed without text output.";
+
+
+        setMessages(
+          (
+            currentMessages,
+          ) => [
+            ...currentMessages,
+
+            {
+              id:
+                crypto.randomUUID(),
+
+              role:
+                "assistant",
+
+              label:
+                "ASSISTANT",
+
+              content:
+                output,
+            },
+          ],
+        );
+      } catch (
+        error
+      ) {
+        setMessages(
+          (
+            currentMessages,
+          ) => [
+            ...currentMessages,
+
+            {
+              id:
+                crypto.randomUUID(),
+
+              role:
+                "error",
+
+              label:
+                "SYSTEM",
+
+              content:
+                error
+                  .response
+                  ?.data
+                  ?.message ||
+                error.message ||
+                "Request failed.",
+            },
+          ],
+        );
+      } finally {
+        setIsSubmitting(
+          false,
+        );
+      }
+    };
+
 
   return (
-    <form className="command-shell" onSubmit={handleSubmit}>
-      <div className="command-prefix">&gt;</div>
+    <form
+      className="command-shell"
+      onSubmit={
+        handleSubmit
+      }
+    >
+      <div className="command-prefix">
+        &gt;
+      </div>
+
 
       <input
         className="command-input"
         type="text"
-        value={command}
+        value={
+          command
+        }
         placeholder={
           isSubmitting
-            ? "TERMINAL MAN IS PROCESSING..."
+            ? "PROCESSING..."
             : "ENTER COMMAND OR TASK..."
         }
-        onChange={(event) => setCommand(event.target.value)}
+        onChange={(
+          event,
+        ) => {
+          setCommand(
+            event.target.value,
+          );
+        }}
       />
+
 
       <button
         type="button"
@@ -97,15 +231,21 @@ function CommandShell({ setMessages }) {
         +
       </button>
 
+
       <button
         type="submit"
         className="command-run-button"
-        disabled={isSubmitting}
+        disabled={
+          isSubmitting
+        }
       >
-        {isSubmitting ? "WORKING" : "EXECUTE"}
+        {isSubmitting
+          ? "WORKING"
+          : "EXECUTE"}
       </button>
     </form>
   );
 }
+
 
 export default CommandShell;

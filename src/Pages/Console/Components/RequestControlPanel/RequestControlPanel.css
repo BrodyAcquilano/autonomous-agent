@@ -1,0 +1,389 @@
+.request-control-panel {
+  position: absolute;
+
+  top: 96px;
+  right: 26px;
+
+  z-index: 35;
+
+  width:
+    clamp(
+      430px,
+      36vw,
+      540px
+    );
+
+  min-height: 220px;
+
+  box-sizing: border-box;
+
+  transform:
+    translate(
+      var(
+        --drag-x,
+        0px
+      ),
+      var(
+        --drag-y,
+        0px
+      )
+    );
+
+  display: flex;
+  flex-direction: column;
+
+  padding:
+    15px
+    17px
+    17px;
+
+  border:
+    1px solid
+    rgba(
+      97,
+      165,
+      237,
+      0.4
+    );
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(
+        27,
+        76,
+        137,
+        0.57
+      ),
+      rgba(
+        7,
+        29,
+        71,
+        0.34
+      )
+    );
+
+  backdrop-filter:
+    blur(32px)
+    saturate(140%);
+
+  box-shadow:
+    inset
+    0
+    0
+    35px
+    rgba(
+      89,
+      161,
+      244,
+      0.07
+    ),
+    0
+    8px
+    30px
+    rgba(
+      0,
+      0,
+      0,
+      0.45
+    );
+}
+
+
+/* --------------------------------
+   HEADER
+-------------------------------- */
+
+.request-control-panel-header {
+  height: 35px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  cursor: grab;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.request-control-panel-header:active {
+  cursor: grabbing;
+}
+
+
+.request-control-panel-title {
+  color: #d8ebff;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+
+  letter-spacing: 2px;
+}
+
+
+.request-control-panel-model {
+  color:
+    rgba(
+      146,
+      192,
+      242,
+      0.58
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9px;
+
+  letter-spacing: 1.2px;
+}
+
+
+/* --------------------------------
+   CONTROL AREA
+-------------------------------- */
+
+.request-control-panel-body {
+  flex: 1;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    17px
+    18px;
+
+  padding:
+    19px
+    20px;
+
+  border:
+    1px solid
+    rgba(
+      131,
+      183,
+      239,
+      0.36
+    );
+
+  background:
+    rgba(
+      6,
+      24,
+      55,
+      0.64
+    );
+
+  box-shadow:
+    inset
+    0
+    0
+    22px
+    rgba(
+      61,
+      131,
+      211,
+      0.1
+    );
+}
+
+
+/* --------------------------------
+   FIELDS
+-------------------------------- */
+
+.request-control-field {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+
+.request-control-label {
+  color:
+    rgba(
+      185,
+      216,
+      249,
+      0.76
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+
+  letter-spacing: 1.25px;
+}
+
+
+.request-control-field select,
+.request-control-field input {
+  width: 100%;
+  height: 40px;
+
+  box-sizing: border-box;
+
+  padding:
+    0
+    11px;
+
+  border:
+    1px solid
+    rgba(
+      120,
+      177,
+      237,
+      0.4
+    );
+
+  outline: none;
+
+  background:
+    rgba(
+      3,
+      15,
+      35,
+      0.9
+    );
+
+  color: #d8ebff;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 12px;
+}
+
+
+.request-control-field select {
+  cursor: pointer;
+}
+
+
+.request-control-field select:focus,
+.request-control-field input:focus {
+  border-color:
+    rgba(
+      158,
+      205,
+      255,
+      0.82
+    );
+
+  box-shadow:
+    inset
+    0
+    0
+    14px
+    rgba(
+      80,
+      154,
+      236,
+      0.12
+    );
+}
+
+
+.request-control-field option {
+  background: #07162a;
+
+  color: #d8ebff;
+}
+
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
+
+@media (
+  max-width: 1000px
+) {
+  .request-control-panel {
+    width: 400px;
+  }
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .request-control-panel {
+    top: 12px;
+    right: 12px;
+
+    width:
+      calc(
+        100% - 24px
+      );
+
+    min-height: 0;
+
+    padding:
+      12px
+      12px
+      14px;
+  }
+
+
+  .request-control-panel-header {
+    height: 31px;
+  }
+
+
+  .request-control-panel-model {
+    display: none;
+  }
+
+
+  .request-control-panel-body {
+    gap:
+      12px
+      10px;
+
+    padding:
+      14px;
+  }
+
+
+  .request-control-label {
+    font-size: 9px;
+  }
+
+
+  .request-control-field select,
+  .request-control-field input {
+    height: 37px;
+
+    font-size: 11px;
+  }
+}
