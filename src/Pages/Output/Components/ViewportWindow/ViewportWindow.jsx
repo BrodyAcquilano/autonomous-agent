@@ -55,13 +55,6 @@ function getWindowDimensions(
       }
 
 
-      /*
-       * Window structure:
-       *
-       * 34px header
-       * 20px body padding
-       * remaining area = image
-       */
       const rendererWidth =
         width -
         20;
@@ -175,7 +168,26 @@ function ViewportWindow({
         isExpanded,
 
       scale,
+
+
+  /*
+   * The whole output window is draggable,
+   * but renderer clicks/double-clicks still
+   * need to behave like normal mouse events.
+   */
+    preventDefault:
+    false,
     });
+
+
+  function toggleExpanded() {
+    setIsExpanded(
+      (
+        current,
+      ) =>
+        !current,
+    );
+  }
 
 
   const windowStyle = {
@@ -200,69 +212,75 @@ function ViewportWindow({
   };
 
 
-  const window =
-    (
-      <section
-        ref={
-          dragRef
-        }
-        className={`viewport-window viewport-window-${variant} ${
-          isExpanded
-            ? "expanded"
-            : ""
-        }`}
-        style={
-          windowStyle
-        }
-        aria-label={
-          ariaLabel
-        }
-      >
-        <header
-          className="viewport-window-header"
-          {...dragHandleProps}
+const window =
+  (
+    <section
+      ref={
+        dragRef
+      }
+      className={`viewport-window viewport-window-${variant} ${
+        isExpanded
+          ? "expanded"
+          : ""
+      }`}
+      style={
+        windowStyle
+      }
+      aria-label={
+        ariaLabel
+      }
+      {...dragHandleProps}
+    >
+      <header className="viewport-window-header">
+        <button
+          type="button"
+          className="viewport-window-expand-button"
+          aria-label={
+            isExpanded
+              ? "Restore output window"
+              : "Maximize output window"
+          }
+          title={
+            isExpanded
+              ? "Restore"
+              : "Maximize"
+          }
+          onPointerDown={(
+            event,
+          ) => {
+            event.stopPropagation();
+          }}
+          onClick={(
+            event,
+          ) => {
+            event.stopPropagation();
+
+            toggleExpanded();
+          }}
         >
-          <button
-            type="button"
-            className="viewport-window-expand-button"
-            aria-label={
-              isExpanded
-                ? "Restore output window"
-                : "Maximize output window"
-            }
-            title={
-              isExpanded
-                ? "Restore"
-                : "Maximize"
-            }
-            onPointerDown={(
-              event,
-            ) => {
-              event.stopPropagation();
-            }}
-            onClick={() => {
-              setIsExpanded(
-                (
-                  current,
-                ) =>
-                  !current,
-              );
-            }}
-          >
-            {isExpanded
-              ? "❐"
-              : "□"}
-          </button>
-        </header>
+          {isExpanded
+            ? "❐"
+            : "□"}
+        </button>
+      </header>
 
 
-        <div className="viewport-window-body">
-          <div className="viewport-window-renderer">
-            {children}
-          </div>
+      <div className="viewport-window-body">
+        <div
+          className="viewport-window-renderer"
+          onDoubleClick={(
+            event,
+          ) => {
+            event.stopPropagation();
+
+            toggleExpanded();
+          }}
+        >
+          {children}
         </div>
-      </section>
-    );
+      </div>
+    </section>
+  );
 
 
   if (

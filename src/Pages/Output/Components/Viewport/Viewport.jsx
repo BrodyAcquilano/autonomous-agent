@@ -642,66 +642,68 @@ function Viewport({
   }
 
 
-  function handleWheel(
-    event,
+ function handleWheel(
+  event,
+) {
+  /*
+   * An expanded window is outside the
+   * virtual workspace, so don't alter
+   * workspace zoom while interacting
+   * with it.
+   */
+  if (
+    event.target.closest(
+      ".viewport-window.expanded",
+    )
   ) {
-    /*
-     * Later renderers such as PDFs
-     * may need their own scrolling.
-     */
-    if (
-      event.target.closest(
-        ".viewport-window",
-      )
-    ) {
-      return;
-    }
-
-
-    event.preventDefault();
-
-
-    const container =
-      containerRef.current;
-
-
-    if (
-      !container
-    ) {
-      return;
-    }
-
-
-    const rect =
-      container.getBoundingClientRect();
-
-
-    const pointX =
-      event.clientX -
-      rect.left;
-
-
-    const pointY =
-      event.clientY -
-      rect.top;
-
-
-    const zoomFactor =
-      Math.exp(
-        -event.deltaY *
-        0.0015,
-      );
-
-
-    zoomAtPoint(
-      view.scale *
-        zoomFactor,
-
-      pointX,
-
-      pointY,
-    );
+    return;
   }
+
+
+  event.preventDefault();
+
+
+  const container =
+    containerRef.current;
+
+
+  if (
+    !container
+  ) {
+    return;
+  }
+
+
+  const rect =
+    container.getBoundingClientRect();
+
+
+  const pointX =
+    event.clientX -
+    rect.left;
+
+
+  const pointY =
+    event.clientY -
+    rect.top;
+
+
+  const zoomFactor =
+    Math.exp(
+      -event.deltaY *
+      0.0015,
+    );
+
+
+  zoomAtPoint(
+    view.scale *
+      zoomFactor,
+
+    pointX,
+
+    pointY,
+  );
+}
 
 
   const enhancedChildren =

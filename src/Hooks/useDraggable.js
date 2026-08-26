@@ -4,10 +4,15 @@ import {
 } from "react";
 
 
+const DRAG_THRESHOLD =
+  4;
+
+
 function useDraggable({
   boundsRef,
   disabled = false,
   scale = 1,
+  preventDefault = true,
 }) {
   const dragRef =
     useRef(
@@ -26,11 +31,8 @@ function useDraggable({
     setOffset,
   ] =
     useState({
-      x:
-        0,
-
-      y:
-        0,
+      x: 0,
+      y: 0,
     });
 
 
@@ -87,15 +89,18 @@ function useDraggable({
       elementRect,
 
       boundsRect,
+
+      isDragging:
+        false,
     };
 
 
-    event.currentTarget.setPointerCapture(
-      event.pointerId,
-    );
-
-
-    event.preventDefault();
+    /*
+     * Do NOT capture the pointer yet.
+     *
+     * This allows normal click and
+     * double-click behavior.
+     */
   };
 
 
@@ -123,6 +128,45 @@ function useDraggable({
     const pointerY =
       event.clientY -
       drag.startY;
+
+
+    /*
+     * Treat tiny movement as a click,
+     * not a drag.
+     */
+    if (
+      !drag.isDragging
+    ) {
+      const distance =
+        Math.hypot(
+          pointerX,
+          pointerY,
+        );
+
+
+      if (
+        distance <
+        DRAG_THRESHOLD
+      ) {
+        return;
+      }
+
+
+      drag.isDragging =
+        true;
+
+
+      event.currentTarget.setPointerCapture(
+        event.pointerId,
+      );
+
+
+      if (
+        preventDefault
+      ) {
+        event.preventDefault();
+      }
+    }
 
 
     const minimumX =
@@ -210,6 +254,7 @@ function useDraggable({
 
 
     if (
+      drag.isDragging &&
       event.currentTarget.hasPointerCapture(
         event.pointerId,
       )
@@ -251,9 +296,7 @@ function useDraggable({
 
   return {
     dragRef,
-
     dragHandleProps,
-
     dragStyle,
   };
 }
