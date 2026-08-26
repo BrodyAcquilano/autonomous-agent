@@ -93,7 +93,9 @@ function CodeRenderer({
           "CODE"}
       </div>
 
-      <pre>
+      <pre
+  data-window-selectable="true"
+>
         <code>
           {content}
         </code>

@@ -38,7 +38,7 @@ function TextRenderer({
     null
   ) {
     return (
-      <div className="text-renderer-missing">
+      <div className="text-renderer-missing"  data-window-selectable="true">
         <span>
           TEXT CONTENT NOT LOADED
         </span>
@@ -54,10 +54,11 @@ function TextRenderer({
 
 
   return (
-    <div className="text-renderer">
-      <pre>
-        {content}
-      </pre>
+    <div className="text-renderer"  data-window-selectable="true">
+   <pre
+>
+  {content}
+</pre>
     </div>
   );
 }

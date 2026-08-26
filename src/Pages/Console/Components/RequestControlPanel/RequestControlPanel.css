@@ -371,16 +371,88 @@
    TOOLS
 -------------------------------- */
 
-.request-control-tool-toggle {
+.request-control-tools-list {
   display: flex;
+  flex-direction: column;
 
-  align-items: center;
+  gap: 18px;
+}
 
-  gap: 10px;
 
-  margin-bottom: 17px;
+.request-control-tool {
+  display: flex;
+  flex-direction: column;
 
-  color: #d8ebff;
+  gap: 15px;
+
+  padding-bottom: 17px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      132,
+      185,
+      241,
+      0.14
+    );
+}
+
+
+.request-control-tool:last-child {
+  padding-bottom: 0;
+
+  border-bottom: 0;
+}
+
+
+.request-control-tool-row {
+  display: grid;
+
+  grid-template-columns:
+    18px
+    minmax(
+      0,
+      1fr
+    );
+
+  align-items: start;
+
+  gap: 11px;
+
+  cursor: pointer;
+}
+
+
+.request-control-tool-row
+input {
+  width: 17px;
+  height: 17px;
+
+  margin:
+    1px
+    0
+    0;
+
+  accent-color:
+    #659eda;
+
+  cursor: pointer;
+}
+
+
+.request-control-tool-copy {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+
+.request-control-tool-name {
+  color:
+    #d8ebff;
 
   font-family:
     "Courier New",
@@ -390,24 +462,57 @@
   font-size: 11px;
 
   letter-spacing: 1.3px;
-
-  cursor: pointer;
 }
 
 
-.request-control-tool-toggle input {
-  width: 17px;
-  height: 17px;
+.request-control-tool-description {
+  color:
+    rgba(
+      161,
+      199,
+      239,
+      0.56
+    );
 
-  margin: 0;
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
 
-  accent-color: #659eda;
+  font-size: 8px;
 
-  cursor: pointer;
+  line-height: 1.45;
+
+  letter-spacing: 0.8px;
+}
+
+
+.request-control-tool-formats {
+  color:
+    rgba(
+      139,
+      180,
+      224,
+      0.38
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 7px;
+
+  line-height: 1.5;
+
+  letter-spacing: 0.65px;
 }
 
 
 .request-control-tool-options {
+  margin-left:
+    29px;
+
   transition:
     opacity
     140ms

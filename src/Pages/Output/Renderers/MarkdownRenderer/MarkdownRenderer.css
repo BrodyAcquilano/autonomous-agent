@@ -24,6 +24,10 @@
   line-height: 1.65;
 
   scrollbar-width: thin;
+
+    user-select: text;
+
+  cursor: text;
 }
 
 
@@ -124,3 +128,4 @@
 
   letter-spacing: 1.2px;
 }
+

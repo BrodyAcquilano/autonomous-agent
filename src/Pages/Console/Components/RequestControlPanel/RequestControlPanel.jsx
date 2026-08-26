@@ -126,6 +126,32 @@ function RequestControlPanel({
     );
   }
 
+  function updateToolEnabled(
+  toolKey,
+  enabled,
+) {
+  setRequestSettings(
+    (
+      current,
+    ) => ({
+      ...current,
+
+      tools: {
+        ...current.tools,
+
+        [toolKey]: {
+          ...current
+            .tools
+            ?.[
+              toolKey
+            ],
+
+          enabled,
+        },
+      },
+    }),
+  );
+}
 
   function updateMaxOutputTokens(
     value,
@@ -199,6 +225,15 @@ function RequestControlPanel({
       size:
         "1024x1024",
     };
+
+    const codeInterpreter =
+  requestSettings
+    .tools
+    ?.code_interpreter ||
+  {
+    enabled:
+      false,
+  };
 
 
   return (
@@ -381,122 +416,168 @@ function RequestControlPanel({
 
 
       <div className="request-control-panel-section request-control-tools-section">
-        <div className="request-control-panel-section-title">
-          TOOLS
-        </div>
+  <div className="request-control-panel-section-title">
+    TOOLS
+  </div>
 
 
-        <label className="request-control-tool-toggle">
-          <input
-            type="checkbox"
-            checked={
-              imageGeneration.enabled
+  <div className="request-control-tools-list">
+    <div className="request-control-tool">
+      <label className="request-control-tool-row">
+        <input
+          type="checkbox"
+          checked={
+            imageGeneration.enabled
+          }
+          onChange={(
+            event,
+          ) => {
+            updateToolEnabled(
+              "image_generation",
+              event.target.checked,
+            );
+          }}
+        />
+
+
+        <span className="request-control-tool-copy">
+          <span className="request-control-tool-name">
+            IMAGE GENERATION
+          </span>
+
+          <span className="request-control-tool-description">
+            OPTIONAL IMAGE OUTPUT USING GPT-IMAGE-2
+          </span>
+        </span>
+      </label>
+
+
+      <div
+        className={`request-control-panel-grid request-control-tool-options ${
+          imageGeneration.enabled
+            ? ""
+            : "disabled"
+        }`}
+      >
+        <label className="request-control-field">
+          <span className="request-control-label">
+            QUALITY
+          </span>
+
+          <select
+            disabled={
+              !imageGeneration.enabled
+            }
+            value={
+              imageGeneration.quality
             }
             onChange={(
               event,
             ) => {
               updateImageGeneration(
-                "enabled",
-                event.target.checked,
+                "quality",
+                event.target.value,
               );
             }}
-          />
-
-          <span>
-            IMAGE GENERATION
-          </span>
+          >
+            {IMAGE_QUALITIES.map(
+              (
+                option,
+              ) => (
+                <option
+                  key={
+                    option
+                  }
+                  value={
+                    option
+                  }
+                >
+                  {option.toUpperCase()}
+                </option>
+              ),
+            )}
+          </select>
         </label>
 
 
-        <div
-          className={`request-control-panel-grid request-control-tool-options ${
-            imageGeneration.enabled
-              ? ""
-              : "disabled"
-          }`}
-        >
-          <label className="request-control-field">
-            <span className="request-control-label">
-              QUALITY
-            </span>
+        <label className="request-control-field">
+          <span className="request-control-label">
+            SIZE
+          </span>
 
-            <select
-              disabled={
-                !imageGeneration.enabled
-              }
-              value={
-                imageGeneration.quality
-              }
-              onChange={(
-                event,
-              ) => {
-                updateImageGeneration(
-                  "quality",
-                  event.target.value,
-                );
-              }}
-            >
-              {IMAGE_QUALITIES.map(
-                (
-                  option,
-                ) => (
-                  <option
-                    key={
-                      option
-                    }
-                    value={
-                      option
-                    }
-                  >
-                    {option.toUpperCase()}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
-
-
-          <label className="request-control-field">
-            <span className="request-control-label">
-              SIZE
-            </span>
-
-            <select
-              disabled={
-                !imageGeneration.enabled
-              }
-              value={
-                imageGeneration.size
-              }
-              onChange={(
-                event,
-              ) => {
-                updateImageGeneration(
-                  "size",
-                  event.target.value,
-                );
-              }}
-            >
-              {IMAGE_SIZES.map(
-                (
-                  option,
-                ) => (
-                  <option
-                    key={
-                      option
-                    }
-                    value={
-                      option
-                    }
-                  >
-                    {option.toUpperCase()}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
-        </div>
+          <select
+            disabled={
+              !imageGeneration.enabled
+            }
+            value={
+              imageGeneration.size
+            }
+            onChange={(
+              event,
+            ) => {
+              updateImageGeneration(
+                "size",
+                event.target.value,
+              );
+            }}
+          >
+            {IMAGE_SIZES.map(
+              (
+                option,
+              ) => (
+                <option
+                  key={
+                    option
+                  }
+                  value={
+                    option
+                  }
+                >
+                  {option.toUpperCase()}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
       </div>
+    </div>
+
+
+    <div className="request-control-tool">
+      <label className="request-control-tool-row">
+        <input
+          type="checkbox"
+          checked={
+            codeInterpreter.enabled
+          }
+          onChange={(
+            event,
+          ) => {
+            updateToolEnabled(
+              "code_interpreter",
+              event.target.checked,
+            );
+          }}
+        />
+
+
+        <span className="request-control-tool-copy">
+          <span className="request-control-tool-name">
+            CODE INTERPRETER
+          </span>
+
+          <span className="request-control-tool-description">
+            FILE GENERATION + PYTHON CODE EXECUTION
+          </span>
+
+          <span className="request-control-tool-formats">
+            PDF · MD · TXT · CSV · XLSX · CODE · IMAGES · ZIP + MORE
+          </span>
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
     </section>
   );
 }

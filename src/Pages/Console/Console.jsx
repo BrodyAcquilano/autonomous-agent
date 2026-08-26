@@ -56,7 +56,7 @@ function Console({
   setMessages,
   setResponse,
 }) {
- const [
+const [
   requestSettings,
   setRequestSettings,
 ] =
@@ -87,6 +87,11 @@ function Console({
 
         size:
           "1024x1024",
+      },
+
+      code_interpreter: {
+        enabled:
+          false,
       },
     },
   });

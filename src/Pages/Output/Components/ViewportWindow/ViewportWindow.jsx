@@ -161,23 +161,20 @@ function ViewportWindow({
     dragHandleProps,
     dragStyle,
   } =
-    useDraggable({
-      boundsRef,
+   useDraggable({
+  boundsRef,
 
-      disabled:
-        isExpanded,
+  disabled:
+    isExpanded,
 
-      scale,
+  scale,
 
-
-  /*
-   * The whole output window is draggable,
-   * but renderer clicks/double-clicks still
-   * need to behave like normal mouse events.
-   */
-    preventDefault:
+  preventDefault:
     false,
-    });
+
+  ignoreSelector:
+    '[data-window-selectable="true"]',
+});
 
 
   function toggleExpanded() {
@@ -266,18 +263,27 @@ const window =
 
 
       <div className="viewport-window-body">
-        <div
-          className="viewport-window-renderer"
-          onDoubleClick={(
-            event,
-          ) => {
-            event.stopPropagation();
+       <div
+  className="viewport-window-renderer"
+  onDoubleClick={(
+    event,
+  ) => {
+    if (
+      event.target.closest(
+        '[data-window-selectable="true"]',
+      )
+    ) {
+      return;
+    }
 
-            toggleExpanded();
-          }}
-        >
-          {children}
-        </div>
+
+    event.stopPropagation();
+
+    toggleExpanded();
+  }}
+>
+  {children}
+</div>
       </div>
     </section>
   );

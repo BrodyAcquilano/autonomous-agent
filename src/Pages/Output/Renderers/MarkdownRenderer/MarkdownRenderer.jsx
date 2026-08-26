@@ -56,7 +56,10 @@ function MarkdownRenderer({
 
 
   return (
-    <article className="markdown-renderer">
+    <article
+  className="markdown-renderer"
+  data-window-selectable="true"
+>
       <ReactMarkdown>
         {content}
       </ReactMarkdown>

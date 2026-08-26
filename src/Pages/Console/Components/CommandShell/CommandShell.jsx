@@ -382,12 +382,15 @@ function CommandShell({
        * Attachments remain separate from
        * this object until the server turns
        * them into structured model input.
-       * Add tools to generate images if the control panel permits.
+       * Add tools to generate images or files.
        */
-    const tools =
+  const tools =
   [];
 
 
+/*
+ * Image Generation
+ */
 const imageGeneration =
   requestSettings
     .tools
@@ -422,6 +425,30 @@ if (
   tools.push(
     imageGenerationTool,
   );
+}
+
+
+/*
+ * Code Interpreter
+ */
+const codeInterpreter =
+  requestSettings
+    .tools
+    ?.code_interpreter;
+
+
+if (
+  codeInterpreter?.enabled
+) {
+  tools.push({
+    type:
+      "code_interpreter",
+
+    container: {
+      type:
+        "auto",
+    },
+  });
 }
 
 
