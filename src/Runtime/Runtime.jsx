@@ -109,10 +109,7 @@ function extractResponseFiles(
 
 
   /*
-   * Also understand the current shape
-   * returned by the image-generation
-   * route, so runtime is already capable
-   * of representing those outputs later.
+   * Image-generation route output.
    */
   if (
     Array.isArray(
@@ -128,11 +125,26 @@ function extractResponseFiles(
           "image/png";
 
 
-        const extension =
+        let extension =
+          "png";
+
+
+        if (
           mimeType ===
           "image/jpeg"
-            ? "jpg"
-            : "png";
+        ) {
+          extension =
+            "jpg";
+        }
+
+
+        if (
+          mimeType ===
+          "image/webp"
+        ) {
+          extension =
+            "webp";
+        }
 
 
         files.push({
@@ -159,6 +171,36 @@ function extractResponseFiles(
 }
 
 
+function createTextOutputFile(
+  response,
+  outputText,
+) {
+  if (
+    !outputText
+  ) {
+    return null;
+  }
+
+
+  return {
+    id:
+      `response-text-${response?.id || Date.now()}`,
+
+    type:
+      "text",
+
+    fileName:
+      "response.txt",
+
+    mimeType:
+      "text/plain",
+
+    content:
+      outputText,
+  };
+}
+
+
 function useRuntime() {
   const [
     messages,
@@ -168,7 +210,7 @@ function useRuntime() {
 
 
   /*
-   * Only the most recent complete API
+   * Only the latest complete API
    * response is retained.
    */
   const [
@@ -181,9 +223,11 @@ function useRuntime() {
 
 
   /*
-   * Files belong only to the current
-   * response. They are replaced rather
-   * than accumulated forever.
+   * Output belongs only to the latest
+   * response.
+   *
+   * It is replaced every time a new
+   * response arrives.
    */
   const [
     outputFiles,
@@ -194,6 +238,13 @@ function useRuntime() {
 
   useEffect(
     () => {
+      /*
+       * A new command sets response to
+       * null before executing.
+       *
+       * This clears the previous Output
+       * workspace immediately.
+       */
       if (
         !response
       ) {
@@ -212,6 +263,10 @@ function useRuntime() {
           : "";
 
 
+      /*
+       * Console keeps the conversational
+       * history.
+       */
       if (
         outputText
       ) {
@@ -239,10 +294,43 @@ function useRuntime() {
       }
 
 
-      setOutputFiles(
-        extractResponseFiles(
+      /*
+       * Output represents only this run.
+       *
+       * The normal assistant response is
+       * represented as a text file so the
+       * Output page can render it alongside
+       * images, PDFs, code, and other files.
+       */
+      const nextOutputFiles =
+        [];
+
+
+      const textFile =
+        createTextOutputFile(
+          response,
+          outputText,
+        );
+
+
+      if (
+        textFile
+      ) {
+        nextOutputFiles.push(
+          textFile,
+        );
+      }
+
+
+      nextOutputFiles.push(
+        ...extractResponseFiles(
           response,
         ),
+      );
+
+
+      setOutputFiles(
+        nextOutputFiles,
       );
     },
     [

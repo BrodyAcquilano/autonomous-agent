@@ -1,0 +1,87 @@
+.text-renderer {
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+
+  overflow: auto;
+
+  padding:
+    24px
+    26px;
+
+  background:
+    #f1f2f4;
+
+  color: #181a1e;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      80,
+      84,
+      90,
+      0.48
+    )
+    transparent;
+}
+
+
+.text-renderer pre {
+  margin: 0;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+}
+
+
+.text-renderer-missing {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  color:
+    rgba(
+      41,
+      45,
+      51,
+      0.48
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+
+  letter-spacing: 1.2px;
+}
+
+
+.text-renderer-missing code {
+  color:
+    rgba(
+      41,
+      45,
+      51,
+      0.7
+    );
+}

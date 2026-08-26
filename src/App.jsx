@@ -51,6 +51,17 @@ function App() {
             }
           />
 
+             <Route
+            path="/output"
+            element={
+              <Output
+                outputFiles={
+                  outputFiles
+                }
+              />
+            }
+          />
+
 
           <Route
             path="/models"
@@ -76,16 +87,7 @@ function App() {
           />
 
 
-          <Route
-            path="/output"
-            element={
-              <Output
-                outputFiles={
-                  outputFiles
-                }
-              />
-            }
-          />
+       
 
 
           <Route

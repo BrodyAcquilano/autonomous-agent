@@ -1,4 +1,5 @@
 import {
+  useMemo,
   useState,
 } from "react";
 
@@ -11,6 +12,107 @@ import useDraggable from "../../../../Hooks/useDraggable";
 import "./ViewportWindow.css";
 
 
+function clamp(
+  value,
+  minimum,
+  maximum,
+) {
+  return Math.min(
+    maximum,
+    Math.max(
+      minimum,
+      value,
+    ),
+  );
+}
+
+
+function getWindowDimensions(
+  variant,
+  aspectRatio,
+) {
+  switch (
+    variant
+  ) {
+    case "image": {
+      const width =
+        420;
+
+
+      if (
+        !Number.isFinite(
+          aspectRatio,
+        ) ||
+        aspectRatio <=
+          0
+      ) {
+        return {
+          width,
+
+          height:
+            420,
+        };
+      }
+
+
+      /*
+       * Window structure:
+       *
+       * 34px header
+       * 20px body padding
+       * remaining area = image
+       */
+      const rendererWidth =
+        width -
+        20;
+
+
+      const rendererHeight =
+        rendererWidth /
+        aspectRatio;
+
+
+      const height =
+        clamp(
+          rendererHeight +
+          54,
+
+          260,
+
+          700,
+        );
+
+
+      return {
+        width,
+
+        height,
+      };
+    }
+
+
+    case "document":
+      return {
+        width:
+          430,
+
+        height:
+          560,
+      };
+
+
+    default:
+      return {
+        width:
+          360,
+
+        height:
+          460,
+      };
+  }
+}
+
+
 function ViewportWindow({
   children,
 
@@ -20,6 +122,12 @@ function ViewportWindow({
   scale = 1,
 
   zIndex = 20,
+
+  variant =
+    "default",
+
+  aspectRatio =
+    null,
 
   initialOffset = {
     x:
@@ -38,6 +146,20 @@ function ViewportWindow({
   ] =
     useState(
       false,
+    );
+
+
+  const dimensions =
+    useMemo(
+      () =>
+        getWindowDimensions(
+          variant,
+          aspectRatio,
+        ),
+      [
+        variant,
+        aspectRatio,
+      ],
     );
 
 
@@ -65,6 +187,12 @@ function ViewportWindow({
     "--window-start-y":
       `${initialOffset.y}px`,
 
+    "--window-width":
+      `${dimensions.width}px`,
+
+    "--window-height":
+      `${dimensions.height}px`,
+
     zIndex:
       isExpanded
         ? 1000
@@ -78,7 +206,7 @@ function ViewportWindow({
         ref={
           dragRef
         }
-        className={`viewport-window ${
+        className={`viewport-window viewport-window-${variant} ${
           isExpanded
             ? "expanded"
             : ""

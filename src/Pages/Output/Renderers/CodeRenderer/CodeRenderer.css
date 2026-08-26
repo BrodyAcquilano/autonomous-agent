@@ -1,0 +1,110 @@
+.code-renderer {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+
+  box-sizing: border-box;
+
+  overflow: auto;
+
+  padding:
+    34px
+    20px
+    20px;
+
+  background: #111317;
+
+  color: #dfe4eb;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      150,
+      158,
+      170,
+      0.42
+    )
+    transparent;
+}
+
+
+.code-renderer-language {
+  position: absolute;
+
+  top: 10px;
+  right: 12px;
+
+  color:
+    rgba(
+      181,
+      188,
+      198,
+      0.52
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9px;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+
+.code-renderer pre {
+  margin: 0;
+
+  min-width: max-content;
+}
+
+
+.code-renderer code {
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 12px;
+  line-height: 1.55;
+
+  white-space: pre;
+}
+
+
+.code-renderer-missing {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  background: #111317;
+
+  color:
+    rgba(
+      210,
+      216,
+      224,
+      0.46
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+
+  letter-spacing: 1.2px;
+}

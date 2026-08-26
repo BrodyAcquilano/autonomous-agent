@@ -12,6 +12,10 @@ const TABS = [
     path: "/console",
   },
   {
+    label: "Output",
+    path: "/output",
+  },
+  {
     label: "Models",
     path: "/models",
   },
@@ -22,10 +26,6 @@ const TABS = [
   {
     label: "Memory",
     path: "/memory",
-  },
-  {
-    label: "Output",
-    path: "/output",
   },
   {
     label: "Analytics",

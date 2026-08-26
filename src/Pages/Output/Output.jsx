@@ -1,7 +1,233 @@
+import {
+  useState,
+} from "react";
+
 import Viewport from "./Components/Viewport/Viewport";
 import ViewportWindow from "./Components/ViewportWindow/ViewportWindow";
 
+import CodeRenderer from "./Renderers/CodeRenderer/CodeRenderer";
+import ImageRenderer from "./Renderers/ImageRenderer/ImageRenderer";
+import MarkdownRenderer from "./Renderers/MarkdownRenderer/MarkdownRenderer";
+import PdfRenderer from "./Renderers/PdfRenderer/PdfRenderer";
+import TextRenderer from "./Renderers/TextRenderer/TextRenderer";
+import UnknownRenderer from "./Renderers/UnknownRenderer/UnknownRenderer";
+
 import "./Output.css";
+
+
+const CODE_EXTENSIONS =
+  new Set([
+    "js",
+    "jsx",
+    "mjs",
+    "cjs",
+
+    "ts",
+    "tsx",
+
+    "py",
+
+    "java",
+    "c",
+    "h",
+    "cpp",
+    "hpp",
+    "cs",
+
+    "go",
+    "rs",
+
+    "php",
+    "rb",
+    "swift",
+    "kt",
+
+    "html",
+    "htm",
+    "css",
+    "scss",
+    "sass",
+    "less",
+
+    "sql",
+
+    "sh",
+    "bash",
+    "ps1",
+
+    "xml",
+    "yaml",
+    "yml",
+  ]);
+
+
+const TEXT_EXTENSIONS =
+  new Set([
+    "txt",
+    "log",
+    "csv",
+    "tsv",
+  ]);
+
+
+const MARKDOWN_EXTENSIONS =
+  new Set([
+    "md",
+    "mdx",
+    "markdown",
+  ]);
+
+
+const IMAGE_EXTENSIONS =
+  new Set([
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "gif",
+  ]);
+
+
+function getFileExtension(
+  fileName,
+) {
+  if (
+    typeof fileName !==
+      "string"
+  ) {
+    return "";
+  }
+
+
+  const parts =
+    fileName
+      .toLowerCase()
+      .split(
+        ".",
+      );
+
+
+  if (
+    parts.length <
+    2
+  ) {
+    return "";
+  }
+
+
+  return (
+    parts.pop() ||
+    ""
+  );
+}
+
+
+function getRendererType(
+  file,
+) {
+  if (
+    file?.placeholder
+  ) {
+    return "placeholder";
+  }
+
+
+  const mimeType =
+    typeof file?.mimeType ===
+      "string"
+      ? file.mimeType
+          .toLowerCase()
+      : "";
+
+
+  const extension =
+    getFileExtension(
+      file?.fileName,
+    );
+
+
+  if (
+    mimeType.startsWith(
+      "image/",
+    ) ||
+    IMAGE_EXTENSIONS.has(
+      extension,
+    )
+  ) {
+    return "image";
+  }
+
+
+  if (
+    mimeType ===
+      "application/pdf" ||
+    extension ===
+      "pdf"
+  ) {
+    return "pdf";
+  }
+
+
+  if (
+    mimeType ===
+      "text/markdown" ||
+    MARKDOWN_EXTENSIONS.has(
+      extension,
+    )
+  ) {
+    return "markdown";
+  }
+
+
+  if (
+    CODE_EXTENSIONS.has(
+      extension,
+    )
+  ) {
+    return "code";
+  }
+
+
+  if (
+    mimeType.startsWith(
+      "text/",
+    ) ||
+    TEXT_EXTENSIONS.has(
+      extension,
+    )
+  ) {
+    return "text";
+  }
+
+
+  return "unknown";
+}
+
+
+function getWindowVariant(
+  rendererType,
+) {
+  switch (
+    rendererType
+  ) {
+    case "image":
+      return "image";
+
+
+    case "pdf":
+      return "document";
+
+
+    case "markdown":
+    case "code":
+    case "text":
+      return "document";
+
+
+    default:
+      return "default";
+  }
+}
 
 
 function getWindowOffset(
@@ -44,18 +270,105 @@ function getWindowOffset(
         column -
         centerColumn
       ) *
-      400,
+      470,
 
     y:
       row *
-      490,
+      590,
   };
 }
 
 
+function renderOutputFile({
+  file,
+  rendererType,
+  onImageAspectRatio,
+}) {
+  switch (
+    rendererType
+  ) {
+    case "placeholder":
+      return null;
+
+
+    case "image":
+      return (
+        <ImageRenderer
+          file={
+            file
+          }
+          onAspectRatio={
+            onImageAspectRatio
+          }
+        />
+      );
+
+
+    case "pdf":
+      return (
+        <PdfRenderer
+          file={
+            file
+          }
+        />
+      );
+
+
+    case "markdown":
+      return (
+        <MarkdownRenderer
+          file={
+            file
+          }
+        />
+      );
+
+
+    case "code":
+      return (
+        <CodeRenderer
+          file={
+            file
+          }
+        />
+      );
+
+
+    case "text":
+      return (
+        <TextRenderer
+          file={
+            file
+          }
+        />
+      );
+
+
+    case "unknown":
+      return (
+        <UnknownRenderer
+          file={
+            file
+          }
+        />
+      );
+
+
+    default:
+      return null;
+  }
+}
+
 function Output({
   outputFiles = [],
 }) {
+  const [
+    imageAspectRatios,
+    setImageAspectRatios,
+  ] =
+    useState({});
+
+
   const files =
     Array.isArray(
       outputFiles,
@@ -64,11 +377,6 @@ function Output({
       : [];
 
 
-  /*
-   * Temporary empty window lets us
-   * test the workspace before file
-   * renderers are implemented.
-   */
   const windows =
     files.length >
     0
@@ -84,6 +392,47 @@ function Output({
         ];
 
 
+  function handleImageAspectRatio(
+    fileId,
+    aspectRatio,
+  ) {
+    if (
+      !fileId ||
+      !Number.isFinite(
+        aspectRatio,
+      ) ||
+      aspectRatio <=
+        0
+    ) {
+      return;
+    }
+
+
+    setImageAspectRatios(
+      (
+        current,
+      ) => {
+        if (
+          current[
+            fileId
+          ] ===
+          aspectRatio
+        ) {
+          return current;
+        }
+
+
+        return {
+          ...current,
+
+          [fileId]:
+            aspectRatio,
+        };
+      },
+    );
+  }
+
+
   return (
     <main
       className="output-page"
@@ -96,6 +445,23 @@ function Output({
             file,
             index,
           ) => {
+            const fileId =
+              file.id ||
+              `${file.fileName || "output"}-${index}`;
+
+
+            const rendererType =
+              getRendererType(
+                file,
+              );
+
+
+            const windowVariant =
+              getWindowVariant(
+                rendererType,
+              );
+
+
             const initialOffset =
               getWindowOffset(
                 index,
@@ -103,11 +469,20 @@ function Output({
               );
 
 
+            const aspectRatio =
+              rendererType ===
+                "image"
+                ? imageAspectRatios[
+                    fileId
+                  ] ||
+                  null
+                : null;
+
+
             return (
               <ViewportWindow
                 key={
-                  file.id ||
-                  `${file.fileName || "output"}-${index}`
+                  fileId
                 }
                 initialOffset={
                   initialOffset
@@ -116,12 +491,35 @@ function Output({
                   20 +
                   index
                 }
+                variant={
+                  windowVariant
+                }
+                aspectRatio={
+                  aspectRatio
+                }
                 ariaLabel={
                   file.placeholder
                     ? "Empty output window"
-                    : `Output file ${index + 1}`
+                    : file.fileName ||
+                      `Output file ${index + 1}`
                 }
-              />
+              >
+                {renderOutputFile({
+                  file,
+
+                  rendererType,
+
+                  onImageAspectRatio:
+                    (
+                      ratio,
+                    ) => {
+                      handleImageAspectRatio(
+                        fileId,
+                        ratio,
+                      );
+                    },
+                })}
+              </ViewportWindow>
             );
           },
         )}
