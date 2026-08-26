@@ -3,6 +3,7 @@ import apiClient from "../axios";
 
 const openAIResponsesApi = {
   async request({
+    model,
     input,
     instructions,
     maxOutputTokens,
@@ -11,6 +12,7 @@ const openAIResponsesApi = {
       await apiClient.post(
         "/azure/openai-responses/request",
         {
+          model,
           input,
           instructions,
           maxOutputTokens,

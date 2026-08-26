@@ -9,9 +9,7 @@ function getAzureConfig(
   const {
     AZURE_OPENAI_BASE_URL,
     AZURE_OPENAI_API_KEY,
-
-    AZURE_OPENAI_GPT_56_TERRA_DEPLOYMENT_NAME,
-    AZURE_OPENAI_GPT_53_CODEX_DEPLOYMENT_NAME,
+    AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME,
   } = process.env;
 
 
@@ -39,23 +37,16 @@ function getAzureConfig(
   switch (
     model
   ) {
-    case "gpt-5.6-terra":
+    case "gpt-image-2":
       deploymentName =
-        AZURE_OPENAI_GPT_56_TERRA_DEPLOYMENT_NAME;
-
-      break;
-
-
-    case "gpt-5.3-codex":
-      deploymentName =
-        AZURE_OPENAI_GPT_53_CODEX_DEPLOYMENT_NAME;
+        AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME;
 
       break;
 
 
     default:
       throw new Error(
-        `Unsupported Azure OpenAI Responses model: ${model}`,
+        `Unsupported Azure OpenAI Images model: ${model}`,
       );
   }
 
@@ -98,15 +89,24 @@ function createAzureClient(
   return new OpenAI({
     apiKey,
     baseURL,
+
+    defaultQuery: {
+      "api-version":
+        "preview",
+    },
   });
 }
 
 
-async function createResponse({
+async function createImage({
   model,
-  input,
-  instructions,
-  maxOutputTokens,
+  prompt,
+  size = "1024x1024",
+  quality = "high",
+  outputFormat = "png",
+  background,
+  outputCompression,
+  numberOfImages = 1,
 }) {
   const {
     deploymentName,
@@ -125,27 +125,38 @@ async function createResponse({
     model:
       deploymentName,
 
-    input,
+    prompt,
+
+    size,
+
+    quality,
+
+    n:
+      numberOfImages,
+
+    output_format:
+      outputFormat,
   };
 
 
   if (
-    instructions
+    background
   ) {
-    request.instructions =
-      instructions;
+    request.background =
+      background;
   }
 
 
   if (
-    maxOutputTokens
+    outputCompression !==
+      undefined
   ) {
-    request.max_output_tokens =
-      maxOutputTokens;
+    request.output_compression =
+      outputCompression;
   }
 
 
-  return client.responses.create(
+  return client.images.generate(
     request,
   );
 }
@@ -153,6 +164,6 @@ async function createResponse({
 
 export {
   createAzureClient,
-  createResponse,
+  createImage,
   getAzureConfig,
 };

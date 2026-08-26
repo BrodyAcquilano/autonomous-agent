@@ -2,18 +2,14 @@ import "dotenv/config";
 
 import express from "express";
 
+import openAIImagesRoutes from "./Routes/Azure/OpenAIImages.js";
 import openAIResponsesRoutes from "./Routes/Azure/OpenAIResponses.js";
 
+import modelsRoutes from "./Routes/Models/models.js";
 
-const app =
-  express();
+const app = express();
 
-const PORT =
-  Number(
-    process.env.PORT,
-  ) ||
-  3000;
-
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(
   express.json({
@@ -21,18 +17,12 @@ app.use(
   }),
 );
 
+app.use("/api/models", modelsRoutes);
 
-app.use(
-  "/api/azure/openai-responses",
-  openAIResponsesRoutes,
-);
+app.use("/api/azure/openai-responses", openAIResponsesRoutes);
 
+app.use("/api/azure/openai-images", openAIImagesRoutes);
 
-app.listen(
-  PORT,
-  () => {
-    console.log(
-      `Server running on port ${PORT}`,
-    );
-  },
-);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

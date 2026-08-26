@@ -1,0 +1,291 @@
+.models-page {
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  padding:
+    28px
+    28px
+    92px;
+
+  overflow: hidden;
+
+  background: #000;
+
+  color: #f4f6fa;
+}
+
+
+/* --------------------------------
+   HEADER
+-------------------------------- */
+
+.models-page-header {
+  width: 100%;
+  max-width: 1320px;
+
+  flex-shrink: 0;
+
+  margin:
+    0 auto 24px;
+}
+
+
+.models-page-eyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color:
+    rgba(
+      144,
+      164,
+      205,
+      0.62
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+
+.models-page-header h1 {
+  margin:
+    0
+    0
+    8px;
+
+  font-size:
+    clamp(
+      28px,
+      3vw,
+      38px
+    );
+
+  font-weight: 500;
+
+  letter-spacing:
+    -0.03em;
+}
+
+
+.models-page-header p {
+  max-width: 720px;
+
+  margin: 0;
+
+  color:
+    rgba(
+      205,
+      211,
+      223,
+      0.58
+    );
+
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+
+/* --------------------------------
+   STATUS
+-------------------------------- */
+
+.models-page-message,
+.models-page-error {
+  width: 100%;
+  max-width: 1320px;
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+
+  margin:
+    0 auto 18px;
+
+  padding:
+    14px
+    16px;
+
+  border:
+    1px solid
+    rgba(
+      115,
+      132,
+      170,
+      0.2
+    );
+
+  background:
+    rgba(
+      20,
+      23,
+      30,
+      0.72
+    );
+
+  color:
+    rgba(
+      211,
+      219,
+      234,
+      0.72
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+}
+
+
+.models-page-error {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  border-color:
+    rgba(
+      213,
+      71,
+      79,
+      0.4
+    );
+
+  color:
+    rgba(
+      255,
+      174,
+      180,
+      0.9
+    );
+}
+
+
+/* --------------------------------
+   CATALOG
+-------------------------------- */
+
+.models-catalog {
+  width: 100%;
+  max-width: 1320px;
+
+  flex: 1;
+  min-height: 0;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+    grid-auto-rows:
+    390px;
+
+  align-content: start;
+
+  gap: 22px;
+
+  box-sizing: border-box;
+
+  padding:
+    2px
+    8px
+    20px
+    2px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      105,
+      124,
+      158,
+      0.5
+    )
+    transparent;
+}
+
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
+
+@media (
+  max-width: 1100px
+) {
+  .models-catalog {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+
+    grid-auto-rows:
+      390px;
+  }
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .models-page {
+    padding:
+      18px
+      12px
+      72px;
+  }
+
+
+  .models-page-header {
+    margin-bottom: 16px;
+  }
+
+
+  .models-page-header p {
+    font-size: 12px;
+  }
+
+
+   .models-catalog {
+    grid-template-columns:
+      1fr;
+
+    grid-auto-rows:
+      390px;
+
+    gap: 16px;
+
+    padding:
+      2px
+      4px
+      18px
+      2px;
+  }
+}

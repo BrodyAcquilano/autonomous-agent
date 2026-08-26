@@ -1,12 +1,12 @@
-# GPT-5.6 Terra
+# GPT-5.3 Codex
 
 ## Identity
 
-**Model name:** GPT-5.6 Terra
+**Model name:** GPT-5.3 Codex
 
-**Model ID:** `gpt-5.6-terra`
+**Model ID:** `gpt-5.3-codex`
 
-**Model version:** `2026-07-09`
+**Model version:** `2026-02-24`
 
 **Provider:** OpenAI
 
@@ -18,19 +18,19 @@
 
 **Lifecycle:** Generally Available
 
-**Training cutoff:** 2026-06-17
+**Training cutoff:** August 2025
 
-**Retirement date:** 2028-01-10
+**Retirement date:** 2027-08-23
 
 ---
 
 ## Description
 
-GPT-5.6 Terra is a balanced reasoning model in the GPT-5.6 family.
+GPT-5.3 Codex is a reasoning model specialized for software development and coding workflows.
 
-It is designed to provide strong reasoning and tool-use capabilities while balancing performance, scalability, and cost.
+It is designed for steerability, front-end development, interactivity, repository-aware reasoning, code review, refactoring, testing, and longer-running development tasks.
 
-Key use cases include business automation, knowledge retrieval, document analysis, workflow orchestration, agentic assistance, operational decision support, research, and other workloads requiring strong reasoning at scale.
+The model can reason across text, source code, screenshots, user interfaces, architecture diagrams, and other image inputs within software-development workflows.
 
 ---
 
@@ -38,7 +38,7 @@ Key use cases include business automation, knowledge retrieval, document analysi
 
 **Primary API:** Responses API
 
-**Additional API:** Chat Completions API
+**Additional API:** Not listed
 
 ### Azure OpenAI Base URL
 
@@ -56,7 +56,7 @@ Responses are created with the OpenAI SDK using:
 
 The Azure OpenAI v1 API uses implicit API versioning.
 
-No `api-version` environment variable is required for OpenAI-compatible v1 requests.
+No `api-version` environment variable is required for OpenAI-compatible v1 Responses API requests.
 
 The deployment name is supplied as the `model` field in requests.
 
@@ -92,11 +92,11 @@ This document stores environment-variable names only.
 
 **Deployment name**
 
-`AZURE_OPENAI_GPT_56_TERRA_DEPLOYMENT_NAME`
+`AZURE_OPENAI_GPT_53_CODEX_DEPLOYMENT_NAME`
 
 Expected deployment:
 
-`gpt-5.6-terra`
+`gpt-5.3-codex`
 
 ### Microsoft Foundry
 
@@ -133,9 +133,9 @@ Other local file types can be read by application code and supplied as text, or 
 
 ## Context
 
-**Context window:** 1,050,000 tokens
+**Context window:** 400,000 tokens
 
-**Maximum input:** 922,000 tokens
+**Maximum input:** 272,000 tokens
 
 **Maximum output:** 128,000 tokens
 
@@ -144,41 +144,46 @@ Other local file types can be read by application code and supplied as text, or 
 ## Core Capabilities
 
 - Reasoning
-- Long-context understanding
+- Software development
+- Front-end development
+- Repository-aware code understanding
+- Context-aware code review
+- Long-running development workflows
 - Structured output
 - Function calling
 - Tool calling
 - Parallel tool calling
 - Image processing
-- Computer use
-- Workflow execution
-- Agentic workflows
-- Large-document analysis
+- Multimodal reasoning
+- Refactoring
+- Test generation and automation
 
 ---
 
 ## Reasoning
 
-GPT-5.6 Terra supports configurable reasoning effort.
+GPT-5.3 Codex is a reasoning model optimized for software-development workloads.
 
-Increasing reasoning effort can trade additional latency and token usage for deeper reasoning.
+It is designed to maintain context across complex coding tasks and reason across repositories, source code, screenshots, user-interface states, architecture diagrams, and related development artifacts.
 
-The model is designed to balance reasoning capability, scalability, efficiency, and cost.
+The model is particularly suited to workflows requiring coordinated code changes, debugging, code review, refactoring, testing, and iterative development.
 
 ---
 
 ## Key Use Cases
 
-- Business automation
-- Knowledge retrieval
-- Document analysis
-- Workflow orchestration
-- Agentic assistance
-- Operational decision support
-- Research
-- Tool-based workflows
-- Long-context analysis
-- General reasoning
+- Code generation
+- Front-end development
+- Repository analysis
+- Code review
+- Debugging
+- Refactoring
+- Test generation
+- Test automation
+- UI implementation
+- Architecture analysis
+- Long-running coding tasks
+- Multimodal software-development workflows
 
 ---
 
@@ -210,7 +215,7 @@ Tool availability depends on the API, application, agent, project, permissions, 
 
 ## Deployment
 
-**Deployment name:** `gpt-5.6-terra`
+**Deployment name:** `gpt-5.3-codex`
 
 **Deployment type:** GlobalStandard
 
@@ -218,19 +223,19 @@ Tool availability depends on the API, application, agent, project, permissions, 
 
 **Version upgrade policy:** OnceNewDefaultVersionAvailable
 
-**Model version:** `2026-07-09`
+**Model version:** `2026-02-24`
 
 **Guardrails:** DefaultV2
 
 ### Rate Limits
 
-**Tokens per minute:** 250,000
+**Tokens per minute:** 500,000
 
-**Requests per minute:** 250
+**Requests per minute:** 5,000
 
 These limits describe this specific Azure deployment.
 
-They are not inherent limits of the GPT-5.6 Terra model.
+They are not inherent limits of the GPT-5.3 Codex model.
 
 ---
 

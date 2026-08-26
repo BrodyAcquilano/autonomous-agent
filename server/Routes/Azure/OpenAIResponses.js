@@ -17,10 +17,25 @@ router.post(
   ) => {
     try {
       const {
+        model,
         input,
         instructions,
         maxOutputTokens,
       } = req.body;
+
+
+      if (
+        typeof model !==
+          "string" ||
+        !model.trim()
+      ) {
+        return res
+          .status(400)
+          .json({
+            error:
+              "Model is required.",
+          });
+      }
 
 
       if (
@@ -39,6 +54,9 @@ router.post(
 
       const response =
         await createResponse({
+          model:
+            model.trim(),
+
           input:
             input.trim(),
 
