@@ -106,6 +106,7 @@ function ModelInfoModal({
             </span>
           </div>
 
+
           <button
             type="button"
             className="model-modal-close"
@@ -152,6 +153,44 @@ function ModelInfoModal({
                 </code>.
               </p>
             </div>
+          )}
+
+
+          {model.api && (
+            <section className="model-api-document">
+              <div className="model-api-divider">
+                <span className="model-api-divider-label">
+                  API DOCUMENTATION
+                </span>
+
+                <span className="model-api-divider-platform">
+                  {model.api.platform}
+                </span>
+              </div>
+
+
+              {model.api.markdown ? (
+                <div className="model-markdown model-api-markdown">
+                  <ReactMarkdown>
+                    {model.api.markdown}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <div className="model-markdown-missing">
+                  <h2>
+                    API documentation unavailable
+                  </h2>
+
+                  <p>
+                    No documentation was
+                    returned for{" "}
+                    <code>
+                      {model.api.apiId}
+                    </code>.
+                  </p>
+                </div>
+              )}
+            </section>
           )}
         </div>
 

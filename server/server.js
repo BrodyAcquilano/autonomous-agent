@@ -5,6 +5,7 @@ import express from "express";
 import openAIImagesRoutes from "./Routes/Azure/OpenAIImages.js";
 import openAIResponsesRoutes from "./Routes/Azure/OpenAIResponses.js";
 
+import apisRoutes from "./Routes/Apis/apis.js";
 import modelsRoutes from "./Routes/Models/models.js";
 
 const app = express();
@@ -18,6 +19,8 @@ app.use(
 );
 
 app.use("/api/models", modelsRoutes);
+
+app.use("/api/apis", apisRoutes);
 
 app.use("/api/azure/openai-responses", openAIResponsesRoutes);
 

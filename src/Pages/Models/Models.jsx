@@ -4,6 +4,7 @@ import {
   useState,
 } from "react";
 
+import apisApi from "../../Api/Apis/apis";
 import modelsApi from "../../Api/Models/models";
 
 import DisplayCard from "./Components/DisplayCard/DisplayCard";
@@ -28,6 +29,14 @@ const MODEL_CATALOG = [
 
     description:
       "Balanced reasoning, long-context analysis, tool use, and general-purpose agent workflows.",
+
+    apiRef: {
+      platform:
+        "azure",
+
+      apiId:
+        "OpenAIResponses",
+    },
   },
 
   {
@@ -45,6 +54,14 @@ const MODEL_CATALOG = [
 
     description:
       "Coding-focused reasoning for repository analysis, development, debugging, refactoring, and testing.",
+
+    apiRef: {
+      platform:
+        "azure",
+
+      apiId:
+        "OpenAIResponses",
+    },
   },
 
   {
@@ -62,6 +79,14 @@ const MODEL_CATALOG = [
 
     description:
       "Image generation and editing from text and image inputs with flexible visual output.",
+
+    apiRef: {
+      platform:
+        "azure",
+
+      apiId:
+        "OpenAIImages",
+    },
   },
 ];
 
@@ -70,6 +95,12 @@ function Models() {
   const [
     modelFiles,
     setModelFiles,
+  ] = useState([]);
+
+
+  const [
+    apiFiles,
+    setApiFiles,
   ] = useState([]);
 
 
@@ -103,18 +134,28 @@ function Models() {
         true;
 
 
-      const loadModels =
+      const loadDocumentation =
         async () => {
           try {
-            const files =
-              await modelsApi.getAll();
+            const [
+              models,
+              apis,
+            ] =
+              await Promise.all([
+                modelsApi.getAll(),
+                apisApi.getAll(),
+              ]);
 
 
             if (
               mounted
             ) {
               setModelFiles(
-                files,
+                models,
+              );
+
+              setApiFiles(
+                apis,
               );
 
               setError(
@@ -125,7 +166,7 @@ function Models() {
             loadError
           ) {
             console.error(
-              "Failed to load models:",
+              "Failed to load model documentation:",
               loadError,
             );
 
@@ -139,7 +180,7 @@ function Models() {
                   ?.data
                   ?.message ||
                 loadError.message ||
-                "Failed to load model files.",
+                "Failed to load model documentation.",
               );
             }
           } finally {
@@ -154,7 +195,7 @@ function Models() {
         };
 
 
-      loadModels();
+      loadDocumentation();
 
 
       return () => {
@@ -182,6 +223,19 @@ function Models() {
           );
 
 
+        const apisByKey =
+          new Map(
+            apiFiles.map(
+              (
+                api,
+              ) => [
+                api.apiKey,
+                api,
+              ],
+            ),
+          );
+
+
         return MODEL_CATALOG.map(
           (
             definition,
@@ -190,6 +244,21 @@ function Models() {
               filesByModelId.get(
                 definition.modelId,
               );
+
+
+            const apiKey =
+              definition.apiRef
+                ? `${definition.apiRef.platform}/${definition.apiRef.apiId}`
+                : null;
+
+
+            const api =
+              apiKey
+                ? apisByKey.get(
+                    apiKey,
+                  ) ||
+                  null
+                : null;
 
 
             return {
@@ -202,12 +271,15 @@ function Models() {
               markdown:
                 file?.markdown ||
                 null,
+
+              api,
             };
           },
         );
       },
       [
         modelFiles,
+        apiFiles,
       ],
     );
 
