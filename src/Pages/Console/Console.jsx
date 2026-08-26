@@ -56,27 +56,40 @@ function Console({
   setMessages,
   setResponse,
 }) {
-  const [
-    requestSettings,
-    setRequestSettings,
-  ] =
-    useState({
-      reasoning: {
-        effort:
-          "medium",
+ const [
+  requestSettings,
+  setRequestSettings,
+] =
+  useState({
+    reasoning: {
+      effort:
+        "medium",
 
-        mode:
-          "standard",
+      mode:
+        "standard",
+    },
+
+    max_output_tokens:
+      12000,
+
+    text: {
+      verbosity:
+        "medium",
+    },
+
+    tools: {
+      image_generation: {
+        enabled:
+          false,
+
+        quality:
+          "high",
+
+        size:
+          "1024x1024",
       },
-
-      max_output_tokens:
-        12000,
-
-      text: {
-        verbosity:
-          "medium",
-      },
-    });
+    },
+  });
 
 
   const widgetBoundsRef =

@@ -12,6 +12,8 @@ function getAzureConfig(
 
     AZURE_OPENAI_GPT_56_TERRA_DEPLOYMENT_NAME,
     AZURE_OPENAI_GPT_53_CODEX_DEPLOYMENT_NAME,
+
+    AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME,
   } = process.env;
 
 
@@ -80,26 +82,83 @@ function getAzureConfig(
       AZURE_OPENAI_API_KEY,
 
     deploymentName,
+
+    imageGenerationDeploymentName:
+      AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME ||
+      null,
   };
+}
+
+
+function hasTool(
+  tools,
+  toolType,
+) {
+  if (
+    !Array.isArray(
+      tools,
+    )
+  ) {
+    return false;
+  }
+
+
+  return tools.some(
+    (
+      tool,
+    ) =>
+      tool?.type ===
+      toolType,
+  );
 }
 
 
 function createAzureClient(
   model,
+  {
+    imageGeneration =
+      false,
+  } = {},
 ) {
   const {
     baseURL,
     apiKey,
+    imageGenerationDeploymentName,
   } =
     getAzureConfig(
       model,
     );
 
 
-  return new OpenAI({
+  const options = {
     apiKey,
+
     baseURL,
-  });
+  };
+
+
+  if (
+    imageGeneration
+  ) {
+    if (
+      !imageGenerationDeploymentName
+    ) {
+      throw new Error(
+        "AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME is not defined.",
+      );
+    }
+
+
+    options.defaultHeaders = {
+      "x-ms-oai-image-generation-deployment":
+        imageGenerationDeploymentName,
+    };
+  }
+
+
+  return new OpenAI(
+    options,
+  );
 }
 
 
@@ -155,9 +214,20 @@ async function createResponse({
     );
 
 
+  const imageGenerationEnabled =
+    hasTool(
+      tools,
+      "image_generation",
+    );
+
+
   const client =
     createAzureClient(
       model,
+      {
+        imageGeneration:
+          imageGenerationEnabled,
+      },
     );
 
 

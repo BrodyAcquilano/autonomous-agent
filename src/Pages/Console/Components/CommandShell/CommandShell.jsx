@@ -382,35 +382,86 @@ function CommandShell({
        * Attachments remain separate from
        * this object until the server turns
        * them into structured model input.
+       * Add tools to generate images if the control panel permits.
        */
-      const request = {
-        model,
+    const tools =
+  [];
 
-        input,
 
-        reasoning: {
-          effort:
-            requestSettings
-              .reasoning
-              .effort,
+const imageGeneration =
+  requestSettings
+    .tools
+    ?.image_generation;
 
-          mode:
-            requestSettings
-              .reasoning
-              .mode,
-        },
 
-        max_output_tokens:
-          requestSettings
-            .max_output_tokens,
+if (
+  imageGeneration?.enabled
+) {
+  const imageGenerationTool = {
+    type:
+      "image_generation",
+  };
 
-        text: {
-          verbosity:
-            requestSettings
-              .text
-              .verbosity,
-        },
-      };
+
+  if (
+    imageGeneration.quality
+  ) {
+    imageGenerationTool.quality =
+      imageGeneration.quality;
+  }
+
+
+  if (
+    imageGeneration.size
+  ) {
+    imageGenerationTool.size =
+      imageGeneration.size;
+  }
+
+
+  tools.push(
+    imageGenerationTool,
+  );
+}
+
+
+const request = {
+  model,
+
+  input,
+
+  reasoning: {
+    effort:
+      requestSettings
+        .reasoning
+        .effort,
+
+    mode:
+      requestSettings
+        .reasoning
+        .mode,
+  },
+
+  max_output_tokens:
+    requestSettings
+      .max_output_tokens,
+
+  text: {
+    verbosity:
+      requestSettings
+        .text
+        .verbosity,
+  },
+};
+
+
+if (
+  tools.length >
+  0
+) {
+  request.tools =
+    tools;
+}
 
 
       try {

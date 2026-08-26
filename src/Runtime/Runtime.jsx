@@ -11,11 +11,10 @@ function extractResponseFiles(
     [];
 
 
-  /*
-   * Responses API generated files can
-   * appear as container-file citations
-   * attached to output text.
-   */
+  let generatedImageIndex =
+    0;
+
+
   if (
     Array.isArray(
       response?.output,
@@ -29,6 +28,43 @@ function extractResponseFiles(
       (
         outputItem,
       ) => {
+        /*
+         * Image-generation tool output.
+         */
+        if (
+          outputItem?.type ===
+            "image_generation_call" &&
+          typeof outputItem.result ===
+            "string" &&
+          outputItem.result
+        ) {
+          generatedImageIndex +=
+            1;
+
+
+          files.push({
+            id:
+              outputItem.id ||
+              `image-generation-${response?.id || Date.now()}-${generatedImageIndex}`,
+
+            type:
+              "image",
+
+            fileName:
+              `generated-${generatedImageIndex}.png`,
+
+            mimeType:
+              "image/png",
+
+            base64:
+              outputItem.result,
+          });
+        }
+
+
+        /*
+         * Container-generated files.
+         */
         if (
           !Array.isArray(
             outputItem?.content,
@@ -109,7 +145,10 @@ function extractResponseFiles(
 
 
   /*
-   * Image-generation route output.
+   * Standalone Images API output.
+   *
+   * Keep this because later the worker
+   * may call OpenAIImages directly.
    */
   if (
     Array.isArray(

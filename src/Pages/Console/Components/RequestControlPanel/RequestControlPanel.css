@@ -13,7 +13,7 @@
       540px
     );
 
-  min-height: 220px;
+  min-height: 420px;
 
   box-sizing: border-box;
 
@@ -154,29 +154,15 @@
 
 
 /* --------------------------------
-   CONTROL AREA
+   SECTIONS
 -------------------------------- */
 
-.request-control-panel-body {
-  flex: 1;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      2,
-      minmax(
-        0,
-        1fr
-      )
-    );
-
-  gap:
-    17px
-    18px;
+.request-control-panel-section {
+  box-sizing: border-box;
 
   padding:
-    19px
+    17px
+    20px
     20px;
 
   border:
@@ -207,6 +193,66 @@
       211,
       0.1
     );
+}
+
+
+.request-control-tools-section {
+  margin-top: 12px;
+}
+
+
+.request-control-panel-section-title {
+  margin-bottom: 15px;
+
+  padding-bottom: 9px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      132,
+      185,
+      241,
+      0.22
+    );
+
+  color:
+    rgba(
+      177,
+      211,
+      248,
+      0.65
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9px;
+
+  letter-spacing: 1.8px;
+}
+
+
+/* --------------------------------
+   GRID
+-------------------------------- */
+
+.request-control-panel-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    17px
+    18px;
 }
 
 
@@ -322,6 +368,65 @@
 
 
 /* --------------------------------
+   TOOLS
+-------------------------------- */
+
+.request-control-tool-toggle {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 17px;
+
+  color: #d8ebff;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+
+  letter-spacing: 1.3px;
+
+  cursor: pointer;
+}
+
+
+.request-control-tool-toggle input {
+  width: 17px;
+  height: 17px;
+
+  margin: 0;
+
+  accent-color: #659eda;
+
+  cursor: pointer;
+}
+
+
+.request-control-tool-options {
+  transition:
+    opacity
+    140ms
+    ease;
+}
+
+
+.request-control-tool-options.disabled {
+  opacity: 0.38;
+}
+
+
+.request-control-tool-options
+select:disabled {
+  cursor: default;
+}
+
+
+/* --------------------------------
    RESPONSIVE
 -------------------------------- */
 
@@ -348,6 +453,13 @@
 
     min-height: 0;
 
+    max-height:
+      calc(
+        100% - 24px
+      );
+
+    overflow-y: auto;
+
     padding:
       12px
       12px
@@ -365,13 +477,16 @@
   }
 
 
-  .request-control-panel-body {
+  .request-control-panel-section {
+    padding:
+      14px;
+  }
+
+
+  .request-control-panel-grid {
     gap:
       12px
       10px;
-
-    padding:
-      14px;
   }
 
 
