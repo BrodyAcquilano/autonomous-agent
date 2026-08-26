@@ -51,14 +51,11 @@ const STAR_FIELD_TWO = String.raw`
 `;
 
 
-function Console() {
-  const [
-    messages,
-    setMessages,
-  ] =
-    useState([]);
-
-
+function Console({
+  messages,
+  setMessages,
+  setResponse,
+}) {
   const [
     requestSettings,
     setRequestSettings,
@@ -177,6 +174,9 @@ function Console() {
           }
           setMessages={
             setMessages
+          }
+          setResponse={
+            setResponse
           }
         />
       </div>

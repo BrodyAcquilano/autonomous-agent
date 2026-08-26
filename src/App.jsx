@@ -4,6 +4,8 @@ import {
   Routes,
 } from "react-router";
 
+import useRuntime from "./Runtime/Runtime";
+
 import NavigationTabs from "./Components/NavigationTabs/NavigationTabs";
 
 import Analytics from "./Pages/Analytics/Analytics";
@@ -17,6 +19,17 @@ import "./App.css";
 
 
 function App() {
+  const {
+    messages,
+    setMessages,
+
+    setResponse,
+
+    outputFiles,
+  } =
+    useRuntime();
+
+
   return (
     <div className="app">
       <div className="app-pages">
@@ -24,9 +37,20 @@ function App() {
           <Route
             path="/console"
             element={
-              <Console />
+              <Console
+                messages={
+                  messages
+                }
+                setMessages={
+                  setMessages
+                }
+                setResponse={
+                  setResponse
+                }
+              />
             }
           />
+
 
           <Route
             path="/models"
@@ -35,12 +59,14 @@ function App() {
             }
           />
 
+
           <Route
             path="/resources"
             element={
               <Resources />
             }
           />
+
 
           <Route
             path="/memory"
@@ -49,12 +75,18 @@ function App() {
             }
           />
 
+
           <Route
             path="/output"
             element={
-              <Output />
+              <Output
+                outputFiles={
+                  outputFiles
+                }
+              />
             }
           />
+
 
           <Route
             path="/analytics"
@@ -62,6 +94,7 @@ function App() {
               <Analytics />
             }
           />
+
 
           <Route
             path="/"
@@ -72,6 +105,7 @@ function App() {
               />
             }
           />
+
 
           <Route
             path="*"
@@ -84,6 +118,7 @@ function App() {
           />
         </Routes>
       </div>
+
 
       <div className="app-navigation">
         <NavigationTabs />

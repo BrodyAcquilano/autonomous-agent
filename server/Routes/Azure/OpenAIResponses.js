@@ -1,5 +1,7 @@
 import express from "express";
 
+import multer from "multer";
+
 import {
   createResponse,
 } from "../../Services/Azure/OpenAIResponses.js";
@@ -7,6 +9,218 @@ import {
 
 const router =
   express.Router();
+
+
+const ACCEPTED_IMAGE_TYPES =
+  new Set([
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+  ]);
+
+
+const ACCEPTED_FILE_TYPES =
+  new Set([
+    "application/pdf",
+  ]);
+
+
+const MAX_ATTACHMENTS =
+  10;
+
+
+const MAX_FILE_SIZE_BYTES =
+  20 *
+  1024 *
+  1024;
+
+
+const MAX_TOTAL_ATTACHMENT_BYTES =
+  40 *
+  1024 *
+  1024;
+
+
+const upload =
+  multer({
+    storage:
+      multer.memoryStorage(),
+
+    limits: {
+      files:
+        MAX_ATTACHMENTS,
+
+      fileSize:
+        MAX_FILE_SIZE_BYTES,
+    },
+
+    fileFilter: (
+      req,
+      file,
+      callback,
+    ) => {
+      const isAccepted =
+        ACCEPTED_IMAGE_TYPES.has(
+          file.mimetype,
+        ) ||
+        ACCEPTED_FILE_TYPES.has(
+          file.mimetype,
+        );
+
+
+      if (
+        isAccepted
+      ) {
+        callback(
+          null,
+          true,
+        );
+
+        return;
+      }
+
+
+      const error =
+        new Error(
+          `Unsupported attachment type: ${file.mimetype || "unknown"}.`,
+        );
+
+
+      error.code =
+        "UNSUPPORTED_ATTACHMENT_TYPE";
+
+
+      callback(
+        error,
+      );
+    },
+  });
+
+
+function uploadAttachments(
+  req,
+  res,
+  next,
+) {
+  upload.array(
+    "attachments",
+    MAX_ATTACHMENTS,
+  )(
+    req,
+    res,
+    (
+      error,
+    ) => {
+      if (
+        !error
+      ) {
+        next();
+
+        return;
+      }
+
+
+      if (
+        error instanceof
+        multer.MulterError
+      ) {
+        const status =
+          error.code ===
+          "LIMIT_FILE_SIZE"
+            ? 413
+            : 400;
+
+
+        res
+          .status(
+            status,
+          )
+          .json({
+            error:
+              "Attachment upload failed.",
+
+            message:
+              error.message,
+          });
+
+        return;
+      }
+
+
+      if (
+        error.code ===
+        "UNSUPPORTED_ATTACHMENT_TYPE"
+      ) {
+        res
+          .status(415)
+          .json({
+            error:
+              "Unsupported attachment type.",
+
+            message:
+              error.message,
+          });
+
+        return;
+      }
+
+
+      res
+        .status(400)
+        .json({
+          error:
+            "Attachment upload failed.",
+
+          message:
+            error.message,
+        });
+    },
+  );
+}
+
+
+function getRequestPayload(
+  req,
+) {
+  /*
+   * Normal application/json request:
+   *
+   * req.body already is the request.
+   */
+  if (
+    typeof req.body?.request !==
+    "string"
+  ) {
+    return req.body;
+  }
+
+
+  /*
+   * Multipart requests cannot carry
+   * nested JavaScript objects directly.
+   *
+   * The browser serializes the request
+   * field for transport alongside the
+   * actual file parts.
+   */
+  try {
+    return JSON.parse(
+      req.body.request,
+    );
+  } catch {
+    const error =
+      new Error(
+        "The multipart request field could not be parsed.",
+      );
+
+
+    error.code =
+      "INVALID_MULTIPART_REQUEST";
+
+
+    throw error;
+  }
+}
 
 
 function hasValidInput(
@@ -38,13 +252,208 @@ function hasValidInput(
 }
 
 
+function getSafeFileName(
+  fileName,
+) {
+  return String(
+    fileName ||
+    "attachment",
+  ).replace(
+    /[\r\n"]/g,
+    "_",
+  );
+}
+
+
+function createAttachmentContent(
+  file,
+) {
+  const base64 =
+    file.buffer.toString(
+      "base64",
+    );
+
+
+  if (
+    ACCEPTED_IMAGE_TYPES.has(
+      file.mimetype,
+    )
+  ) {
+    return {
+      type:
+        "input_image",
+
+      image_url:
+        `data:${file.mimetype};base64,${base64}`,
+
+      detail:
+        "auto",
+    };
+  }
+
+
+  if (
+    file.mimetype ===
+    "application/pdf"
+  ) {
+    return {
+      type:
+        "input_file",
+
+      filename:
+        getSafeFileName(
+          file.originalname,
+        ),
+
+      file_data:
+        `data:application/pdf;base64,${base64}`,
+    };
+  }
+
+
+  throw new Error(
+    `Unsupported attachment type: ${file.mimetype}`,
+  );
+}
+
+
+function buildInput(
+  input,
+  attachments,
+) {
+  if (
+    !attachments?.length
+  ) {
+    return (
+      typeof input ===
+        "string"
+        ? input.trim()
+        : input
+    );
+  }
+
+
+  /*
+   * Current browser upload workflow:
+   *
+   * typed command
+   * +
+   * uploaded attachments
+   *
+   * More complicated structured-input
+   * construction can be added later on
+   * the server for agent workflows.
+   */
+  if (
+    typeof input !==
+      "string" ||
+    !input.trim()
+  ) {
+    const error =
+      new Error(
+        "Attachments currently require text input.",
+      );
+
+
+    error.code =
+      "INVALID_ATTACHMENT_INPUT";
+
+
+    throw error;
+  }
+
+
+  const content =
+    attachments.map(
+      (
+        file,
+      ) =>
+        createAttachmentContent(
+          file,
+        ),
+    );
+
+
+  content.push({
+    type:
+      "input_text",
+
+    text:
+      input.trim(),
+  });
+
+
+  return [
+    {
+      role:
+        "user",
+
+      content,
+    },
+  ];
+}
+
+
+function validateAttachmentSize(
+  attachments,
+) {
+  const totalBytes =
+    attachments.reduce(
+      (
+        total,
+        file,
+      ) =>
+        total +
+        file.size,
+      0,
+    );
+
+
+  if (
+    totalBytes >
+    MAX_TOTAL_ATTACHMENT_BYTES
+  ) {
+    const error =
+      new Error(
+        "Combined attachment size exceeds the application limit.",
+      );
+
+
+    error.code =
+      "ATTACHMENTS_TOO_LARGE";
+
+
+    throw error;
+  }
+}
+
+
 router.post(
   "/request",
+
+  uploadAttachments,
+
   async (
     req,
     res,
   ) => {
     try {
+      const request =
+        getRequestPayload(
+          req,
+        );
+
+
+      const attachments =
+        req.files ||
+        [];
+
+
+      validateAttachmentSize(
+        attachments,
+      );
+
+
       const {
         model,
         input,
@@ -69,7 +478,7 @@ router.post(
 
         metadata,
         include,
-      } = req.body;
+      } = request;
 
 
       if (
@@ -138,10 +547,10 @@ router.post(
 
 
       const normalizedInput =
-        typeof input ===
-          "string"
-          ? input.trim()
-          : input;
+        buildInput(
+          input,
+          attachments,
+        );
 
 
       const response =
@@ -182,11 +591,6 @@ router.post(
         });
 
 
-      /*
-       * Streaming Responses API requests return
-       * an async stream of response events instead
-       * of one completed response object.
-       */
       if (
         stream ===
         true
@@ -232,6 +636,10 @@ router.post(
       }
 
 
+      /*
+       * Preserve the complete Responses
+       * API response.
+       */
       return res.json(
         response,
       );
@@ -260,6 +668,40 @@ router.post(
         res.end();
 
         return;
+      }
+
+
+      if (
+        error.code ===
+          "INVALID_MULTIPART_REQUEST" ||
+        error.code ===
+          "INVALID_ATTACHMENT_INPUT"
+      ) {
+        return res
+          .status(400)
+          .json({
+            error:
+              "Invalid request.",
+
+            message:
+              error.message,
+          });
+      }
+
+
+      if (
+        error.code ===
+        "ATTACHMENTS_TOO_LARGE"
+      ) {
+        return res
+          .status(413)
+          .json({
+            error:
+              "Attachments are too large.",
+
+            message:
+              error.message,
+          });
       }
 
 

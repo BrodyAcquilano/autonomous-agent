@@ -1,12 +1,10 @@
 .command-shell {
   width: 100%;
-
   min-height: 58px;
 
-  display: flex;
-  align-items: center;
+  position: relative;
 
-  gap: 9px;
+  box-sizing: border-box;
 
   padding:
     8px
@@ -42,6 +40,21 @@
 }
 
 
+/* --------------------------------
+   MAIN INPUT ROW
+-------------------------------- */
+
+.command-shell-main {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+}
+
+
 .command-prefix {
   padding-left: 5px;
 
@@ -58,8 +71,8 @@
 
 .command-input {
   flex: 1;
-  min-width: 0;
 
+  min-width: 0;
   height: 38px;
 
   padding:
@@ -87,6 +100,7 @@
     monospace;
 
   font-size: 13px;
+
   letter-spacing: 0.6px;
 }
 
@@ -119,6 +133,233 @@
 }
 
 
+/* --------------------------------
+   HIDDEN FILE INPUT
+-------------------------------- */
+
+.command-file-input {
+  display: none;
+}
+
+
+/* --------------------------------
+   ATTACHMENT TRAY
+-------------------------------- */
+
+.command-attachments {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+
+  bottom:
+    calc(
+      100% + 8px
+    );
+
+  max-height: 126px;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  box-sizing: border-box;
+
+  padding:
+    8px
+    9px;
+
+  overflow-y: auto;
+
+  border:
+    1px solid
+    rgba(
+      123,
+      166,
+      218,
+      0.42
+    );
+
+  background:
+    rgba(
+      4,
+      13,
+      28,
+      0.94
+    );
+
+  backdrop-filter:
+    blur(22px);
+
+  box-shadow:
+    0
+    8px
+    24px
+    rgba(
+      0,
+      0,
+      0,
+      0.5
+    );
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      97,
+      153,
+      215,
+      0.45
+    )
+    transparent;
+}
+
+
+.command-attachment {
+  max-width: 280px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    6px
+    7px
+    6px
+    9px;
+
+  border:
+    1px solid
+    rgba(
+      106,
+      162,
+      224,
+      0.35
+    );
+
+  background:
+    rgba(
+      11,
+      35,
+      66,
+      0.74
+    );
+}
+
+
+.command-attachment-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.command-attachment-name {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color:
+    rgba(
+      211,
+      232,
+      255,
+      0.88
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+.command-attachment-size {
+  color:
+    rgba(
+      145,
+      188,
+      235,
+      0.55
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 8px;
+}
+
+
+.command-attachment-remove {
+  width: 23px;
+  height: 23px;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgba(
+      135,
+      183,
+      233,
+      0.28
+    );
+
+  background:
+    rgba(
+      4,
+      18,
+      38,
+      0.72
+    );
+
+  color:
+    rgba(
+      199,
+      225,
+      252,
+      0.75
+    );
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+
+.command-attachment-remove:hover {
+  border-color:
+    rgba(
+      181,
+      216,
+      255,
+      0.65
+    );
+
+  color: #fff;
+}
+
+
+/* --------------------------------
+   BUTTONS
+-------------------------------- */
+
 .command-file-button,
 .command-run-button {
   height: 38px;
@@ -148,16 +389,21 @@
 .command-file-button {
   width: 38px;
 
+  flex-shrink: 0;
+
   font-size: 21px;
 }
 
 
 .command-run-button {
+  flex-shrink: 0;
+
   padding:
     0
     17px;
 
   font-size: 10px;
+
   letter-spacing: 1.5px;
 }
 
@@ -172,12 +418,18 @@
 }
 
 
-.command-run-button:disabled {
+.command-file-button:disabled,
+.command-run-button:disabled,
+.command-attachment-remove:disabled {
   opacity: 0.45;
 
   cursor: default;
 }
 
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
 
 @media (
   max-width: 720px
@@ -186,5 +438,18 @@
     padding:
       0
       9px;
+  }
+
+
+  .command-attachments {
+    max-height: 105px;
+  }
+
+
+  .command-attachment {
+    max-width:
+      calc(
+        100% - 4px
+      );
   }
 }
