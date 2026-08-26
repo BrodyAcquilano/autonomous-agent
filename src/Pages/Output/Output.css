@@ -1,0 +1,26 @@
+.output-page {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+
+  box-sizing: border-box;
+
+  padding-bottom:
+    82px;
+
+  overflow: hidden;
+
+  background:
+    #050505;
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .output-page {
+    padding-bottom:
+      66px;
+  }
+}

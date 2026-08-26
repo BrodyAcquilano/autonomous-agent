@@ -7,21 +7,31 @@ import {
 function useDraggable({
   boundsRef,
   disabled = false,
+  scale = 1,
 }) {
   const dragRef =
-    useRef(null);
+    useRef(
+      null,
+    );
+
 
   const dragStateRef =
-    useRef(null);
+    useRef(
+      null,
+    );
 
 
   const [
     offset,
     setOffset,
-  ] = useState({
-    x: 0,
-    y: 0,
-  });
+  ] =
+    useState({
+      x:
+        0,
+
+      y:
+        0,
+    });
 
 
   const handlePointerDown = (
@@ -29,7 +39,8 @@ function useDraggable({
   ) => {
     if (
       disabled ||
-      event.button !== 0
+      event.button !==
+        0
     ) {
       return;
     }
@@ -37,6 +48,7 @@ function useDraggable({
 
     const element =
       dragRef.current;
+
 
     const bounds =
       boundsRef?.current;
@@ -52,6 +64,7 @@ function useDraggable({
 
     const elementRect =
       element.getBoundingClientRect();
+
 
     const boundsRect =
       bounds.getBoundingClientRect();
@@ -72,6 +85,7 @@ function useDraggable({
       },
 
       elementRect,
+
       boundsRect,
     };
 
@@ -79,6 +93,7 @@ function useDraggable({
     event.currentTarget.setPointerCapture(
       event.pointerId,
     );
+
 
     event.preventDefault();
   };
@@ -104,6 +119,7 @@ function useDraggable({
       event.clientX -
       drag.startX;
 
+
     const pointerY =
       event.clientY -
       drag.startY;
@@ -113,13 +129,16 @@ function useDraggable({
       drag.boundsRect.left -
       drag.elementRect.left;
 
+
     const maximumX =
       drag.boundsRect.right -
       drag.elementRect.right;
 
+
     const minimumY =
       drag.boundsRect.top -
       drag.elementRect.top;
+
 
     const maximumY =
       drag.boundsRect.bottom -
@@ -135,6 +154,7 @@ function useDraggable({
         maximumX,
       );
 
+
     const moveY =
       Math.min(
         Math.max(
@@ -145,14 +165,30 @@ function useDraggable({
       );
 
 
+    const safeScale =
+      Number.isFinite(
+        scale,
+      ) &&
+      scale >
+        0
+        ? scale
+        : 1;
+
+
     setOffset({
       x:
         drag.startOffset.x +
-        moveX,
+        (
+          moveX /
+          safeScale
+        ),
 
       y:
         drag.startOffset.y +
-        moveY,
+        (
+          moveY /
+          safeScale
+        ),
     });
   };
 
@@ -215,7 +251,9 @@ function useDraggable({
 
   return {
     dragRef,
+
     dragHandleProps,
+
     dragStyle,
   };
 }

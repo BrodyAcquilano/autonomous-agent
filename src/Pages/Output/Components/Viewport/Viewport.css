@@ -1,0 +1,130 @@
+.output-viewport {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+
+  overflow: hidden;
+
+  background: #050505;
+
+  cursor: grab;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.output-viewport.is-panning {
+  cursor: grabbing;
+}
+
+
+/* --------------------------------
+   VIRTUAL STAGE
+-------------------------------- */
+
+.output-viewport-stage {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  transform-origin:
+    0
+    0;
+
+  will-change:
+    transform;
+
+  background-color:
+    #161616;
+
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(148, 149, 151, 0.937)
+      1px,
+      transparent
+      1.2px
+    );
+
+  background-size:
+    30px
+    30px;
+}
+
+
+/* --------------------------------
+   EXPANDED WINDOW LAYER
+-------------------------------- */
+
+.output-viewport-expanded-layer {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1000;
+
+  pointer-events: none;
+}
+
+
+.output-viewport-expanded-layer > * {
+  pointer-events: auto;
+}
+
+
+/* --------------------------------
+   ZOOM INDICATOR
+-------------------------------- */
+
+.output-viewport-scale {
+  position: absolute;
+
+  right: 14px;
+  bottom: 12px;
+
+  z-index: 15;
+
+  padding:
+    5px
+    8px;
+
+  border:
+    1px solid
+    rgba(
+      180,
+      185,
+      192,
+      0.18
+    );
+
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      0.72
+    );
+
+  color:
+    rgba(
+      205,
+      210,
+      218,
+      0.48
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9px;
+
+  letter-spacing: 1px;
+
+  pointer-events: none;
+}
