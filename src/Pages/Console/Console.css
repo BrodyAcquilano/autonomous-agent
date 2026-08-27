@@ -8,6 +8,10 @@
   --console-viewport-gap:
     13px;
 
+  /*
+   * Shared glass palette for Console
+   * widgets.
+   */
   --console-glass-background:
     linear-gradient(
       135deg,
@@ -64,6 +68,10 @@
 
   overflow: hidden;
 
+  /*
+   * Black frame outside the pannable
+   * virtual Console stage.
+   */
   background:
     #000;
 }

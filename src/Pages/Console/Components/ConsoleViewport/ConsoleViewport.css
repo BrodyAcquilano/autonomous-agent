@@ -17,6 +17,12 @@
       0.42
     );
 
+  /*
+   * Visible frame around the virtual
+   * world. The actual image belongs to
+   * .console-viewport-stage so it pans
+   * and zooms with the workspace.
+   */
   background:
     #000;
 
@@ -81,359 +87,48 @@
   border:
     1px solid
     rgba(
-      80,
-      143,
-      214,
-      0.28
+      105,
+      170,
+      211,
+      0.34
     );
 
-  background:
-    #020918;
+  /*
+   * /public files are served from the
+   * application root by Vite.
+   *
+   * This image therefore becomes part of
+   * world-space and moves/scales with the
+   * stage itself.
+   */
+  background-color:
+    #d8edf7;
+
+  background-image:
+    url(
+      "/Translucent Teal Bubble Nebula.png"
+    );
+
+  background-repeat:
+    no-repeat;
+
+  background-position:
+    center;
+
+  background-size:
+    cover;
 
   box-shadow:
     inset
     0
     0
-    140px
+    70px
     rgba(
-      0,
-      0,
-      0,
-      0.4
+      30,
+      86,
+      126,
+      0.08
     );
-}
-
-
-/* --------------------------------
-   WORLD BACKGROUND
--------------------------------- */
-
-.retro-background {
-  position: absolute;
-
-  inset: 0;
-
-  z-index: 0;
-
-  overflow: hidden;
-
-  background:
-    linear-gradient(
-      180deg,
-      #263f82 0%,
-      #2a4c87 42%,
-      #556a9d 72%,
-      #94a1c0 100%
-    );
-
-  pointer-events: none;
-
-  user-select: none;
-}
-
-
-.deep-space-glow {
-  position: absolute;
-
-  width: 90%;
-  height: 85%;
-
-  left: 5%;
-  top: -10%;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(
-        230,
-        243,
-        255,
-        0.82
-      )
-      0%,
-      rgba(
-        129,
-        170,
-        224,
-        0.54
-      )
-      34%,
-      rgba(
-        74,
-        108,
-        169,
-        0.28
-      )
-      56%,
-      transparent
-      78%
-    );
-
-  filter:
-    blur(
-      42px
-    );
-}
-
-
-/* --------------------------------
-   STAR FIELD
--------------------------------- */
-
-.terminal-stars {
-  position: absolute;
-
-  width: 100%;
-
-  margin: 0;
-
-  overflow: hidden;
-
-  color:
-    rgba(
-      235,
-      220,
-      88,
-      0.86
-    );
-
-  font-family:
-    "Courier New",
-    Consolas,
-    monospace;
-
-  font-size: 50px;
-  line-height: 2.8;
-
-  letter-spacing: 15px;
-
-  white-space: pre;
-
-  text-shadow:
-    0
-    0
-    7px
-    rgba(
-      255,
-      250,
-      190,
-      0.5
-    );
-
-  pointer-events: none;
-
-  user-select: none;
-}
-
-
-.terminal-stars-one {
-  top: 4%;
-  left: 2%;
-
-  animation:
-    terminal-twinkle-one
-    3.2s
-    steps(2)
-    infinite;
-}
-
-
-.terminal-stars-two {
-  top: 35%;
-  left: 7%;
-
-  opacity: 0.55;
-
-  transform:
-    scaleX(
-      1.12
-    );
-
-  animation:
-    terminal-twinkle-two
-    4.1s
-    steps(2)
-    infinite;
-}
-
-
-@keyframes terminal-twinkle-one {
-  0% {
-    opacity: 0.32;
-  }
-
-  25% {
-    opacity: 0.9;
-  }
-
-  50% {
-    opacity: 0.48;
-  }
-
-  75% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.4;
-  }
-}
-
-
-@keyframes terminal-twinkle-two {
-  0% {
-    opacity: 0.72;
-  }
-
-  30% {
-    opacity: 0.3;
-  }
-
-  60% {
-    opacity: 0.88;
-  }
-
-  100% {
-    opacity: 0.48;
-  }
-}
-
-
-/* --------------------------------
-   CRT OVERLAYS
--------------------------------- */
-
-.scanlines {
-  position: absolute;
-
-  inset: 0;
-
-  opacity: 0.07;
-
-  background:
-    repeating-linear-gradient(
-      180deg,
-      transparent 0,
-      transparent 3px,
-      rgba(
-        220,
-        245,
-        255,
-        0.05
-      )
-      3px,
-      rgba(
-        220,
-        245,
-        255,
-        0.05
-      )
-      4px
-    );
-
-  pointer-events: none;
-}
-
-
-.screen-vignette {
-  position: absolute;
-
-  inset: 0;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      transparent 52%,
-      rgba(
-        16,
-        28,
-        62,
-        0.34
-      )
-      100%
-    );
-
-  pointer-events: none;
-}
-
-
-/* --------------------------------
-   ASCII TITLE
--------------------------------- */
-
-.terminal-man-banner {
-  position: absolute;
-
-  top: 52px;
-  left: 50%;
-
-  z-index: 1;
-
-  margin: 0;
-
-  transform:
-    translateX(
-      -50%
-    );
-
-  overflow: visible;
-
-  color:
-    rgba(
-      95,
-      255,
-      196,
-      0.96
-    );
-
-  font-family:
-    "Courier New",
-    Consolas,
-    monospace;
-
-  font-size: 8px;
-
-  line-height: 1.05;
-
-  white-space: pre;
-
-  text-align: left;
-
-  text-shadow:
-    0
-    0
-    10px
-    rgba(
-      84,
-      255,
-      211,
-      0.28
-    );
-
-  pointer-events: none;
-
-  user-select: none;
-}
-
-
-/* --------------------------------
-   COMMUNICATION ARRAY PLACEMENT
--------------------------------- */
-
-.console-workspace {
-  position: absolute;
-
-  right: 72px;
-  bottom: 58px;
-
-  z-index: 2;
-
-  width: 520px;
-  height: 390px;
-
-  pointer-events: none;
-
-  user-select: none;
 }
 
 
@@ -456,26 +151,26 @@
   border:
     1px solid
     rgba(
-      100,
-      163,
-      232,
-      0.2
+      86,
+      144,
+      181,
+      0.24
     );
 
   background:
     rgba(
-      0,
-      4,
-      12,
-      0.84
+      10,
+      40,
+      61,
+      0.68
     );
 
   color:
     rgba(
-      145,
-      195,
-      248,
-      0.58
+      220,
+      246,
+      255,
+      0.8
     );
 
   font-family:
@@ -487,56 +182,17 @@
 
   letter-spacing: 1px;
 
+  backdrop-filter:
+    blur(
+      12px
+    );
+
+  -webkit-backdrop-filter:
+    blur(
+      12px
+    );
+
   pointer-events: none;
 
   user-select: none;
-}
-
-
-/* --------------------------------
-   RESPONSIVE
--------------------------------- */
-
-@media (
-  max-width: 720px
-) {
-  .terminal-stars {
-    font-size: 28px;
-  }
-
-
-  .terminal-man-banner {
-    top: 42px;
-
-    font-size: 7px;
-  }
-
-
-   .console-workspace {
-    right: 28px;
-    bottom: 34px;
-
-    width: 520px;
-    height: 390px;
-
-    transform:
-      scale(
-        0.78
-      );
-
-    transform-origin:
-      right
-      bottom;
-  }
-}
-
-
-@media (
-  prefers-reduced-motion:
-  reduce
-) {
-  .terminal-stars-one,
-  .terminal-stars-two {
-    animation: none;
-  }
 }
