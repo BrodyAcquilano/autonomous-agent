@@ -15,78 +15,24 @@ import UnknownRenderer from "./Renderers/UnknownRenderer/UnknownRenderer";
 import "./Output.css";
 
 
-const CODE_EXTENSIONS =
-  new Set([
-    "js",
-    "jsx",
-    "mjs",
-    "cjs",
+const EMPTY_FILE_TYPES = {
+  codeExtensions:
+    new Set(),
 
-    "ts",
-    "tsx",
+  textExtensions:
+    new Set(),
 
-    "py",
+  markdownExtensions:
+    new Set(),
 
-    "java",
-    "c",
-    "h",
-    "cpp",
-    "hpp",
-    "cs",
-
-    "go",
-    "rs",
-
-    "php",
-    "rb",
-    "swift",
-    "kt",
-
-    "html",
-    "htm",
-    "css",
-    "scss",
-    "sass",
-    "less",
-
-    "sql",
-
-    "sh",
-    "bash",
-    "ps1",
-
-    "xml",
-    "yaml",
-    "yml",
-  ]);
+  imageExtensions:
+    new Set(),
+};
 
 
-const TEXT_EXTENSIONS =
-  new Set([
-    "txt",
-    "log",
-    "csv",
-    "tsv",
-  ]);
-
-
-const MARKDOWN_EXTENSIONS =
-  new Set([
-    "md",
-    "mdx",
-    "markdown",
-  ]);
-
-
-const IMAGE_EXTENSIONS =
-  new Set([
-    "png",
-    "jpg",
-    "jpeg",
-    "webp",
-    "gif",
-  ]);
-
+/* --------------------------------
+   FILE HELPERS
+-------------------------------- */
 
 function getFileExtension(
   fileName,
@@ -124,12 +70,22 @@ function getFileExtension(
 
 function getRendererType(
   file,
+  fileTypes,
 ) {
   if (
     file?.placeholder
   ) {
     return "placeholder";
   }
+
+
+  const {
+    codeExtensions,
+    textExtensions,
+    markdownExtensions,
+    imageExtensions,
+  } =
+    fileTypes;
 
 
   const mimeType =
@@ -146,11 +102,14 @@ function getRendererType(
     );
 
 
+  /*
+   * Images
+   */
   if (
     mimeType.startsWith(
       "image/",
     ) ||
-    IMAGE_EXTENSIONS.has(
+    imageExtensions.has(
       extension,
     )
   ) {
@@ -158,6 +117,9 @@ function getRendererType(
   }
 
 
+  /*
+   * PDF
+   */
   if (
     mimeType ===
       "application/pdf" ||
@@ -168,10 +130,15 @@ function getRendererType(
   }
 
 
+  /*
+   * Markdown must be checked before
+   * generic text because its MIME type
+   * also begins with text/.
+   */
   if (
     mimeType ===
       "text/markdown" ||
-    MARKDOWN_EXTENSIONS.has(
+    markdownExtensions.has(
       extension,
     )
   ) {
@@ -179,8 +146,13 @@ function getRendererType(
   }
 
 
+  /*
+   * Code must also be checked before
+   * generic text because code files
+   * commonly use text MIME types.
+   */
   if (
-    CODE_EXTENSIONS.has(
+    codeExtensions.has(
       extension,
     )
   ) {
@@ -188,11 +160,18 @@ function getRendererType(
   }
 
 
+  /*
+   * Normal text files.
+   *
+   * JSON is included through its
+   * extension even though its MIME
+   * type is application/json.
+   */
   if (
     mimeType.startsWith(
       "text/",
     ) ||
-    TEXT_EXTENSIONS.has(
+    textExtensions.has(
       extension,
     )
   ) {
@@ -203,6 +182,10 @@ function getRendererType(
   return "unknown";
 }
 
+
+/* --------------------------------
+   WINDOW TYPE
+-------------------------------- */
 
 function getWindowVariant(
   rendererType,
@@ -229,6 +212,10 @@ function getWindowVariant(
   }
 }
 
+
+/* --------------------------------
+   WINDOW POSITION
+-------------------------------- */
 
 function getWindowOffset(
   index,
@@ -278,6 +265,10 @@ function getWindowOffset(
   };
 }
 
+
+/* --------------------------------
+   RENDERER ROUTING
+-------------------------------- */
 
 function renderOutputFile({
   file,
@@ -359,8 +350,15 @@ function renderOutputFile({
   }
 }
 
+
+/* --------------------------------
+   OUTPUT
+-------------------------------- */
+
 function Output({
   outputFiles = [],
+  fileTypes =
+    EMPTY_FILE_TYPES,
 }) {
   const [
     imageAspectRatios,
@@ -377,6 +375,10 @@ function Output({
       : [];
 
 
+  /*
+   * Keep one empty window when there
+   * are no current output files.
+   */
   const windows =
     files.length >
     0
@@ -453,6 +455,7 @@ function Output({
             const rendererType =
               getRendererType(
                 file,
+                fileTypes,
               );
 
 

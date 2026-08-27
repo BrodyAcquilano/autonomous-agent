@@ -2,19 +2,12 @@ import "dotenv/config";
 
 import OpenAI from "openai";
 
-
-function getAzureConfig(
-  model,
-) {
+function getAzureConnection() {
   const {
     AZURE_OPENAI_BASE_URL,
     AZURE_OPENAI_API_KEY,
-
-    AZURE_OPENAI_GPT_56_TERRA_DEPLOYMENT_NAME,
-    AZURE_OPENAI_GPT_53_CODEX_DEPLOYMENT_NAME,
-
-    AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME,
-  } = process.env;
+  } =
+    process.env;
 
 
   if (
@@ -33,6 +26,38 @@ function getAzureConfig(
       "AZURE_OPENAI_API_KEY is not defined.",
     );
   }
+
+
+  return {
+    baseURL:
+      `${AZURE_OPENAI_BASE_URL.replace(
+        /\/+$/,
+        "",
+      )}/`,
+
+    apiKey:
+      AZURE_OPENAI_API_KEY,
+  };
+}
+
+
+
+function getAzureConfig(
+  model,
+) {
+  const {
+    baseURL,
+    apiKey,
+  } =
+    getAzureConnection();
+
+
+  const {
+    AZURE_OPENAI_GPT_56_TERRA_DEPLOYMENT_NAME,
+    AZURE_OPENAI_GPT_53_CODEX_DEPLOYMENT_NAME,
+    AZURE_OPENAI_GPT_IMAGE_2_DEPLOYMENT_NAME,
+  } =
+    process.env;
 
 
   let deploymentName;
@@ -72,14 +97,9 @@ function getAzureConfig(
 
 
   return {
-    baseURL:
-      `${AZURE_OPENAI_BASE_URL.replace(
-        /\/+$/,
-        "",
-      )}/`,
+    baseURL,
 
-    apiKey:
-      AZURE_OPENAI_API_KEY,
+    apiKey,
 
     deploymentName,
 
@@ -342,9 +362,83 @@ async function createResponse({
   );
 }
 
+async function getContainerFileContent({
+  containerId,
+  fileId,
+}) {
+  const {
+    baseURL,
+    apiKey,
+  } =
+    getAzureConnection();
+
+
+  if (
+    !containerId
+  ) {
+    throw new Error(
+      "containerId is required.",
+    );
+  }
+
+
+  if (
+    !fileId
+  ) {
+    throw new Error(
+      "fileId is required.",
+    );
+  }
+
+
+  const url =
+    `${baseURL}containers/${encodeURIComponent(
+      containerId,
+    )}/files/${encodeURIComponent(
+      fileId,
+    )}/content`;
+
+
+  const response =
+    await fetch(
+      url,
+      {
+        method:
+          "GET",
+
+        headers: {
+          "api-key":
+            apiKey,
+        },
+      },
+    );
+
+
+  if (
+    !response.ok
+  ) {
+    const message =
+      await response.text();
+
+
+    throw new Error(
+      `Failed to retrieve Azure container file (${response.status}): ${message}`,
+    );
+  }
+
+
+  const arrayBuffer =
+    await response.arrayBuffer();
+
+
+  return Buffer.from(
+    arrayBuffer,
+  );
+}
 
 export {
   createAzureClient,
   createResponse,
   getAzureConfig,
+  getContainerFileContent,
 };

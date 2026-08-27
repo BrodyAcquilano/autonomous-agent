@@ -3,6 +3,276 @@ import {
   useState,
 } from "react";
 
+import openAIResponsesApi from "../Api/Azure/OpenAIResponses";
+
+
+/* --------------------------------
+   OUTPUT FILE TYPES
+-------------------------------- */
+
+const CODE_EXTENSIONS =
+  new Set([
+    "js",
+    "jsx",
+    "mjs",
+    "cjs",
+
+    "ts",
+    "tsx",
+
+    "py",
+
+    "java",
+    "c",
+    "h",
+    "cpp",
+    "hpp",
+    "cs",
+
+    "go",
+    "rs",
+
+    "php",
+    "rb",
+    "swift",
+    "kt",
+
+    "html",
+    "htm",
+    "css",
+    "scss",
+    "sass",
+    "less",
+
+    "sql",
+
+    "sh",
+    "bash",
+    "ps1",
+
+    "xml",
+    "yaml",
+    "yml",
+  ]);
+
+
+const TEXT_EXTENSIONS =
+  new Set([
+    "txt",
+    "log",
+
+    "csv",
+    "tsv",
+
+    "json",
+  ]);
+
+
+const MARKDOWN_EXTENSIONS =
+  new Set([
+    "md",
+    "mdx",
+    "markdown",
+  ]);
+
+
+const IMAGE_EXTENSIONS =
+  new Set([
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "gif",
+  ]);
+
+
+/*
+ * These are the semantic groups used
+ * by Output to choose a renderer.
+ *
+ * Runtime owns them so there is one
+ * source of truth.
+ */
+const OUTPUT_FILE_TYPES = {
+  codeExtensions:
+    CODE_EXTENSIONS,
+
+  textExtensions:
+    TEXT_EXTENSIONS,
+
+  markdownExtensions:
+    MARKDOWN_EXTENSIONS,
+
+  imageExtensions:
+    IMAGE_EXTENSIONS,
+};
+
+
+/*
+ * Runtime has a different question:
+ *
+ * "Can these bytes safely be decoded
+ * into JavaScript text?"
+ *
+ * Code, Markdown, CSV, JSON, etc. are
+ * all text content even though Output
+ * renders them differently.
+ */
+const TEXT_CONTENT_EXTENSIONS =
+  new Set([
+    ...CODE_EXTENSIONS,
+    ...TEXT_EXTENSIONS,
+    ...MARKDOWN_EXTENSIONS,
+  ]);
+
+
+/* --------------------------------
+   FILE HELPERS
+-------------------------------- */
+
+function getFileExtension(
+  fileName,
+) {
+  if (
+    typeof fileName !==
+      "string"
+  ) {
+    return "";
+  }
+
+
+  const parts =
+    fileName
+      .toLowerCase()
+      .split(
+        ".",
+      );
+
+
+  if (
+    parts.length <
+    2
+  ) {
+    return "";
+  }
+
+
+  return (
+    parts.pop() ||
+    ""
+  );
+}
+
+
+function getMimeType(
+  fileName,
+) {
+  const extension =
+    getFileExtension(
+      fileName,
+    );
+
+
+  switch (
+    extension
+  ) {
+    case "pdf":
+      return "application/pdf";
+
+
+    case "csv":
+      return "text/csv";
+
+
+    case "tsv":
+      return "text/tab-separated-values";
+
+
+    case "json":
+      return "application/json";
+
+
+    case "md":
+    case "mdx":
+    case "markdown":
+      return "text/markdown";
+
+
+    case "js":
+    case "jsx":
+    case "mjs":
+    case "cjs":
+      return "text/javascript";
+
+
+    case "html":
+    case "htm":
+      return "text/html";
+
+
+    case "css":
+      return "text/css";
+
+
+    case "xml":
+      return "application/xml";
+
+
+    case "png":
+      return "image/png";
+
+
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+
+
+    case "webp":
+      return "image/webp";
+
+
+    case "gif":
+      return "image/gif";
+
+
+    case "zip":
+      return "application/zip";
+
+
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+
+    default:
+      /*
+       * Known text-like extensions can
+       * safely use text/plain.
+       */
+      if (
+        TEXT_CONTENT_EXTENSIONS.has(
+          extension,
+        )
+      ) {
+        return "text/plain";
+      }
+
+
+      /*
+       * Unknown content should NOT be
+       * assumed to be text.
+       */
+      return "application/octet-stream";
+  }
+}
+
+
+/* --------------------------------
+   RESPONSE EXTRACTION
+-------------------------------- */
 
 function extractResponseFiles(
   response,
@@ -63,7 +333,8 @@ function extractResponseFiles(
 
 
         /*
-         * Container-generated files.
+         * Code Interpreter and other
+         * container-generated files.
          */
         if (
           !Array.isArray(
@@ -147,7 +418,7 @@ function extractResponseFiles(
   /*
    * Standalone Images API output.
    *
-   * Keep this because later the worker
+   * Keep this because a future worker
    * may call OpenAIImages directly.
    */
   if (
@@ -210,6 +481,10 @@ function extractResponseFiles(
 }
 
 
+/* --------------------------------
+   NORMAL RESPONSE TEXT
+-------------------------------- */
+
 function createTextOutputFile(
   response,
   outputText,
@@ -240,6 +515,124 @@ function createTextOutputFile(
 }
 
 
+/* --------------------------------
+   CONTAINER FILE HYDRATION
+-------------------------------- */
+
+async function hydrateContainerFile(
+  file,
+) {
+  if (
+    file?.type !==
+      "container-file" ||
+    !file.containerId ||
+    !file.fileId
+  ) {
+    return file;
+  }
+
+
+  /*
+   * Browser calls our Express route.
+   *
+   * Express calls Azure.
+   *
+   * Azure returns the actual container
+   * file bytes.
+   */
+  const blob =
+    await openAIResponsesApi
+      .getContainerFileContent(
+        file.containerId,
+        file.fileId,
+      );
+
+
+  const extension =
+    getFileExtension(
+      file.fileName,
+    );
+
+
+  const mimeType =
+    getMimeType(
+      file.fileName,
+    );
+
+
+  /*
+   * Axios receives the response as a Blob,
+   * but the Azure route deliberately returns
+   * application/octet-stream.
+   *
+   * Re-wrap it with the MIME type inferred
+   * from the generated filename.
+   */
+  const typedBlob =
+    new Blob(
+      [
+        blob,
+      ],
+      {
+        type:
+          mimeType,
+      },
+    );
+
+
+  /*
+   * Code, Markdown, CSV, JSON and normal
+   * text files all become file.content.
+   *
+   * Output will later decide WHICH renderer
+   * displays that content.
+   */
+  if (
+    TEXT_CONTENT_EXTENSIONS.has(
+      extension,
+    )
+  ) {
+    const content =
+      await typedBlob.text();
+
+
+    return {
+      ...file,
+
+      mimeType,
+
+      content,
+    };
+  }
+
+
+  /*
+   * Binary files remain binary.
+   *
+   * A browser blob URL gives renderers a
+   * normal source without exposing Azure
+   * credentials or Azure APIs to Output.
+   */
+  const blobUrl =
+    URL.createObjectURL(
+      typedBlob,
+    );
+
+
+  return {
+    ...file,
+
+    mimeType,
+
+    blobUrl,
+  };
+}
+
+
+/* --------------------------------
+   RUNTIME
+-------------------------------- */
+
 function useRuntime() {
   const [
     messages,
@@ -249,7 +642,7 @@ function useRuntime() {
 
 
   /*
-   * Only the latest complete API
+   * Only the newest complete API
    * response is retained.
    */
   const [
@@ -262,11 +655,8 @@ function useRuntime() {
 
 
   /*
-   * Output belongs only to the latest
+   * Output belongs only to the newest
    * response.
-   *
-   * It is replaced every time a new
-   * response arrives.
    */
   const [
     outputFiles,
@@ -277,12 +667,27 @@ function useRuntime() {
 
   useEffect(
     () => {
+      let cancelled =
+        false;
+
+
       /*
-       * A new command sets response to
-       * null before executing.
+       * Every binary file hydrated by this
+       * response may create a blob URL.
        *
-       * This clears the previous Output
-       * workspace immediately.
+       * Keep track of them so we can release
+       * browser memory when the next response
+       * replaces this one.
+       */
+      const createdBlobUrls =
+        [];
+
+
+      /*
+       * CommandShell sets response to null
+       * before starting a new command.
+       *
+       * That immediately clears Output.
        */
       if (
         !response
@@ -291,86 +696,200 @@ function useRuntime() {
           [],
         );
 
-        return;
+
+        return undefined;
       }
 
 
-      const outputText =
-        typeof response.output_text ===
-          "string"
-          ? response.output_text.trim()
-          : "";
+      async function processResponse() {
+        const outputText =
+          typeof response.output_text ===
+            "string"
+            ? response.output_text.trim()
+            : "";
 
 
-      /*
-       * Console keeps the conversational
-       * history.
-       */
-      if (
-        outputText
-      ) {
-        setMessages(
-          (
-            currentMessages,
-          ) => [
-            ...currentMessages,
+        /*
+         * Console retains assistant message
+         * history independently from Output.
+         */
+        if (
+          outputText
+        ) {
+          setMessages(
+            (
+              currentMessages,
+            ) => [
+              ...currentMessages,
 
-            {
-              id:
-                crypto.randomUUID(),
+              {
+                id:
+                  crypto.randomUUID(),
 
-              role:
-                "assistant",
+                role:
+                  "assistant",
 
-              label:
-                "ASSISTANT",
+                label:
+                  "ASSISTANT",
 
-              content:
-                outputText,
+                content:
+                  outputText,
+              },
+            ],
+          );
+        }
+
+
+        const currentOutputFiles =
+          [];
+
+
+        /*
+         * Normal assistant text also appears
+         * as one output text document.
+         */
+        const textFile =
+          createTextOutputFile(
+            response,
+            outputText,
+          );
+
+
+        if (
+          textFile
+        ) {
+          currentOutputFiles.push(
+            textFile,
+          );
+        }
+
+
+        /*
+         * Extract image tool outputs and
+         * container-file descriptors.
+         */
+        const extractedFiles =
+          extractResponseFiles(
+            response,
+          );
+
+
+        /*
+         * Show the descriptors immediately.
+         *
+         * A generated file can briefly display
+         * CONTENT NOT LOADED while its bytes
+         * are being fetched.
+         */
+        if (
+          !cancelled
+        ) {
+          setOutputFiles([
+            ...currentOutputFiles,
+            ...extractedFiles,
+          ]);
+        }
+
+
+        /*
+         * Retrieve actual container file
+         * contents in parallel.
+         */
+        const hydratedFiles =
+          await Promise.all(
+            extractedFiles.map(
+              async (
+                file,
+              ) => {
+                try {
+                  const hydratedFile =
+                    await hydrateContainerFile(
+                      file,
+                    );
+
+
+                  if (
+                    hydratedFile?.blobUrl
+                  ) {
+                    createdBlobUrls.push(
+                      hydratedFile.blobUrl,
+                    );
+                  }
+
+
+                  return hydratedFile;
+                } catch (
+                  error
+                ) {
+                  /*
+                   * Preserve the descriptor even
+                   * if hydration fails so Output
+                   * can still identify the file.
+                   */
+                  return {
+                    ...file,
+
+                    loadError:
+                      error.message ||
+                      "Failed to load output file.",
+                  };
+                }
+              },
+            ),
+          );
+
+
+        /*
+         * Response changed while the files
+         * were downloading.
+         */
+        if (
+          cancelled
+        ) {
+          createdBlobUrls.forEach(
+            (
+              blobUrl,
+            ) => {
+              URL.revokeObjectURL(
+                blobUrl,
+              );
             },
-          ],
-        );
+          );
+
+
+          return;
+        }
+
+
+        /*
+         * Replace descriptors with fully
+         * hydrated output files.
+         */
+        setOutputFiles([
+          ...currentOutputFiles,
+          ...hydratedFiles,
+        ]);
       }
 
 
-      /*
-       * Output represents only this run.
-       *
-       * The normal assistant response is
-       * represented as a text file so the
-       * Output page can render it alongside
-       * images, PDFs, code, and other files.
-       */
-      const nextOutputFiles =
-        [];
+      processResponse();
 
 
-      const textFile =
-        createTextOutputFile(
-          response,
-          outputText,
+      return () => {
+        cancelled =
+          true;
+
+
+        createdBlobUrls.forEach(
+          (
+            blobUrl,
+          ) => {
+            URL.revokeObjectURL(
+              blobUrl,
+            );
+          },
         );
-
-
-      if (
-        textFile
-      ) {
-        nextOutputFiles.push(
-          textFile,
-        );
-      }
-
-
-      nextOutputFiles.push(
-        ...extractResponseFiles(
-          response,
-        ),
-      );
-
-
-      setOutputFiles(
-        nextOutputFiles,
-      );
+      };
     },
     [
       response,
@@ -386,6 +905,13 @@ function useRuntime() {
     setResponse,
 
     outputFiles,
+
+    /*
+     * Shared file classification definitions
+     * used by Output.
+     */
+    outputFileTypes:
+      OUTPUT_FILE_TYPES,
   };
 }
 

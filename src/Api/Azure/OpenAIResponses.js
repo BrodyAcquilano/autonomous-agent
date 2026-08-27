@@ -55,6 +55,29 @@ const openAIResponsesApi = {
 
     return response.data;
   },
+
+
+  async getContainerFileContent(
+    containerId,
+    fileId,
+  ) {
+    const response =
+      await apiClient.get(
+        `/azure/openai-responses/containers/${encodeURIComponent(
+          containerId,
+        )}/files/${encodeURIComponent(
+          fileId,
+        )}/content`,
+
+        {
+          responseType:
+            "blob",
+        },
+      );
+
+
+    return response.data;
+  },
 };
 
 

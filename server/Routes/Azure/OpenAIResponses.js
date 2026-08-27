@@ -4,6 +4,7 @@ import multer from "multer";
 
 import {
   createResponse,
+  getContainerFileContent,
 } from "../../Services/Azure/OpenAIResponses.js";
 
 
@@ -428,6 +429,7 @@ function validateAttachmentSize(
 }
 
 
+
 router.post(
   "/request",
 
@@ -710,6 +712,65 @@ router.post(
         .json({
           error:
             "Azure OpenAI request failed.",
+
+          message:
+            error.message,
+        });
+    }
+  },
+);
+
+router.get(
+  "/containers/:containerId/files/:fileId/content",
+
+  async (
+    req,
+    res,
+  ) => {
+    try {
+      const {
+        containerId,
+        fileId,
+      } =
+        req.params;
+
+
+      const content =
+        await getContainerFileContent({
+          containerId,
+          fileId,
+        });
+
+
+      res.setHeader(
+        "Content-Type",
+        "application/octet-stream",
+      );
+
+
+      res.setHeader(
+        "Cache-Control",
+        "no-store",
+      );
+
+
+      return res.send(
+        content,
+      );
+    } catch (
+      error
+    ) {
+      console.error(
+        "Azure container file retrieval failed:",
+        error,
+      );
+
+
+      return res
+        .status(500)
+        .json({
+          error:
+            "Azure container file retrieval failed.",
 
           message:
             error.message,

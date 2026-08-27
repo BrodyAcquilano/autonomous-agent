@@ -26,6 +26,7 @@ function App() {
     setResponse,
 
     outputFiles,
+    outputFileTypes,
   } =
     useRuntime();
 
@@ -51,12 +52,16 @@ function App() {
             }
           />
 
-             <Route
+
+          <Route
             path="/output"
             element={
               <Output
                 outputFiles={
                   outputFiles
+                }
+                fileTypes={
+                  outputFileTypes
                 }
               />
             }
@@ -85,9 +90,6 @@ function App() {
               <Memory />
             }
           />
-
-
-       
 
 
           <Route
