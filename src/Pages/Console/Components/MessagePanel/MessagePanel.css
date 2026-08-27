@@ -53,10 +53,15 @@
     );
 
   display: flex;
+
   flex-direction: column;
 
   box-sizing: border-box;
 
+  /*
+   * Shell padding stays fixed while the
+   * typography grows from panel height.
+   */
   padding:
     15px
     17px
@@ -175,6 +180,11 @@
  *
  * It therefore fills the actual viewport
  * regardless of the virtual-stage zoom.
+ *
+ * The content scale still comes from the
+ * persisted normal-panel height. Maximizing
+ * does not silently replace the user's
+ * chosen typography scale.
  */
 .message-panel.expanded {
   position: absolute;
@@ -204,14 +214,22 @@
 -------------------------------- */
 
 .message-panel-header {
-  height: 38px;
+  min-height:
+    var(
+      --message-panel-header-height,
+      38px
+    );
+
+  height: auto;
 
   flex-shrink: 0;
 
   display: flex;
 
   align-items: flex-start;
-  justify-content: space-between;
+
+  justify-content:
+    space-between;
 
   gap: 20px;
 }
@@ -231,7 +249,11 @@
     Consolas,
     monospace;
 
-  font-size: 14px;
+  font-size:
+    var(
+      --message-panel-title-font-size,
+      14px
+    );
 
   letter-spacing: 1.8px;
 
@@ -248,8 +270,6 @@
 }
 
 
-
-
 /* --------------------------------
    CONTROLS
 -------------------------------- */
@@ -264,12 +284,22 @@
 
 
 .message-panel-window-button {
-  width: 22px;
-  height: 20px;
+  width:
+    var(
+      --message-panel-button-width,
+      22px
+    );
+
+  height:
+    var(
+      --message-panel-button-height,
+      20px
+    );
 
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   flex-shrink: 0;
@@ -301,7 +331,12 @@
       0.86
     );
 
-  font-size: 12px;
+  font-size:
+    var(
+      --message-panel-button-font-size,
+      12px
+    );
+
   line-height: 1;
 
   cursor: pointer;
@@ -357,13 +392,20 @@
 
 .message-panel-screen {
   flex: 1;
+
   min-height: 0;
 
   position: relative;
 
   overflow-y: auto;
+
   overflow-x: hidden;
 
+  /*
+   * The inner screen padding remains fixed.
+   * Increasing panel height therefore gives
+   * the larger text genuinely more space.
+   */
   padding:
     20px
     22px;
@@ -440,6 +482,7 @@
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   color:
@@ -450,7 +493,11 @@
       0.38
     );
 
-  font-size: 11px;
+  font-size:
+    var(
+      --message-panel-empty-font-size,
+      11px
+    );
 
   letter-spacing: 2px;
 }
@@ -462,14 +509,19 @@
 
 .message-list {
   display: flex;
+
   flex-direction: column;
 
+  /*
+   * Message spacing stays fixed.
+   */
   gap: 22px;
 }
 
 
 .message {
   display: flex;
+
   flex-direction: column;
 
   gap: 6px;
@@ -477,7 +529,12 @@
 
 
 .message-label {
-  font-size: 10px;
+  font-size:
+    var(
+      --message-panel-label-font-size,
+      10px
+    );
+
   font-weight: 700;
 
   letter-spacing: 1.6px;
@@ -485,7 +542,11 @@
 
 
 .message-content {
-  font-size: 13px;
+  font-size:
+    var(
+      --message-panel-message-font-size,
+      13px
+    );
 
   line-height: 1.55;
 
@@ -753,11 +814,6 @@
   }
 
 
-  .message-panel-header {
-    height: 31px;
-  }
-
-
   .message-panel-screen {
     padding:
       17px
@@ -765,7 +821,11 @@
   }
 
 
-  .message-content {
-    font-size: 12px;
-  }
+  /*
+   * Do not reduce message text below the
+   * desktop baseline on small screens.
+   *
+   * The inner message surface already
+   * scrolls when space is limited.
+   */
 }

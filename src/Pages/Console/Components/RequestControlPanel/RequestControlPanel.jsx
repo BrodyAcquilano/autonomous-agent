@@ -45,6 +45,107 @@ const IMAGE_SIZES = [
 ];
 
 
+/* --------------------------------
+   HEIGHT-DRIVEN CONTENT SCALE
+-------------------------------- */
+
+/*
+ * The panel's current default placement
+ * uses -343px on Y from a 50% anchor.
+ *
+ * 343 * 2 = 686, so 686px is the natural
+ * baseline height for the current design.
+ */
+const BASE_PANEL_HEIGHT =
+  686;
+
+
+const BASE_BODY_FONT_SIZE =
+  12;
+
+
+const BASE_HEADER_FONT_SIZE =
+  14;
+
+
+const BASE_FIELD_HEIGHT =
+  40;
+
+
+const BASE_HEADER_HEIGHT =
+  39;
+
+
+const BASE_CHECKBOX_WIDTH =
+  17;
+
+
+const BASE_CHECKBOX_HEIGHT =
+  15;
+
+
+/*
+ * 12px body / 14px header are the minimum.
+ *
+ * Shrinking the panel therefore creates
+ * more internal scrolling instead of making
+ * text unreadably small.
+ */
+const MIN_CONTENT_SCALE =
+  1;
+
+
+/*
+ * Current max panel height is 1400px:
+ *
+ * 1400 / 686 ~= 2.04
+ *
+ * The cap is kept just above that so the
+ * resize limit, rather than an arbitrary
+ * font ceiling, determines the practical
+ * maximum scale.
+ */
+const MAX_CONTENT_SCALE =
+  2.05;
+
+
+function clamp(
+  value,
+  minimum,
+  maximum,
+) {
+  return Math.min(
+    maximum,
+    Math.max(
+      minimum,
+      value,
+    ),
+  );
+}
+
+
+function getContentScale(
+  height,
+) {
+  const normalizedHeight =
+    Number.isFinite(
+      height,
+    )
+      ? height
+      : BASE_PANEL_HEIGHT;
+
+
+  return clamp(
+    normalizedHeight /
+      BASE_PANEL_HEIGHT,
+
+    MIN_CONTENT_SCALE,
+
+    MAX_CONTENT_SCALE,
+  );
+}
+
+
 function RequestControlPanel({
   model,
 
@@ -85,6 +186,9 @@ function RequestControlPanel({
   const {
     resizeStyle,
     getResizeHandleProps,
+
+    size:
+      resizedSize,
   } =
     useResizable({
       targetRef:
@@ -102,7 +206,7 @@ function RequestControlPanel({
         1200,
 
       maxHeight:
-        1100,
+        1400,
 
       anchorMode:
         "top-left",
@@ -311,16 +415,129 @@ function RequestControlPanel({
     };
 
 
+  /*
+   * IMPORTANT:
+   *
+   * This scale comes ONLY from the panel's
+   * persisted HEIGHT.
+   *
+   * Console viewport zoom is still passed to
+   * useDraggable/useResizable for pointer math,
+   * but viewport zoom does not alter these
+   * internal font sizes.
+   *
+   * Width-only resizing also leaves this scale
+   * unchanged.
+   */
+  const contentScale =
+    getContentScale(
+      resizedSize
+        ?.height,
+    );
+
+
+  const bodyFontSize =
+    BASE_BODY_FONT_SIZE *
+    contentScale;
+
+
+  const headerFontSize =
+    BASE_HEADER_FONT_SIZE *
+    contentScale;
+
+
+  /*
+   * Keep the surrounding padding visually
+   * stable while allowing controls to become
+   * taller enough for the larger text.
+   */
+  const fieldHeight =
+    BASE_FIELD_HEIGHT +
+    (
+      contentScale -
+      1
+    ) *
+    24;
+
+
+  const headerHeight =
+    BASE_HEADER_HEIGHT +
+    (
+      contentScale -
+      1
+    ) *
+    18;
+
+
+  const checkboxWidth =
+    BASE_CHECKBOX_WIDTH *
+    contentScale;
+
+
+  const checkboxHeight =
+    BASE_CHECKBOX_HEIGHT *
+    contentScale;
+
+
+  const checkboxColumnWidth =
+    Math.max(
+      18,
+      checkboxWidth +
+        1,
+    );
+
+
+  /*
+   * Tool option grids line up with the text
+   * column beside the checkbox.
+   *
+   * The 11px visual gap itself stays fixed.
+   */
+  const toolOptionsLeft =
+    checkboxColumnWidth +
+    11;
+
+
+  const panelStyle = {
+    ...dragStyle,
+
+    ...resizeStyle,
+
+    "--request-control-body-font-size":
+      `${bodyFontSize}px`,
+
+    "--request-control-header-font-size":
+      `${headerFontSize}px`,
+
+    "--request-control-field-height":
+      `${fieldHeight}px`,
+
+    "--request-control-header-height":
+      `${headerHeight}px`,
+
+    "--request-control-checkbox-width":
+      `${checkboxWidth}px`,
+
+    "--request-control-checkbox-height":
+      `${checkboxHeight}px`,
+
+    "--request-control-checkbox-column":
+      `${checkboxColumnWidth}px`,
+
+    "--request-control-tool-options-left":
+      `${toolOptionsLeft}px`,
+  };
+
+
   return (
     <section
       ref={
         dragRef
       }
       className="request-control-panel"
-      style={{
-        ...dragStyle,
-        ...resizeStyle,
-      }}
+      style={
+        panelStyle
+      }
       {...dragHandleProps}
     >
       <header

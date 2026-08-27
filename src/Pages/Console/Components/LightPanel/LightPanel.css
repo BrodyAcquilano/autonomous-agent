@@ -6,6 +6,18 @@
 
   z-index: 20;
 
+  width:
+    var(
+      --resize-width,
+      auto
+    );
+
+  height:
+    var(
+      --resize-height,
+      auto
+    );
+
   transform:
     translate(
       calc(
@@ -39,11 +51,17 @@
   gap: 14px;
 
   min-width: 210px;
+
   min-height: 58px;
 
   box-sizing:
     border-box;
 
+  /*
+   * Padding and gap intentionally do not
+   * scale. Only the actual status content
+   * scales from the panel HEIGHT.
+   */
   padding:
     12px
     18px;
@@ -152,9 +170,20 @@
     Consolas,
     monospace;
 
-  font-size: 14px;
+  /*
+   * Controlled by LightPanel.jsx.
+   *
+   * Baseline:
+   * 58px panel height -> 14px font.
+   */
+  font-size:
+    var(
+      --light-panel-font-size,
+      14px
+    );
 
-  letter-spacing: 2.6px;
+  letter-spacing:
+    2.6px;
 
   cursor: grab;
 
@@ -174,8 +203,17 @@
 -------------------------------- */
 
 .light-panel-light {
-  width: 11px;
-  height: 11px;
+  width:
+    var(
+      --light-panel-light-size,
+      11px
+    );
+
+  height:
+    var(
+      --light-panel-light-size,
+      11px
+    );
 
   flex-shrink: 0;
 
@@ -201,7 +239,10 @@
   box-shadow:
     0
     0
-    10px
+    var(
+      --light-panel-light-glow,
+      10px
+    )
     rgba(
       92,
       255,
@@ -223,7 +264,10 @@
   box-shadow:
     0
     0
-    10px
+    var(
+      --light-panel-light-glow,
+      10px
+    )
     rgba(
       255,
       205,
@@ -248,7 +292,10 @@
   box-shadow:
     0
     0
-    11px
+    var(
+      --light-panel-light-glow,
+      11px
+    )
     rgba(
       255,
       72,
@@ -285,6 +332,126 @@
 }
 
 
+/* --------------------------------
+   RESIZE HANDLES
+-------------------------------- */
+
+.light-panel >
+.resize-handle {
+  position: absolute;
+
+  z-index: 120;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.light-panel >
+.resize-handle-n,
+.light-panel >
+.resize-handle-s {
+  left: 10px;
+  right: 10px;
+
+  height: 8px;
+
+  cursor: ns-resize;
+}
+
+
+.light-panel >
+.resize-handle-n {
+  top: 0;
+}
+
+
+.light-panel >
+.resize-handle-s {
+  bottom: 0;
+}
+
+
+.light-panel >
+.resize-handle-e,
+.light-panel >
+.resize-handle-w {
+  top: 10px;
+  bottom: 10px;
+
+  width: 8px;
+
+  cursor: ew-resize;
+}
+
+
+.light-panel >
+.resize-handle-e {
+  right: 0;
+}
+
+
+.light-panel >
+.resize-handle-w {
+  left: 0;
+}
+
+
+.light-panel >
+.resize-handle-ne,
+.light-panel >
+.resize-handle-nw,
+.light-panel >
+.resize-handle-se,
+.light-panel >
+.resize-handle-sw {
+  width: 12px;
+  height: 12px;
+
+  z-index: 121;
+}
+
+
+.light-panel >
+.resize-handle-ne {
+  top: 0;
+  right: 0;
+
+  cursor: nesw-resize;
+}
+
+
+.light-panel >
+.resize-handle-nw {
+  top: 0;
+  left: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.light-panel >
+.resize-handle-se {
+  right: 0;
+  bottom: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.light-panel >
+.resize-handle-sw {
+  left: 0;
+  bottom: 0;
+
+  cursor: nesw-resize;
+}
+
+
+/* --------------------------------
+   ANIMATION
+-------------------------------- */
 
 @keyframes light-panel-blink {
   0%,
@@ -297,6 +464,10 @@
   }
 }
 
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
 
 @media (
   max-width: 720px

@@ -168,7 +168,13 @@
 -------------------------------- */
 
 .request-control-panel-header {
-  height: 39px;
+  min-height:
+    var(
+      --request-control-header-height,
+      39px
+    );
+
+  height: auto;
 
   flex-shrink: 0;
 
@@ -190,7 +196,11 @@
     Consolas,
     monospace;
 
-  font-size: 14px;
+  font-size:
+    var(
+      --request-control-header-font-size,
+      14px
+    );
 
   letter-spacing: 1.8px;
 
@@ -221,9 +231,21 @@
     Consolas,
     monospace;
 
-  font-size: 14px;
+  min-width: 0;
+
+  overflow: hidden;
+
+  font-size:
+    var(
+      --request-control-header-font-size,
+      14px
+    );
 
   letter-spacing: 1px;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
 }
 
 
@@ -364,7 +386,11 @@
     Consolas,
     monospace;
 
-  font-size: 14px;
+  font-size:
+    var(
+      --request-control-header-font-size,
+      14px
+    );
 
   letter-spacing: 1.7px;
 }
@@ -406,7 +432,11 @@
 
   user-select: auto;
 
-   font-size: 12px;
+  font-size:
+    var(
+      --request-control-body-font-size,
+      12px
+    );
 }
 
 
@@ -424,7 +454,11 @@
     Consolas,
     monospace;
 
-  font-size: 12px;
+  font-size:
+    var(
+      --request-control-body-font-size,
+      12px
+    );
 
   letter-spacing: 1.1px;
 }
@@ -433,7 +467,12 @@
 .request-control-field select,
 .request-control-field input {
   width: 100%;
-  height: 40px;
+
+  height:
+    var(
+      --request-control-field-height,
+      40px
+    );
 
   box-sizing: border-box;
 
@@ -468,7 +507,11 @@
     Consolas,
     monospace;
 
-  font-size: 12px;
+  font-size:
+    var(
+      --request-control-body-font-size,
+      12px
+    );
 }
 
 
@@ -561,7 +604,10 @@
   display: grid;
 
   grid-template-columns:
-    18px
+    var(
+      --request-control-checkbox-column,
+      18px
+    )
     minmax(
       0,
       1fr
@@ -579,8 +625,17 @@
 
 .request-control-tool-row
 input {
-  width: 17px;
-  height: 15px;
+  width:
+    var(
+      --request-control-checkbox-width,
+      17px
+    );
+
+  height:
+    var(
+      --request-control-checkbox-height,
+      15px
+    );
 
   margin:
     1px
@@ -613,7 +668,11 @@ input {
     Consolas,
     monospace;
 
-  font-size: 12px;
+  font-size:
+    var(
+      --request-control-body-font-size,
+      12px
+    );
 
   letter-spacing: 1.15px;
 
@@ -635,7 +694,11 @@ input {
     Consolas,
     monospace;
 
-  font-size: 12px;
+  font-size:
+    var(
+      --request-control-body-font-size,
+      12px
+    );
 
   line-height: 1.55;
 
@@ -657,7 +720,11 @@ input {
     Consolas,
     monospace;
 
-  font-size: 12px;
+  font-size:
+    var(
+      --request-control-body-font-size,
+      12px
+    );
 
   line-height: 1.55;
 
@@ -667,7 +734,10 @@ input {
 
 .request-control-tool-options {
   margin-left:
-    29px;
+    var(
+      --request-control-tool-options-left,
+      29px
+    );
 
   transition:
     opacity
@@ -899,11 +969,6 @@ select:disabled {
   }
 
 
-  .request-control-panel-header {
-    height: 35px;
-  }
-
-
   .request-control-panel-model {
     display: none;
   }
@@ -922,15 +987,13 @@ select:disabled {
   }
 
 
-  .request-control-label {
-    font-size: 9px;
-  }
-
-
-  .request-control-field select,
-  .request-control-field input {
-    height: 37px;
-
-    font-size: 11px;
-  }
+  /*
+   * Keep the same height-driven typography
+   * on small screens.
+   *
+   * 12px remains the minimum body size;
+   * shorter panels scroll internally rather
+   * than shrinking the controls/text.
+   */
 }
+

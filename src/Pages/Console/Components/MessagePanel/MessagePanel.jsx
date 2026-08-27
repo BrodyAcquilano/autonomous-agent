@@ -9,11 +9,110 @@ import {
 } from "react-dom";
 
 import useDraggable from "../../../../Hooks/useDraggable";
+
 import useResizable, {
   RESIZE_DIRECTIONS,
 } from "../../../../Hooks/useResizable";
 
 import "./MessagePanel.css";
+
+
+/* --------------------------------
+   HEIGHT-DRIVEN CONTENT SCALE
+-------------------------------- */
+
+const BASE_PANEL_HEIGHT =
+  572;
+
+
+const BASE_TITLE_FONT_SIZE =
+  14;
+
+
+const BASE_MESSAGE_FONT_SIZE =
+  13;
+
+
+const BASE_LABEL_FONT_SIZE =
+  10;
+
+
+const BASE_EMPTY_FONT_SIZE =
+  11;
+
+
+const BASE_BUTTON_FONT_SIZE =
+  12;
+
+
+const BASE_BUTTON_WIDTH =
+  22;
+
+
+const BASE_BUTTON_HEIGHT =
+  20;
+
+
+const BASE_HEADER_HEIGHT =
+  38;
+
+
+/*
+ * Existing typography is the minimum.
+ *
+ * Making the panel shorter therefore gives
+ * the message screen less visible space,
+ * but it never makes the text smaller.
+ */
+const MIN_CONTENT_SCALE =
+  1;
+
+
+/*
+ * MessagePanel currently allows a maximum
+ * height of 1200px:
+ *
+ * 1200 / 572 ~= 2.10
+ */
+const MAX_CONTENT_SCALE =
+  2.1;
+
+
+function clamp(
+  value,
+  minimum,
+  maximum,
+) {
+  return Math.min(
+    maximum,
+    Math.max(
+      minimum,
+      value,
+    ),
+  );
+}
+
+
+function getContentScale(
+  height,
+) {
+  const normalizedHeight =
+    Number.isFinite(
+      height,
+    )
+      ? height
+      : BASE_PANEL_HEIGHT;
+
+
+  return clamp(
+    normalizedHeight /
+      BASE_PANEL_HEIGHT,
+
+    MIN_CONTENT_SCALE,
+
+    MAX_CONTENT_SCALE,
+  );
+}
 
 
 function MessagePanel({
@@ -81,6 +180,9 @@ function MessagePanel({
   const {
     resizeStyle,
     getResizeHandleProps,
+
+    size:
+      resizedSize,
   } =
     useResizable({
       targetRef:
@@ -114,6 +216,85 @@ function MessagePanel({
 
       onOffsetChange,
     });
+
+
+  /*
+   * IMPORTANT:
+   *
+   * Internal content scale comes only from
+   * the panel's persisted HEIGHT.
+   *
+   * Console viewport zoom is still used by
+   * drag/resize pointer math, but viewport
+   * zoom itself does not change typography.
+   *
+   * Width-only resizing also leaves these
+   * values unchanged.
+   */
+  const contentScale =
+    getContentScale(
+      resizedSize
+        ?.height,
+    );
+
+
+  const panelStyle = {
+    ...dragStyle,
+
+    ...resizeStyle,
+
+    "--message-panel-title-font-size":
+      `${
+        BASE_TITLE_FONT_SIZE *
+        contentScale
+      }px`,
+
+    "--message-panel-message-font-size":
+      `${
+        BASE_MESSAGE_FONT_SIZE *
+        contentScale
+      }px`,
+
+    "--message-panel-label-font-size":
+      `${
+        BASE_LABEL_FONT_SIZE *
+        contentScale
+      }px`,
+
+    "--message-panel-empty-font-size":
+      `${
+        BASE_EMPTY_FONT_SIZE *
+        contentScale
+      }px`,
+
+    "--message-panel-button-font-size":
+      `${
+        BASE_BUTTON_FONT_SIZE *
+        contentScale
+      }px`,
+
+    "--message-panel-button-width":
+      `${
+        BASE_BUTTON_WIDTH *
+        contentScale
+      }px`,
+
+    "--message-panel-button-height":
+      `${
+        BASE_BUTTON_HEIGHT *
+        contentScale
+      }px`,
+
+    "--message-panel-header-height":
+      `${
+        BASE_HEADER_HEIGHT +
+        (
+          contentScale -
+          1
+        ) *
+        18
+      }px`,
+  };
 
 
   useEffect(
@@ -188,10 +369,9 @@ function MessagePanel({
             ? "expanded"
             : ""
         }`}
-        style={{
-          ...dragStyle,
-          ...resizeStyle,
-        }}
+        style={
+          panelStyle
+        }
         {...dragHandleProps}
       >
         <div className="message-panel-header">
@@ -201,7 +381,6 @@ function MessagePanel({
 
 
           <div className="message-panel-controls">
-
             <button
               type="button"
               className="message-panel-window-button"

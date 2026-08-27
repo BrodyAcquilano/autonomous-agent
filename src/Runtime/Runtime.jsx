@@ -969,14 +969,17 @@ function useRuntime() {
    * dimensions in Runtime just like their
    * offsets.
    *
-   * LightPanel is intentionally omitted
-   * because it is no longer resizable.
+   * LightPanel uses its persisted height
+   * to derive its internal text/light scale.
    */
   const [
     consoleWidgetSizes,
     setConsoleWidgetSizes,
   ] =
     useState({
+      lightPanel:
+        createEmptyWidgetSize(),
+
       messagePanel:
         createEmptyWidgetSize(),
 
@@ -1122,30 +1125,30 @@ function useRuntime() {
         setConsoleWidgetSizes(
           (
             current,
-          ) => {
-            if (
-              !Object.prototype
-                .hasOwnProperty.call(
-                  current,
-                  widgetKey,
-                )
-            ) {
-              return current;
-            }
+          ) => ({
+            /*
+             * Do not require the key to
+             * already exist.
+             *
+             * Vite Fast Refresh can preserve
+             * an older Runtime state object
+             * after a new resizable widget is
+             * added to the initializer.
+             *
+             * Allowing this assignment to add
+             * the key makes new widget sizes
+             * persist immediately.
+             */
+            ...current,
 
+            [widgetKey]: {
+              width:
+                nextSize.width,
 
-            return {
-              ...current,
-
-              [widgetKey]: {
-                width:
-                  nextSize.width,
-
-                height:
-                  nextSize.height,
-              },
-            };
-          },
+              height:
+                nextSize.height,
+            },
+          }),
         );
       },
       [],

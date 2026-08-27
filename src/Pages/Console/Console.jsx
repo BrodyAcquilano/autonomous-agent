@@ -77,6 +77,20 @@ function Console({
                     nextOffset,
                   );
                 }}
+
+                size={
+                  consoleWidgetSizes
+                    ?.lightPanel
+                }
+
+                onSizeChange={(
+                  nextSize,
+                ) => {
+                  setConsoleWidgetSize(
+                    "lightPanel",
+                    nextSize,
+                  );
+                }}
               />
 
 
@@ -113,6 +127,7 @@ function Console({
                     nextOffset,
                   );
                 }}
+
                 size={
                   consoleWidgetSizes
                     ?.requestControlPanel
@@ -126,7 +141,6 @@ function Console({
                     nextSize,
                   );
                 }}
-
               />
 
 
