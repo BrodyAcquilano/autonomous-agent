@@ -132,6 +132,15 @@ function ViewportWindow({
 
   ariaLabel =
     "Output window",
+
+  showSave =
+    false,
+
+  canSave =
+    false,
+
+  onSave =
+    null,
 }) {
   const [
     isExpanded,
@@ -161,20 +170,20 @@ function ViewportWindow({
     dragHandleProps,
     dragStyle,
   } =
-   useDraggable({
-  boundsRef,
+    useDraggable({
+      boundsRef,
 
-  disabled:
-    isExpanded,
+      disabled:
+        isExpanded,
 
-  scale,
+      scale,
 
-  preventDefault:
-    false,
+      preventDefault:
+        false,
 
-  ignoreSelector:
-    '[data-window-selectable="true"]',
-});
+      ignoreSelector:
+        '[data-window-selectable="true"]',
+    });
 
 
   function toggleExpanded() {
@@ -209,84 +218,124 @@ function ViewportWindow({
   };
 
 
-const window =
-  (
-    <section
-      ref={
-        dragRef
-      }
-      className={`viewport-window viewport-window-${variant} ${
-        isExpanded
-          ? "expanded"
-          : ""
-      }`}
-      style={
-        windowStyle
-      }
-      aria-label={
-        ariaLabel
-      }
-      {...dragHandleProps}
-    >
-      <header className="viewport-window-header">
-        <button
-          type="button"
-          className="viewport-window-expand-button"
-          aria-label={
-            isExpanded
-              ? "Restore output window"
-              : "Maximize output window"
-          }
-          title={
-            isExpanded
-              ? "Restore"
-              : "Maximize"
-          }
-          onPointerDown={(
-            event,
-          ) => {
-            event.stopPropagation();
-          }}
-          onClick={(
-            event,
-          ) => {
-            event.stopPropagation();
-
-            toggleExpanded();
-          }}
-        >
-          {isExpanded
-            ? "❐"
-            : "□"}
-        </button>
-      </header>
+  const window =
+    (
+      <section
+        ref={
+          dragRef
+        }
+        className={`viewport-window viewport-window-${variant} ${
+          isExpanded
+            ? "expanded"
+            : ""
+        }`}
+        style={
+          windowStyle
+        }
+        aria-label={
+          ariaLabel
+        }
+        {...dragHandleProps}
+      >
+        <header className="viewport-window-header">
+          <div className="viewport-window-controls">
+            {showSave && (
+              <button
+                type="button"
+                className="viewport-window-save-button"
+                aria-label="Save output file"
+                title={
+                  canSave
+                    ? "Save"
+                    : "File is still loading"
+                }
+                disabled={
+                  !canSave
+                }
+                onPointerDown={(
+                  event,
+                ) => {
+                  event.stopPropagation();
+                }}
+                onClick={(
+                  event,
+                ) => {
+                  event.stopPropagation();
 
 
-      <div className="viewport-window-body">
-       <div
-  className="viewport-window-renderer"
-  onDoubleClick={(
-    event,
-  ) => {
-    if (
-      event.target.closest(
-        '[data-window-selectable="true"]',
-      )
-    ) {
-      return;
-    }
+                  if (
+                    canSave &&
+                    typeof onSave ===
+                      "function"
+                  ) {
+                    onSave();
+                  }
+                }}
+              >
+                ⇩
+              </button>
+            )}
 
 
-    event.stopPropagation();
+            <button
+              type="button"
+              className="viewport-window-expand-button"
+              aria-label={
+                isExpanded
+                  ? "Restore output window"
+                  : "Maximize output window"
+              }
+              title={
+                isExpanded
+                  ? "Restore"
+                  : "Maximize"
+              }
+              onPointerDown={(
+                event,
+              ) => {
+                event.stopPropagation();
+              }}
+              onClick={(
+                event,
+              ) => {
+                event.stopPropagation();
 
-    toggleExpanded();
-  }}
->
-  {children}
-</div>
-      </div>
-    </section>
-  );
+                toggleExpanded();
+              }}
+            >
+              {isExpanded
+                ? "❐"
+                : "□"}
+            </button>
+          </div>
+        </header>
+
+
+        <div className="viewport-window-body">
+          <div
+            className="viewport-window-renderer"
+            onDoubleClick={(
+              event,
+            ) => {
+              if (
+                event.target.closest(
+                  '[data-window-selectable="true"]',
+                )
+              ) {
+                return;
+              }
+
+
+              event.stopPropagation();
+
+              toggleExpanded();
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      </section>
+    );
 
 
   if (

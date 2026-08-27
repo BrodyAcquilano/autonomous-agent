@@ -102,9 +102,6 @@ function getRendererType(
     );
 
 
-  /*
-   * Images
-   */
   if (
     mimeType.startsWith(
       "image/",
@@ -117,9 +114,6 @@ function getRendererType(
   }
 
 
-  /*
-   * PDF
-   */
   if (
     mimeType ===
       "application/pdf" ||
@@ -130,11 +124,6 @@ function getRendererType(
   }
 
 
-  /*
-   * Markdown must be checked before
-   * generic text because its MIME type
-   * also begins with text/.
-   */
   if (
     mimeType ===
       "text/markdown" ||
@@ -146,11 +135,6 @@ function getRendererType(
   }
 
 
-  /*
-   * Code must also be checked before
-   * generic text because code files
-   * commonly use text MIME types.
-   */
   if (
     codeExtensions.has(
       extension,
@@ -160,13 +144,6 @@ function getRendererType(
   }
 
 
-  /*
-   * Normal text files.
-   *
-   * JSON is included through its
-   * extension even though its MIME
-   * type is application/json.
-   */
   if (
     mimeType.startsWith(
       "text/",
@@ -180,6 +157,256 @@ function getRendererType(
 
 
   return "unknown";
+}
+
+
+/* --------------------------------
+   SAVE HELPERS
+-------------------------------- */
+
+function canSaveOutputFile(
+  file,
+) {
+  if (
+    !file ||
+    file.placeholder
+  ) {
+    return false;
+  }
+
+
+  return Boolean(
+    typeof file.content ===
+      "string" ||
+    typeof file.text ===
+      "string" ||
+    file.blobUrl ||
+    file.dataUrl ||
+    file.url ||
+    file.base64,
+  );
+}
+
+
+function base64ToBlob(
+  base64,
+  mimeType,
+) {
+  const byteCharacters =
+    atob(
+      base64,
+    );
+
+
+  const byteNumbers =
+    new Uint8Array(
+      byteCharacters.length,
+    );
+
+
+  for (
+    let index = 0;
+    index <
+    byteCharacters.length;
+    index += 1
+  ) {
+    byteNumbers[
+      index
+    ] =
+      byteCharacters.charCodeAt(
+        index,
+      );
+  }
+
+
+  return new Blob(
+    [
+      byteNumbers,
+    ],
+    {
+      type:
+        mimeType ||
+        "application/octet-stream",
+    },
+  );
+}
+
+
+function triggerDownload(
+  href,
+  fileName,
+  revokeAfter =
+    false,
+) {
+  const anchor =
+    document.createElement(
+      "a",
+    );
+
+
+  anchor.href =
+    href;
+
+
+  anchor.download =
+    fileName ||
+    "output";
+
+
+  anchor.rel =
+    "noopener";
+
+
+  document.body.appendChild(
+    anchor,
+  );
+
+
+  anchor.click();
+
+
+  anchor.remove();
+
+
+  if (
+    revokeAfter
+  ) {
+    window.setTimeout(
+      () => {
+        URL.revokeObjectURL(
+          href,
+        );
+      },
+      0,
+    );
+  }
+}
+
+
+function saveOutputFile(
+  file,
+) {
+  if (
+    !canSaveOutputFile(
+      file,
+    )
+  ) {
+    return;
+  }
+
+
+  const fileName =
+    file.fileName ||
+    "output";
+
+
+  /*
+   * Runtime-hydrated binary file.
+   */
+  if (
+    file.blobUrl
+  ) {
+    triggerDownload(
+      file.blobUrl,
+      fileName,
+    );
+
+
+    return;
+  }
+
+
+  /*
+   * Existing URL or data URL.
+   */
+  if (
+    file.dataUrl ||
+    file.url
+  ) {
+    triggerDownload(
+      file.dataUrl ||
+      file.url,
+      fileName,
+    );
+
+
+    return;
+  }
+
+
+  /*
+   * Image-generation base64 output.
+   */
+  if (
+    typeof file.base64 ===
+      "string" &&
+    file.base64
+  ) {
+    const blob =
+      base64ToBlob(
+        file.base64,
+        file.mimeType ||
+          "application/octet-stream",
+      );
+
+
+    const blobUrl =
+      URL.createObjectURL(
+        blob,
+      );
+
+
+    triggerDownload(
+      blobUrl,
+      fileName,
+      true,
+    );
+
+
+    return;
+  }
+
+
+  /*
+   * Text, Markdown, code, CSV, JSON,
+   * response.txt and error.txt.
+   */
+  const content =
+    typeof file.content ===
+      "string"
+      ? file.content
+      : file.text;
+
+
+  if (
+    typeof content ===
+      "string"
+  ) {
+    const blob =
+      new Blob(
+        [
+          content,
+        ],
+        {
+          type:
+            file.mimeType ||
+            "text/plain",
+        },
+      );
+
+
+    const blobUrl =
+      URL.createObjectURL(
+        blob,
+      );
+
+
+    triggerDownload(
+      blobUrl,
+      fileName,
+      true,
+    );
+  }
 }
 
 
@@ -375,10 +602,6 @@ function Output({
       : [];
 
 
-  /*
-   * Keep one empty window when there
-   * are no current output files.
-   */
   const windows =
     files.length >
     0
@@ -482,6 +705,12 @@ function Output({
                 : null;
 
 
+            const canSave =
+              canSaveOutputFile(
+                file,
+              );
+
+
             return (
               <ViewportWindow
                 key={
@@ -506,6 +735,17 @@ function Output({
                     : file.fileName ||
                       `Output file ${index + 1}`
                 }
+                showSave={
+                  !file.placeholder
+                }
+                canSave={
+                  canSave
+                }
+                onSave={() => {
+                  saveOutputFile(
+                    file,
+                  );
+                }}
               >
                 {renderOutputFile({
                   file,

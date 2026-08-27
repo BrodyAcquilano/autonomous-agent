@@ -4,16 +4,24 @@ import useDraggable from "../../../../Hooks/useDraggable";
 
 import "./MessagePanel.css";
 
-function MessagePanel({ messages, boundsRef }) {
+function MessagePanel({
+  messages,
+  boundsRef,
+
+  offset,
+  onOffsetChange,
+}) {
   const messagesEndRef = useRef(null);
 
   const [isExpanded, setIsExpanded] = useState(false);
 
   const { dragRef, dragHandleProps, dragStyle } = useDraggable({
-    boundsRef,
+  boundsRef,
 
-    disabled: isExpanded,
-  });
+  offset,
+
+  onOffsetChange,
+});
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({

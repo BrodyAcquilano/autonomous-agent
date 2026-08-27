@@ -81,8 +81,12 @@ function formatFileSize(
 function CommandShell({
   model,
   requestSettings,
+
   setMessages,
   setResponse,
+
+  setSystemStatus,
+  reportError,
 }) {
   const [
     command,
@@ -151,10 +155,6 @@ function CommandShell({
       );
 
 
-    /*
-     * Allows selecting the same file again
-     * after it has been removed.
-     */
     event.target.value =
       "";
 
@@ -358,8 +358,15 @@ function CommandShell({
 
 
       /*
-       * Clear the previous response/output
-       * as a new execution begins.
+       * Entire request lifecycle begins.
+       */
+      setSystemStatus(
+        "busy",
+      );
+
+
+      /*
+       * Clear previous response/output.
        */
       setResponse(
         null,
@@ -376,119 +383,111 @@ function CommandShell({
       );
 
 
+      const tools =
+        [];
+
+
       /*
-       * Frontend Responses request.
-       *
-       * Attachments remain separate from
-       * this object until the server turns
-       * them into structured model input.
-       * Add tools to generate images or files.
+       * Image Generation
        */
-  const tools =
-  [];
+      const imageGeneration =
+        requestSettings
+          .tools
+          ?.image_generation;
 
 
-/*
- * Image Generation
- */
-const imageGeneration =
-  requestSettings
-    .tools
-    ?.image_generation;
+      if (
+        imageGeneration?.enabled
+      ) {
+        const imageGenerationTool = {
+          type:
+            "image_generation",
+        };
 
 
-if (
-  imageGeneration?.enabled
-) {
-  const imageGenerationTool = {
-    type:
-      "image_generation",
-  };
+        if (
+          imageGeneration.quality
+        ) {
+          imageGenerationTool.quality =
+            imageGeneration.quality;
+        }
 
 
-  if (
-    imageGeneration.quality
-  ) {
-    imageGenerationTool.quality =
-      imageGeneration.quality;
-  }
+        if (
+          imageGeneration.size
+        ) {
+          imageGenerationTool.size =
+            imageGeneration.size;
+        }
 
 
-  if (
-    imageGeneration.size
-  ) {
-    imageGenerationTool.size =
-      imageGeneration.size;
-  }
+        tools.push(
+          imageGenerationTool,
+        );
+      }
 
 
-  tools.push(
-    imageGenerationTool,
-  );
-}
+      /*
+       * Code Interpreter
+       */
+      const codeInterpreter =
+        requestSettings
+          .tools
+          ?.code_interpreter;
 
 
-/*
- * Code Interpreter
- */
-const codeInterpreter =
-  requestSettings
-    .tools
-    ?.code_interpreter;
+      if (
+        codeInterpreter?.enabled
+      ) {
+        tools.push({
+          type:
+            "code_interpreter",
+
+          container: {
+            type:
+              "auto",
+          },
+        });
+      }
 
 
-if (
-  codeInterpreter?.enabled
-) {
-  tools.push({
-    type:
-      "code_interpreter",
+      const request = {
+        model,
 
-    container: {
-      type:
-        "auto",
-    },
-  });
-}
+        input,
 
+        reasoning: {
+          effort:
+            requestSettings
+              .reasoning
+              .effort,
 
-const request = {
-  model,
+          mode:
+            requestSettings
+              .reasoning
+              .mode,
+        },
 
-  input,
+        max_output_tokens:
+          requestSettings
+            .max_output_tokens,
 
-  reasoning: {
-    effort:
-      requestSettings
-        .reasoning
-        .effort,
-
-    mode:
-      requestSettings
-        .reasoning
-        .mode,
-  },
-
-  max_output_tokens:
-    requestSettings
-      .max_output_tokens,
-
-  text: {
-    verbosity:
-      requestSettings
-        .text
-        .verbosity,
-  },
-};
+        text: {
+          verbosity:
+            requestSettings
+              .text
+              .verbosity,
+        },
+      };
 
 
-if (
-  tools.length >
-  0
-) {
-  request.tools =
-    tools;
-}
+      if (
+        tools.length >
+        0
+      ) {
+        request.tools =
+          tools;
+      }
 
 
       try {
@@ -500,49 +499,44 @@ if (
 
 
         /*
-         * Runtime derives message text and
-         * current output files from this.
+         * Runtime takes over from here.
+         *
+         * It keeps status BUSY while
+         * container files hydrate.
          */
         setResponse(
           response,
         );
 
 
-        /*
-         * Successful execution consumes the
-         * currently staged attachments.
-         */
         setAttachments(
           [],
         );
       } catch (
         error
       ) {
-        setMessages(
-          (
-            currentMessages,
-          ) => [
-            ...currentMessages,
+        const errorMessage =
+          error
+            .response
+            ?.data
+            ?.message ||
+          error
+            .response
+            ?.data
+            ?.error ||
+          error.message ||
+          "Request failed.";
 
-            {
-              id:
-                crypto.randomUUID(),
 
-              role:
-                "error",
-
-              label:
-                "SYSTEM",
-
-              content:
-                error
-                  .response
-                  ?.data
-                  ?.message ||
-                error.message ||
-                "Request failed.",
-            },
-          ],
+        /*
+         * Runtime puts this into:
+         *
+         * MessagePanel
+         * Output/error.txt
+         * systemStatus = error
+         */
+        reportError(
+          errorMessage,
         );
       } finally {
         setIsSubmitting(

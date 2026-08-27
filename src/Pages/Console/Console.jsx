@@ -55,46 +55,54 @@ function Console({
   messages,
   setMessages,
   setResponse,
+
+  systemStatus,
+  setSystemStatus,
+
+  reportError,
+
+  widgetOffsets,
+  setWidgetOffset,
 }) {
-const [
-  requestSettings,
-  setRequestSettings,
-] =
-  useState({
-    reasoning: {
-      effort:
-        "medium",
+  const [
+    requestSettings,
+    setRequestSettings,
+  ] =
+    useState({
+      reasoning: {
+        effort:
+          "medium",
 
-      mode:
-        "standard",
-    },
-
-    max_output_tokens:
-      12000,
-
-    text: {
-      verbosity:
-        "medium",
-    },
-
-    tools: {
-      image_generation: {
-        enabled:
-          false,
-
-        quality:
-          "high",
-
-        size:
-          "1024x1024",
+        mode:
+          "standard",
       },
 
-      code_interpreter: {
-        enabled:
-          false,
+      max_output_tokens:
+        12000,
+
+      text: {
+        verbosity:
+          "medium",
       },
-    },
-  });
+
+      tools: {
+        image_generation: {
+          enabled:
+            false,
+
+          quality:
+            "high",
+
+          size:
+            "1024x1024",
+        },
+
+        code_interpreter: {
+          enabled:
+            false,
+        },
+      },
+    });
 
 
   const widgetBoundsRef =
@@ -149,9 +157,24 @@ const [
         className="console-widget-layer"
       >
         <LightPanel
+          systemStatus={
+            systemStatus
+          }
           boundsRef={
             widgetBoundsRef
           }
+          offset={
+            widgetOffsets
+              ?.lightPanel
+          }
+          onOffsetChange={(
+            nextOffset,
+          ) => {
+            setWidgetOffset(
+              "lightPanel",
+              nextOffset,
+            );
+          }}
         />
 
 
@@ -168,6 +191,18 @@ const [
           boundsRef={
             widgetBoundsRef
           }
+          offset={
+            widgetOffsets
+              ?.requestControlPanel
+          }
+          onOffsetChange={(
+            nextOffset,
+          ) => {
+            setWidgetOffset(
+              "requestControlPanel",
+              nextOffset,
+            );
+          }}
         />
 
 
@@ -178,6 +213,18 @@ const [
           boundsRef={
             widgetBoundsRef
           }
+          offset={
+            widgetOffsets
+              ?.messagePanel
+          }
+          onOffsetChange={(
+            nextOffset,
+          ) => {
+            setWidgetOffset(
+              "messagePanel",
+              nextOffset,
+            );
+          }}
         />
       </div>
 
@@ -195,6 +242,12 @@ const [
           }
           setResponse={
             setResponse
+          }
+          setSystemStatus={
+            setSystemStatus
+          }
+          reportError={
+            reportError
           }
         />
       </div>

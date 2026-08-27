@@ -1,164 +1,456 @@
-import { useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-const DRAG_THRESHOLD = 4;
+
+const DRAG_THRESHOLD =
+  4;
+
+
+function normalizeOffset(
+  value,
+) {
+  return {
+    x:
+      Number.isFinite(
+        value?.x,
+      )
+        ? value.x
+        : 0,
+
+    y:
+      Number.isFinite(
+        value?.y,
+      )
+        ? value.y
+        : 0,
+  };
+}
+
 
 function useDraggable({
   boundsRef,
-  disabled = false,
-  scale = 1,
-  preventDefault = true,
-  ignoreSelector = null,
+
+  disabled =
+    false,
+
+  scale =
+    1,
+
+  preventDefault =
+    true,
+
+  ignoreSelector =
+    null,
+
+  initialOffset = {
+    x:
+      0,
+
+    y:
+      0,
+  },
+
+  /*
+   * Optional controlled position.
+   *
+   * When supplied, the component using
+   * this hook owns the offset.
+   */
+  offset:
+    controlledOffset =
+      null,
+
+  /*
+   * Called whenever dragging changes
+   * the offset.
+   */
+  onOffsetChange =
+    null,
 }) {
-  const dragRef = useRef(null);
+  const dragRef =
+    useRef(
+      null,
+    );
 
-  const dragStateRef = useRef(null);
 
-  const [offset, setOffset] = useState({
-    x: 0,
-    y: 0,
-  });
+  const dragStateRef =
+    useRef(
+      null,
+    );
 
-  const handlePointerDown = (event) => {
-    if (disabled || event.button !== 0) {
-      return;
-    }
+
+  const [
+    internalOffset,
+    setInternalOffset,
+  ] =
+    useState(
+      () =>
+        normalizeOffset(
+          initialOffset,
+        ),
+    );
+
+
+  const isControlled =
+    controlledOffset !==
+      null &&
+    controlledOffset !==
+      undefined;
+
+
+  const activeOffset =
+    isControlled
+      ? normalizeOffset(
+          controlledOffset,
+        )
+      : internalOffset;
+
+
+  /*
+   * Pointer handlers need the newest
+   * offset without depending on the
+   * timing of React renders.
+   */
+  const offsetRef =
+    useRef(
+      activeOffset,
+    );
+
+
+  useEffect(
+    () => {
+      offsetRef.current =
+        activeOffset;
+    },
+    [
+      activeOffset.x,
+      activeOffset.y,
+    ],
+  );
+
+
+  function updateOffset(
+    nextOffset,
+  ) {
+    const normalized =
+      normalizeOffset(
+        nextOffset,
+      );
+
+
+    offsetRef.current =
+      normalized;
+
 
     if (
-      ignoreSelector &&
-      event.target instanceof Element &&
-      event.target.closest(ignoreSelector)
+      !isControlled
+    ) {
+      setInternalOffset(
+        normalized,
+      );
+    }
+
+
+    if (
+      typeof onOffsetChange ===
+      "function"
+    ) {
+      onOffsetChange(
+        normalized,
+      );
+    }
+  }
+
+
+  function handlePointerDown(
+    event,
+  ) {
+    if (
+      disabled ||
+      event.button !==
+        0
     ) {
       return;
     }
 
-    const element = dragRef.current;
 
-    const bounds = boundsRef?.current;
-
-    if (!element || !bounds) {
+    if (
+      ignoreSelector &&
+      event.target instanceof
+        Element &&
+      event.target.closest(
+        ignoreSelector,
+      )
+    ) {
       return;
     }
 
-    const elementRect = element.getBoundingClientRect();
 
-    const boundsRect = bounds.getBoundingClientRect();
+    const element =
+      dragRef.current;
+
+
+    const bounds =
+      boundsRef?.current;
+
+
+    if (
+      !element ||
+      !bounds
+    ) {
+      return;
+    }
+
 
     dragStateRef.current = {
-      pointerId: event.pointerId,
+      pointerId:
+        event.pointerId,
 
-      startX: event.clientX,
+      startX:
+        event.clientX,
 
-      startY: event.clientY,
+      startY:
+        event.clientY,
 
       startOffset: {
-        ...offset,
+        ...offsetRef.current,
       },
 
-      elementRect,
+      elementRect:
+        element.getBoundingClientRect(),
 
-      boundsRect,
+      boundsRect:
+        bounds.getBoundingClientRect(),
 
-      isDragging: false,
+      isDragging:
+        false,
     };
+  }
 
-    /*
-     * Do NOT capture the pointer yet.
-     *
-     * This allows normal click and
-     * double-click behavior.
-     */
-  };
 
-  const handlePointerMove = (event) => {
-    const drag = dragStateRef.current;
+  function handlePointerMove(
+    event,
+  ) {
+    const drag =
+      dragStateRef.current;
 
-    if (!drag || drag.pointerId !== event.pointerId) {
+
+    if (
+      !drag ||
+      drag.pointerId !==
+        event.pointerId
+    ) {
       return;
     }
 
-    const pointerX = event.clientX - drag.startX;
 
-    const pointerY = event.clientY - drag.startY;
+    const pointerX =
+      event.clientX -
+      drag.startX;
+
+
+    const pointerY =
+      event.clientY -
+      drag.startY;
+
 
     /*
-     * Treat tiny movement as a click,
-     * not a drag.
+     * Tiny pointer movement remains a
+     * normal click rather than becoming
+     * a drag.
      */
-    if (!drag.isDragging) {
-      const distance = Math.hypot(pointerX, pointerY);
+    if (
+      !drag.isDragging
+    ) {
+      const distance =
+        Math.hypot(
+          pointerX,
+          pointerY,
+        );
 
-      if (distance < DRAG_THRESHOLD) {
+
+      if (
+        distance <
+        DRAG_THRESHOLD
+      ) {
         return;
       }
 
-      drag.isDragging = true;
 
-      event.currentTarget.setPointerCapture(event.pointerId);
+      drag.isDragging =
+        true;
 
-      if (preventDefault) {
+
+      try {
+        event.currentTarget
+          .setPointerCapture(
+            event.pointerId,
+          );
+      } catch {
+        /*
+         * Pointer capture is only a
+         * convenience here.
+         */
+      }
+
+
+      if (
+        preventDefault
+      ) {
         event.preventDefault();
       }
     }
 
-    const minimumX = drag.boundsRect.left - drag.elementRect.left;
 
-    const maximumX = drag.boundsRect.right - drag.elementRect.right;
+    const minimumX =
+      drag.boundsRect.left -
+      drag.elementRect.left;
 
-    const minimumY = drag.boundsRect.top - drag.elementRect.top;
 
-    const maximumY = drag.boundsRect.bottom - drag.elementRect.bottom;
+    const maximumX =
+      drag.boundsRect.right -
+      drag.elementRect.right;
 
-    const moveX = Math.min(Math.max(pointerX, minimumX), maximumX);
 
-    const moveY = Math.min(Math.max(pointerY, minimumY), maximumY);
+    const minimumY =
+      drag.boundsRect.top -
+      drag.elementRect.top;
 
-    const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
 
-    setOffset({
-      x: drag.startOffset.x + moveX / safeScale,
+    const maximumY =
+      drag.boundsRect.bottom -
+      drag.elementRect.bottom;
 
-      y: drag.startOffset.y + moveY / safeScale,
+
+    const moveX =
+      Math.min(
+        Math.max(
+          pointerX,
+          minimumX,
+        ),
+        maximumX,
+      );
+
+
+    const moveY =
+      Math.min(
+        Math.max(
+          pointerY,
+          minimumY,
+        ),
+        maximumY,
+      );
+
+
+    const safeScale =
+      Number.isFinite(
+        scale,
+      ) &&
+      scale >
+        0
+        ? scale
+        : 1;
+
+
+    updateOffset({
+      x:
+        drag.startOffset.x +
+        (
+          moveX /
+          safeScale
+        ),
+
+      y:
+        drag.startOffset.y +
+        (
+          moveY /
+          safeScale
+        ),
     });
-  };
+  }
 
-  const finishDrag = (event) => {
-    const drag = dragStateRef.current;
 
-    if (!drag || drag.pointerId !== event.pointerId) {
+  function finishDrag(
+    event,
+  ) {
+    const drag =
+      dragStateRef.current;
+
+
+    if (
+      !drag ||
+      drag.pointerId !==
+        event.pointerId
+    ) {
       return;
     }
 
+
     if (
-      drag.isDragging &&
-      event.currentTarget.hasPointerCapture(event.pointerId)
+      drag.isDragging
     ) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+      try {
+        if (
+          event.currentTarget
+            .hasPointerCapture(
+              event.pointerId,
+            )
+        ) {
+          event.currentTarget
+            .releasePointerCapture(
+              event.pointerId,
+            );
+        }
+      } catch {
+        /*
+         * Pointer may already have
+         * been released.
+         */
+      }
     }
 
-    dragStateRef.current = null;
-  };
+
+    dragStateRef.current =
+      null;
+  }
+
 
   const dragHandleProps = {
-    onPointerDown: handlePointerDown,
+    onPointerDown:
+      handlePointerDown,
 
-    onPointerMove: handlePointerMove,
+    onPointerMove:
+      handlePointerMove,
 
-    onPointerUp: finishDrag,
+    onPointerUp:
+      finishDrag,
 
-    onPointerCancel: finishDrag,
+    onPointerCancel:
+      finishDrag,
   };
+
 
   const dragStyle = {
-    "--drag-x": `${offset.x}px`,
+    "--drag-x":
+      `${activeOffset.x}px`,
 
-    "--drag-y": `${offset.y}px`,
+    "--drag-y":
+      `${activeOffset.y}px`,
   };
+
 
   return {
     dragRef,
     dragHandleProps,
     dragStyle,
+
+    offset:
+      activeOffset,
   };
 }
+
 
 export default useDraggable;

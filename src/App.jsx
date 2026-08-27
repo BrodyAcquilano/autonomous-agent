@@ -27,6 +27,14 @@ function App() {
 
     outputFiles,
     outputFileTypes,
+
+    systemStatus,
+    setSystemStatus,
+
+    reportError,
+
+    consoleWidgetOffsets,
+    setConsoleWidgetOffset,
   } =
     useRuntime();
 
@@ -47,6 +55,21 @@ function App() {
                 }
                 setResponse={
                   setResponse
+                }
+                systemStatus={
+                  systemStatus
+                }
+                setSystemStatus={
+                  setSystemStatus
+                }
+                reportError={
+                  reportError
+                }
+                widgetOffsets={
+                  consoleWidgetOffsets
+                }
+                setWidgetOffset={
+                  setConsoleWidgetOffset
                 }
               />
             }

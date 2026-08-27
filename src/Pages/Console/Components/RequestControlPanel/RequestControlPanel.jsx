@@ -47,15 +47,22 @@ function RequestControlPanel({
   requestSettings,
   setRequestSettings,
   boundsRef,
+
+  offset,
+  onOffsetChange,
 }) {
   const {
-    dragRef,
-    dragHandleProps,
-    dragStyle,
-  } =
-    useDraggable({
-      boundsRef,
-    });
+  dragRef,
+  dragHandleProps,
+  dragStyle,
+} =
+  useDraggable({
+    boundsRef,
+
+    offset,
+
+    onOffsetChange,
+  });
 
 
   function updateReasoning(
