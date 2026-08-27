@@ -8,6 +8,9 @@ import {
 } from "react-dom";
 
 import useDraggable from "../../../../Hooks/useDraggable";
+import useResizable, {
+  RESIZE_DIRECTIONS,
+} from "../../../../Hooks/useResizable";
 
 import "./ViewportWindow.css";
 
@@ -121,6 +124,12 @@ function ViewportWindow({
   onOffsetChange =
     null,
 
+  size =
+    null,
+
+  onSizeChange =
+    null,
+
   zIndex = 20,
 
   variant =
@@ -181,7 +190,52 @@ function ViewportWindow({
         false,
 
       ignoreSelector:
-        '[data-window-selectable="true"]',
+        '[data-window-selectable="true"], .resize-handle',
+
+      offset,
+
+      onOffsetChange,
+    });
+
+
+  const {
+    resizeStyle,
+    getResizeHandleProps,
+  } =
+    useResizable({
+      targetRef:
+        dragRef,
+
+      disabled:
+        isExpanded,
+
+      scale,
+
+      minWidth:
+        240,
+
+      minHeight:
+        180,
+
+      maxWidth:
+        1600,
+
+      maxHeight:
+        1200,
+
+      /*
+       * ViewportWindow is centered by its
+       * CSS base transform.
+       *
+       * This keeps edge resizing behaving
+       * like a normal desktop window.
+       */
+      anchorMode:
+        "center",
+
+      size,
+
+      onSizeChange,
 
       offset,
 
@@ -201,6 +255,7 @@ function ViewportWindow({
 
   const windowStyle = {
     ...dragStyle,
+    ...resizeStyle,
 
     "--window-width":
       `${dimensions.width}px`,
@@ -333,6 +388,24 @@ function ViewportWindow({
             {children}
           </div>
         </div>
+
+
+        {!isExpanded &&
+          RESIZE_DIRECTIONS.map(
+            (
+              direction,
+            ) => (
+              <div
+                key={
+                  direction
+                }
+                className={`resize-handle resize-handle-${direction}`}
+                {...getResizeHandleProps(
+                  direction,
+                )}
+              />
+            ),
+          )}
       </section>
     );
 

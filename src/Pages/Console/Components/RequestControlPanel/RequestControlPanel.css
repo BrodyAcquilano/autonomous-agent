@@ -7,15 +7,26 @@
   z-index: 35;
 
   width:
-    clamp(
-      430px,
-      36vw,
-      540px
+    var(
+      --resize-width,
+      clamp(
+        430px,
+        36vw,
+        540px
+      )
     );
 
-  min-height: 420px;
+  height:
+    var(
+      --resize-height,
+      auto
+    );
 
-  box-sizing: border-box;
+  min-height:
+    420px;
+
+  box-sizing:
+    border-box;
 
   transform:
     translate(
@@ -24,12 +35,20 @@
         var(
           --drag-x,
           0px
+        ) +
+        var(
+          --resize-shift-x,
+          0px
         )
       ),
       calc(
         -320px +
         var(
           --drag-y,
+          0px
+        ) +
+        var(
+          --resize-shift-y,
           0px
         )
       )
@@ -130,24 +149,6 @@
         0.34
       )
     );
-}
-
-
-/* --------------------------------
-   HEADER
--------------------------------- */
-
-.request-control-panel-header {
-  height: 35px;
-
-  flex-shrink: 0;
-
-  display: flex;
-
-  align-items: flex-start;
-  justify-content: space-between;
-
-  gap: 20px;
 
   cursor: grab;
 
@@ -157,28 +158,41 @@
 }
 
 
-.request-control-panel-header:active {
+.request-control-panel:active {
   cursor: grabbing;
+}
+
+
+/* --------------------------------
+   HEADER
+-------------------------------- */
+
+.request-control-panel-header {
+  height: 39px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
 }
 
 
 .request-control-panel-title {
   color:
-    rgba(
-      235,
-      252,
-      255,
-      0.96
-    );
+    #fffdf4;
 
   font-family:
     "Courier New",
     Consolas,
     monospace;
 
-  font-size: 11px;
+  font-size: 12.5px;
 
-  letter-spacing: 2px;
+  letter-spacing: 1.8px;
 
   text-shadow:
     0
@@ -196,10 +210,10 @@
 .request-control-panel-model {
   color:
     rgba(
-      208,
-      245,
-      248,
-      0.62
+      255,
+      253,
+      244,
+      0.88
     );
 
   font-family:
@@ -207,9 +221,53 @@
     Consolas,
     monospace;
 
-  font-size: 9px;
+  font-size: 10.5px;
 
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
+}
+
+
+/* --------------------------------
+   SCROLLABLE CONTENT
+-------------------------------- */
+
+/*
+ * The glass shell stays draggable around
+ * the outside.
+ *
+ * Model/tool controls live in this inner
+ * area and keep their own mouse behavior.
+ * If the panel is resized shorter than its
+ * content, only this section scrolls.
+ */
+.request-control-panel-content {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  cursor: auto;
+
+  touch-action: auto;
+
+  user-select: auto;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      114,
+      205,
+      214,
+      0.5
+    )
+    rgba(
+      7,
+      31,
+      52,
+      0.2
+    );
 }
 
 
@@ -287,18 +345,18 @@
   border-bottom:
     1px solid
     rgba(
-      165,
-      232,
-      241,
-      0.2
+      220,
+      239,
+      238,
+      0.22
     );
 
   color:
     rgba(
-      198,
-      239,
-      247,
-      0.76
+      255,
+      253,
+      244,
+      0.9
     );
 
   font-family:
@@ -306,9 +364,9 @@
     Consolas,
     monospace;
 
-  font-size: 9px;
+  font-size: 10px;
 
-  letter-spacing: 1.8px;
+  letter-spacing: 1.7px;
 }
 
 
@@ -353,10 +411,10 @@
 .request-control-label {
   color:
     rgba(
-      209,
-      241,
-      249,
-      0.82
+      255,
+      253,
+      244,
+      0.9
     );
 
   font-family:
@@ -364,9 +422,9 @@
     Consolas,
     monospace;
 
-  font-size: 10px;
+  font-size: 10.5px;
 
-  letter-spacing: 1.25px;
+  letter-spacing: 1.1px;
 }
 
 
@@ -546,26 +604,26 @@ input {
 
 .request-control-tool-name {
   color:
-    #e3fbff;
+    #fffdf4;
 
   font-family:
     "Courier New",
     Consolas,
     monospace;
 
-  font-size: 11px;
+  font-size: 12px;
 
-  letter-spacing: 1.3px;
+  letter-spacing: 1.15px;
 }
 
 
 .request-control-tool-description {
   color:
     rgba(
-      185,
-      228,
-      238,
-      0.64
+      255,
+      253,
+      244,
+      0.78
     );
 
   font-family:
@@ -573,21 +631,21 @@ input {
     Consolas,
     monospace;
 
-  font-size: 8px;
+  font-size: 10px;
 
-  line-height: 1.45;
+  line-height: 1.55;
 
-  letter-spacing: 0.8px;
+  letter-spacing: 0.55px;
 }
 
 
 .request-control-tool-formats {
   color:
     rgba(
-      161,
-      214,
-      223,
-      0.48
+      255,
+      253,
+      244,
+      0.62
     );
 
   font-family:
@@ -595,11 +653,11 @@ input {
     Consolas,
     monospace;
 
-  font-size: 7px;
+  font-size: 9px;
 
-  line-height: 1.5;
+  line-height: 1.55;
 
-  letter-spacing: 0.65px;
+  letter-spacing: 0.45px;
 }
 
 
@@ -626,6 +684,123 @@ select:disabled {
 
 
 /* --------------------------------
+   RESIZE HANDLES
+-------------------------------- */
+
+.request-control-panel >
+.resize-handle {
+  position: absolute;
+
+  z-index: 120;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.request-control-panel >
+.resize-handle-n,
+.request-control-panel >
+.resize-handle-s {
+  left: 12px;
+  right: 12px;
+
+  height: 8px;
+
+  cursor: ns-resize;
+}
+
+
+.request-control-panel >
+.resize-handle-n {
+  top: 0;
+}
+
+
+.request-control-panel >
+.resize-handle-s {
+  bottom: 0;
+}
+
+
+.request-control-panel >
+.resize-handle-e,
+.request-control-panel >
+.resize-handle-w {
+  top: 12px;
+  bottom: 12px;
+
+  width: 8px;
+
+  cursor: ew-resize;
+}
+
+
+.request-control-panel >
+.resize-handle-e {
+  right: 0;
+}
+
+
+.request-control-panel >
+.resize-handle-w {
+  left: 0;
+}
+
+
+.request-control-panel >
+.resize-handle-ne,
+.request-control-panel >
+.resize-handle-nw,
+.request-control-panel >
+.resize-handle-se,
+.request-control-panel >
+.resize-handle-sw {
+  width: 12px;
+  height: 12px;
+
+  z-index: 121;
+}
+
+
+.request-control-panel >
+.resize-handle-ne {
+  top: 0;
+  right: 0;
+
+  cursor: nesw-resize;
+}
+
+
+.request-control-panel >
+.resize-handle-nw {
+  top: 0;
+  left: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.request-control-panel >
+.resize-handle-se {
+  right: 0;
+  bottom: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.request-control-panel >
+.resize-handle-sw {
+  left: 0;
+  bottom: 0;
+
+  cursor: nesw-resize;
+}
+
+
+/* --------------------------------
    RESPONSIVE
 -------------------------------- */
 
@@ -633,7 +808,11 @@ select:disabled {
   max-width: 1000px
 ) {
   .request-control-panel {
-    width: 400px;
+    width:
+      var(
+        --resize-width,
+        400px
+      );
 
     transform:
       translate(
@@ -642,12 +821,20 @@ select:disabled {
           var(
             --drag-x,
             0px
+          ) +
+          var(
+            --resize-shift-x,
+            0px
           )
         ),
         calc(
           -370px +
           var(
             --drag-y,
+            0px
+          ) +
+          var(
+            --resize-shift-y,
             0px
           )
         )
@@ -660,13 +847,20 @@ select:disabled {
   max-width: 720px
 ) {
   .request-control-panel {
-    width: 360px;
+    width:
+      var(
+        --resize-width,
+        360px
+      );
 
-    min-height: 0;
+    height:
+      var(
+        --resize-height,
+        720px
+      );
 
-    max-height: 720px;
-
-    overflow-y: auto;
+    min-height:
+      360px;
 
     padding:
       12px
@@ -680,12 +874,20 @@ select:disabled {
           var(
             --drag-x,
             0px
+          ) +
+          var(
+            --resize-shift-x,
+            0px
           )
         ),
         calc(
           -330px +
           var(
             --drag-y,
+            0px
+          ) +
+          var(
+            --resize-shift-y,
             0px
           )
         )
@@ -694,7 +896,7 @@ select:disabled {
 
 
   .request-control-panel-header {
-    height: 31px;
+    height: 35px;
   }
 
 

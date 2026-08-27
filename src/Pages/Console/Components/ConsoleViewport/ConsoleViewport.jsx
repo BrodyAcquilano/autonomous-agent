@@ -173,6 +173,12 @@ function ConsoleViewport({
     );
 
 
+  const expandedLayerRef =
+    useRef(
+      null,
+    );
+
+
   const panRef =
     useRef({
       active:
@@ -803,27 +809,101 @@ function ConsoleViewport({
   }
 
 
-  function handleWheel(
-    event,
+  function canInnerElementScroll(
+    element,
+    deltaY,
   ) {
-    /*
-     * Keep normal wheel behavior on
-     * form controls themselves.
-     *
-     * MessagePanel remains zoomable,
-     * including over the message screen.
-     */
     if (
-      event.target instanceof
-        Element &&
-      event.target.closest(
-        "input, select, textarea",
-      )
+      !element ||
+      element.scrollHeight <=
+        element.clientHeight
     ) {
-      return;
+      return false;
     }
 
 
+    if (
+      deltaY <
+      0
+    ) {
+      return (
+        element.scrollTop >
+        0
+      );
+    }
+
+
+    if (
+      deltaY >
+      0
+    ) {
+      return (
+        element.scrollTop +
+          element.clientHeight <
+        element.scrollHeight -
+          1
+      );
+    }
+
+
+    return false;
+  }
+
+
+  function handleWheel(
+    event,
+  ) {
+    if (
+      event.target instanceof
+        Element
+    ) {
+      /*
+       * Expanded MessagePanel is outside
+       * the virtual stage. Let its message
+       * surface use normal wheel scrolling.
+       */
+      if (
+        event.target.closest(
+          ".message-panel.expanded",
+        )
+      ) {
+        return;
+      }
+
+
+      /*
+       * Scrollable widget content consumes
+       * wheel movement only while it can
+       * actually scroll in that direction.
+       *
+       * At its edge, the same wheel gesture
+       * falls through to viewport zoom.
+       */
+      const scrollArea =
+        event.target.closest(
+          '[data-console-wheel-scroll="true"]',
+        );
+
+
+      if (
+        scrollArea &&
+        canInnerElementScroll(
+          scrollArea,
+          event.deltaY,
+        )
+      ) {
+        return;
+      }
+    }
+
+
+    /*
+     * Form controls no longer block zoom.
+     *
+     * preventDefault also prevents a
+     * focused number input from stepping
+     * while the user is zooming.
+     */
     event.preventDefault();
 
 
@@ -874,7 +954,6 @@ function ConsoleViewport({
     );
   }
 
-
   const renderedChildren =
     typeof children ===
       "function"
@@ -884,6 +963,9 @@ function ConsoleViewport({
 
           scale:
             activeView.scale,
+
+          portalTargetRef:
+            expandedLayerRef,
         })
       : children;
 
@@ -934,6 +1016,14 @@ function ConsoleViewport({
       >
         {renderedChildren}
       </div>
+
+
+      <div
+        ref={
+          expandedLayerRef
+        }
+        className="console-viewport-expanded-layer"
+      />
 
 
       <div

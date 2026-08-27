@@ -807,6 +807,68 @@ function createOutputWidgetOffsets(
 }
 
 
+function createEmptyWidgetSize() {
+  return {
+    width:
+      null,
+
+    height:
+      null,
+  };
+}
+
+
+function createOutputWidgetSizes(
+  files,
+  currentSizes = {},
+) {
+  const nextSizes = {
+    [OUTPUT_PLACEHOLDER_KEY]:
+      currentSizes[
+        OUTPUT_PLACEHOLDER_KEY
+      ] ||
+      createEmptyWidgetSize(),
+  };
+
+
+  if (
+    !Array.isArray(
+      files,
+    ) ||
+    files.length ===
+      0
+  ) {
+    return nextSizes;
+  }
+
+
+  files.forEach(
+    (
+      file,
+      index,
+    ) => {
+      const widgetKey =
+        getOutputWidgetKey(
+          file,
+          index,
+        );
+
+
+      nextSizes[
+        widgetKey
+      ] =
+        currentSizes[
+          widgetKey
+        ] ||
+        createEmptyWidgetSize();
+    },
+  );
+
+
+  return nextSizes;
+}
+
+
 /* --------------------------------
    RUNTIME
 -------------------------------- */
@@ -977,6 +1039,41 @@ function useRuntime() {
     });
 
 
+  /*
+   * Resizable Console widgets keep their
+   * dimensions in Runtime just like their
+   * offsets.
+   *
+   * LightPanel is intentionally omitted
+   * because it is no longer resizable.
+   */
+  const [
+    consoleWidgetSizes,
+    setConsoleWidgetSizes,
+  ] =
+    useState({
+      messagePanel:
+        createEmptyWidgetSize(),
+
+      requestControlPanel:
+        createEmptyWidgetSize(),
+    });
+
+
+  /*
+   * Dynamic Output window dimensions are
+   * keyed by the same IDs as their offsets.
+   */
+  const [
+    outputWidgetSizes,
+    setOutputWidgetSizes,
+  ] =
+    useState({
+      [OUTPUT_PLACEHOLDER_KEY]:
+        createEmptyWidgetSize(),
+    });
+
+
   const setConsoleWidgetOffset =
     useCallback(
       (
@@ -1079,6 +1176,108 @@ function useRuntime() {
     );
 
 
+  const setConsoleWidgetSize =
+    useCallback(
+      (
+        widgetKey,
+        nextSize,
+      ) => {
+        if (
+          !Number.isFinite(
+            nextSize?.width,
+          ) ||
+          !Number.isFinite(
+            nextSize?.height,
+          )
+        ) {
+          return;
+        }
+
+
+        setConsoleWidgetSizes(
+          (
+            current,
+          ) => {
+            if (
+              !Object.prototype
+                .hasOwnProperty.call(
+                  current,
+                  widgetKey,
+                )
+            ) {
+              return current;
+            }
+
+
+            return {
+              ...current,
+
+              [widgetKey]: {
+                width:
+                  nextSize.width,
+
+                height:
+                  nextSize.height,
+              },
+            };
+          },
+        );
+      },
+      [],
+    );
+
+
+  const setOutputWidgetSize =
+    useCallback(
+      (
+        widgetKey,
+        nextSize,
+      ) => {
+        if (
+          !Number.isFinite(
+            nextSize?.width,
+          ) ||
+          !Number.isFinite(
+            nextSize?.height,
+          )
+        ) {
+          return;
+        }
+
+
+        setOutputWidgetSizes(
+          (
+            current,
+          ) => {
+            if (
+              !Object.prototype
+                .hasOwnProperty.call(
+                  current,
+                  widgetKey,
+                )
+            ) {
+              return current;
+            }
+
+
+            return {
+              ...current,
+
+              [widgetKey]: {
+                width:
+                  nextSize.width,
+
+                height:
+                  nextSize.height,
+              },
+            };
+          },
+        );
+      },
+      [],
+    );
+
+
   const setCurrentOutputFiles =
     useCallback(
       (
@@ -1104,6 +1303,17 @@ function useRuntime() {
             createOutputWidgetOffsets(
               files,
               currentOffsets,
+            ),
+        );
+
+
+        setOutputWidgetSizes(
+          (
+            currentSizes,
+          ) =>
+            createOutputWidgetSizes(
+              files,
+              currentSizes,
             ),
         );
       },
@@ -1534,8 +1744,14 @@ function useRuntime() {
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
 
+    consoleWidgetSizes,
+    setConsoleWidgetSize,
+
     outputWidgetOffsets,
     setOutputWidgetOffset,
+
+    outputWidgetSizes,
+    setOutputWidgetSize,
 
     consoleViewportView,
     setConsoleViewportView,

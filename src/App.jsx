@@ -39,8 +39,14 @@ function App() {
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
 
+    consoleWidgetSizes,
+    setConsoleWidgetSize,
+
     outputWidgetOffsets,
     setOutputWidgetOffset,
+
+    outputWidgetSizes,
+    setOutputWidgetSize,
 
     consoleViewportView,
     setConsoleViewportView,
@@ -94,6 +100,13 @@ function App() {
                   setConsoleWidgetOffset
                 }
 
+                consoleWidgetSizes={
+                  consoleWidgetSizes
+                }
+                setConsoleWidgetSize={
+                  setConsoleWidgetSize
+                }
+
                 viewportView={
                   consoleViewportView
                 }
@@ -122,6 +135,13 @@ function App() {
                 }
                 setWidgetOffset={
                   setOutputWidgetOffset
+                }
+
+                widgetSizes={
+                  outputWidgetSizes
+                }
+                setWidgetSize={
+                  setOutputWidgetSize
                 }
 
                 viewportView={

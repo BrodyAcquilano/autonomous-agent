@@ -17,12 +17,6 @@
       0.42
     );
 
-  /*
-   * Visible frame around the virtual
-   * world. The actual image belongs to
-   * .console-viewport-stage so it pans
-   * and zooms with the workspace.
-   */
   background:
     #000;
 
@@ -93,14 +87,6 @@
       0.34
     );
 
-  /*
-   * /public files are served from the
-   * application root by Vite.
-   *
-   * This image therefore becomes part of
-   * world-space and moves/scales with the
-   * stage itself.
-   */
   background-color:
     #d8edf7;
 
@@ -129,6 +115,35 @@
       126,
       0.08
     );
+}
+
+
+/* --------------------------------
+   EXPANDED WIDGET LAYER
+-------------------------------- */
+
+/*
+ * This layer is screen-space.
+ *
+ * MessagePanel portals here when
+ * maximized, so it fills ConsoleViewport
+ * instead of remaining scaled inside the
+ * virtual stage.
+ */
+.console-viewport-expanded-layer {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1000;
+
+  pointer-events: none;
+}
+
+
+.console-viewport-expanded-layer >
+* {
+  pointer-events: auto;
 }
 
 

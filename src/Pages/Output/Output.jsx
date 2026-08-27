@@ -532,6 +532,11 @@ function Output({
   setWidgetOffset =
     null,
 
+  widgetSizes = {},
+
+  setWidgetSize =
+    null,
+
   viewportView =
     null,
 
@@ -658,6 +663,13 @@ function Output({
               };
 
 
+            const size =
+              widgetSizes[
+                fileId
+              ] ||
+              null;
+
+
             const aspectRatio =
               rendererType ===
                 "image"
@@ -694,6 +706,24 @@ function Output({
                     setWidgetOffset(
                       fileId,
                       nextOffset,
+                    );
+                  }
+                }}
+
+                size={
+                  size
+                }
+
+                onSizeChange={(
+                  nextSize,
+                ) => {
+                  if (
+                    typeof setWidgetSize ===
+                    "function"
+                  ) {
+                    setWidgetSize(
+                      fileId,
+                      nextSize,
                     );
                   }
                 }}

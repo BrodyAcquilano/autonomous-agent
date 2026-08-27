@@ -28,6 +28,9 @@ function Console({
   consoleWidgetOffsets,
   setConsoleWidgetOffset,
 
+  consoleWidgetSizes,
+  setConsoleWidgetSize,
+
   viewportView,
   setViewportView,
 }) {
@@ -45,6 +48,7 @@ function Console({
           {({
             boundsRef,
             scale,
+            portalTargetRef,
           }) => (
             <>
               <LightPanel
@@ -109,6 +113,20 @@ function Console({
                     nextOffset,
                   );
                 }}
+                size={
+                  consoleWidgetSizes
+                    ?.requestControlPanel
+                }
+
+                onSizeChange={(
+                  nextSize,
+                ) => {
+                  setConsoleWidgetSize(
+                    "requestControlPanel",
+                    nextSize,
+                  );
+                }}
+
               />
 
 
@@ -138,6 +156,24 @@ function Console({
                     nextOffset,
                   );
                 }}
+
+                size={
+                  consoleWidgetSizes
+                    ?.messagePanel
+                }
+
+                onSizeChange={(
+                  nextSize,
+                ) => {
+                  setConsoleWidgetSize(
+                    "messagePanel",
+                    nextSize,
+                  );
+                }}
+
+                portalTargetRef={
+                  portalTargetRef
+                }
               />
             </>
           )}

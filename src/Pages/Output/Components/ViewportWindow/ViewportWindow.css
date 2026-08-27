@@ -8,26 +8,24 @@
 
   width:
     var(
-      --window-width,
-      360px
+      --resize-width,
+      var(
+        --window-width,
+        360px
+      )
     );
 
   height:
     var(
-      --window-height,
-      460px
+      --resize-height,
+      var(
+        --window-height,
+        460px
+      )
     );
 
   box-sizing: border-box;
 
-  /*
-   * Every output window has the same
-   * CSS base position.
-   *
-   * Runtime now supplies the complete
-   * workspace offset through --drag-x
-   * and --drag-y.
-   */
   transform:
     translate(
       calc(
@@ -35,12 +33,20 @@
         var(
           --drag-x,
           0px
+        ) +
+        var(
+          --resize-shift-x,
+          0px
         )
       ),
       calc(
         -50% +
         var(
           --drag-y,
+          0px
+        ) +
+        var(
+          --resize-shift-y,
           0px
         )
       )
@@ -297,6 +303,123 @@
 .viewport-window.expanded
 .viewport-window-renderer {
   cursor: default;
+}
+
+
+/* --------------------------------
+   RESIZE HANDLES
+-------------------------------- */
+
+.viewport-window >
+.resize-handle {
+  position: absolute;
+
+  z-index: 120;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.viewport-window >
+.resize-handle-n,
+.viewport-window >
+.resize-handle-s {
+  left: 10px;
+  right: 10px;
+
+  height: 8px;
+
+  cursor: ns-resize;
+}
+
+
+.viewport-window >
+.resize-handle-n {
+  top: 0;
+}
+
+
+.viewport-window >
+.resize-handle-s {
+  bottom: 0;
+}
+
+
+.viewport-window >
+.resize-handle-e,
+.viewport-window >
+.resize-handle-w {
+  top: 10px;
+  bottom: 10px;
+
+  width: 8px;
+
+  cursor: ew-resize;
+}
+
+
+.viewport-window >
+.resize-handle-e {
+  right: 0;
+}
+
+
+.viewport-window >
+.resize-handle-w {
+  left: 0;
+}
+
+
+.viewport-window >
+.resize-handle-ne,
+.viewport-window >
+.resize-handle-nw,
+.viewport-window >
+.resize-handle-se,
+.viewport-window >
+.resize-handle-sw {
+  width: 12px;
+  height: 12px;
+
+  z-index: 121;
+}
+
+
+.viewport-window >
+.resize-handle-ne {
+  top: 0;
+  right: 0;
+
+  cursor: nesw-resize;
+}
+
+
+.viewport-window >
+.resize-handle-nw {
+  top: 0;
+  left: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.viewport-window >
+.resize-handle-se {
+  right: 0;
+  bottom: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.viewport-window >
+.resize-handle-sw {
+  left: 0;
+  bottom: 0;
+
+  cursor: nesw-resize;
 }
 
 

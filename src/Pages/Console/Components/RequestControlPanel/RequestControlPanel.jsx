@@ -1,4 +1,7 @@
 import useDraggable from "../../../../Hooks/useDraggable";
+import useResizable, {
+  RESIZE_DIRECTIONS,
+} from "../../../../Hooks/useResizable";
 
 import "./RequestControlPanel.css";
 
@@ -55,6 +58,10 @@ function RequestControlPanel({
   offset,
 
   onOffsetChange,
+
+  size,
+
+  onSizeChange,
 }) {
   const {
     dragRef,
@@ -65,6 +72,44 @@ function RequestControlPanel({
       boundsRef,
 
       scale,
+
+      offset,
+
+      onOffsetChange,
+
+      ignoreSelector:
+        ".request-control-panel-content, .resize-handle",
+    });
+
+
+  const {
+    resizeStyle,
+    getResizeHandleProps,
+  } =
+    useResizable({
+      targetRef:
+        dragRef,
+
+      scale,
+
+      minWidth:
+        360,
+
+      minHeight:
+        420,
+
+      maxWidth:
+        1200,
+
+      maxHeight:
+        1100,
+
+      anchorMode:
+        "top-left",
+
+      size,
+
+      onSizeChange,
 
       offset,
 
@@ -272,13 +317,14 @@ function RequestControlPanel({
         dragRef
       }
       className="request-control-panel"
-      style={
-        dragStyle
-      }
+      style={{
+        ...dragStyle,
+        ...resizeStyle,
+      }}
+      {...dragHandleProps}
     >
       <header
         className="request-control-panel-header"
-        {...dragHandleProps}
       >
         <span className="request-control-panel-title">
           REQUEST CONTROL
@@ -291,7 +337,11 @@ function RequestControlPanel({
       </header>
 
 
-      <div className="request-control-panel-section">
+      <div
+        className="request-control-panel-content"
+        data-console-wheel-scroll="true"
+      >
+        <div className="request-control-panel-section">
         <div className="request-control-panel-section-title">
           MODEL PARAMETERS
         </div>
@@ -655,6 +705,24 @@ function RequestControlPanel({
           </div>
         </div>
       </div>
+      </div>
+
+
+      {RESIZE_DIRECTIONS.map(
+        (
+          direction,
+        ) => (
+          <div
+            key={
+              direction
+            }
+            className={`resize-handle resize-handle-${direction}`}
+            {...getResizeHandleProps(
+              direction,
+            )}
+          />
+        ),
+      )}
     </section>
   );
 }

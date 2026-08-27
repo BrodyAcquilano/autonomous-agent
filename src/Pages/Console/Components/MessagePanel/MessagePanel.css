@@ -7,17 +7,23 @@
   z-index: 40;
 
   width:
-    clamp(
-      390px,
-      40vw,
-      620px
+    var(
+      --resize-width,
+      clamp(
+        390px,
+        40vw,
+        620px
+      )
     );
 
   height:
-    clamp(
-      420px,
-      58vh,
-      560px
+    var(
+      --resize-height,
+      clamp(
+        420px,
+        58vh,
+        560px
+      )
     );
 
   transform:
@@ -27,12 +33,20 @@
         var(
           --drag-x,
           0px
+        ) +
+        var(
+          --resize-shift-x,
+          0px
         )
       ),
       calc(
         -200px +
         var(
           --drag-y,
+          0px
+        ) +
+        var(
+          --resize-shift-y,
           0px
         )
       )
@@ -135,40 +149,6 @@
         0.34
       )
     );
-}
-
-
-/* --------------------------------
-   EXPANDED WINDOW
--------------------------------- */
-
-.message-panel.expanded {
-  width: 1200px;
-  height: 900px;
-
-  transform:
-    translate(
-      -600px,
-      -450px
-    );
-}
-
-
-/* --------------------------------
-   HEADER
--------------------------------- */
-
-.message-panel-header {
-  height: 35px;
-
-  flex-shrink: 0;
-
-  display: flex;
-
-  align-items: flex-start;
-  justify-content: space-between;
-
-  gap: 20px;
 
   cursor: grab;
 
@@ -178,8 +158,62 @@
 }
 
 
-.message-panel-header:active {
+.message-panel:active:not(
+  .expanded
+) {
   cursor: grabbing;
+}
+
+
+/* --------------------------------
+   EXPANDED WINDOW
+-------------------------------- */
+
+/*
+ * Expanded MessagePanel is portaled into
+ * ConsoleViewport's screen-space layer.
+ *
+ * It therefore fills the actual viewport
+ * regardless of the virtual-stage zoom.
+ */
+.message-panel.expanded {
+  position: absolute;
+
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+
+  z-index: 1000;
+
+  width: auto;
+  height: auto;
+
+  transform: none;
+
+  cursor: default;
+
+  touch-action: auto;
+
+  user-select: auto;
+}
+
+
+/* --------------------------------
+   HEADER
+-------------------------------- */
+
+.message-panel-header {
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
 }
 
 
@@ -197,9 +231,9 @@
     Consolas,
     monospace;
 
-  font-size: 11px;
+  font-size: 12.5px;
 
-  letter-spacing: 2px;
+  letter-spacing: 1.8px;
 
   text-shadow:
     0
@@ -214,24 +248,6 @@
 }
 
 
-.message-panel-status {
-  color:
-    rgba(
-      208,
-      245,
-      248,
-      0.62
-    );
-
-  font-family:
-    "Courier New",
-    Consolas,
-    monospace;
-
-  font-size: 8px;
-
-  letter-spacing: 1.4px;
-}
 
 
 /* --------------------------------
@@ -402,6 +418,8 @@
   user-select: text;
 
   touch-action: auto;
+
+  cursor: auto;
 }
 
 
@@ -520,6 +538,123 @@
 
 
 /* --------------------------------
+   RESIZE HANDLES
+-------------------------------- */
+
+.message-panel >
+.resize-handle {
+  position: absolute;
+
+  z-index: 120;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+.message-panel >
+.resize-handle-n,
+.message-panel >
+.resize-handle-s {
+  left: 12px;
+  right: 12px;
+
+  height: 8px;
+
+  cursor: ns-resize;
+}
+
+
+.message-panel >
+.resize-handle-n {
+  top: 0;
+}
+
+
+.message-panel >
+.resize-handle-s {
+  bottom: 0;
+}
+
+
+.message-panel >
+.resize-handle-e,
+.message-panel >
+.resize-handle-w {
+  top: 12px;
+  bottom: 12px;
+
+  width: 8px;
+
+  cursor: ew-resize;
+}
+
+
+.message-panel >
+.resize-handle-e {
+  right: 0;
+}
+
+
+.message-panel >
+.resize-handle-w {
+  left: 0;
+}
+
+
+.message-panel >
+.resize-handle-ne,
+.message-panel >
+.resize-handle-nw,
+.message-panel >
+.resize-handle-se,
+.message-panel >
+.resize-handle-sw {
+  width: 12px;
+  height: 12px;
+
+  z-index: 121;
+}
+
+
+.message-panel >
+.resize-handle-ne {
+  top: 0;
+  right: 0;
+
+  cursor: nesw-resize;
+}
+
+
+.message-panel >
+.resize-handle-nw {
+  top: 0;
+  left: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.message-panel >
+.resize-handle-se {
+  right: 0;
+  bottom: 0;
+
+  cursor: nwse-resize;
+}
+
+
+.message-panel >
+.resize-handle-sw {
+  left: 0;
+  bottom: 0;
+
+  cursor: nesw-resize;
+}
+
+
+/* --------------------------------
    SCROLLBAR
 -------------------------------- */
 
@@ -550,7 +685,11 @@
   max-width: 1000px
 ) {
   .message-panel {
-    width: 520px;
+    width:
+      var(
+        --resize-width,
+        520px
+      );
   }
 }
 
@@ -558,10 +697,20 @@
 @media (
   max-width: 720px
 ) {
-  .message-panel {
-    width: 360px;
+  .message-panel:not(
+    .expanded
+  ) {
+    width:
+      var(
+        --resize-width,
+        360px
+      );
 
-    height: 500px;
+    height:
+      var(
+        --resize-height,
+        500px
+      );
 
     transform:
       translate(
@@ -570,12 +719,20 @@
           var(
             --drag-x,
             0px
+          ) +
+          var(
+            --resize-shift-x,
+            0px
           )
         ),
         calc(
           -180px +
           var(
             --drag-y,
+            0px
+          ) +
+          var(
+            --resize-shift-y,
             0px
           )
         )
@@ -589,24 +746,15 @@
 
 
   .message-panel.expanded {
-    width: 700px;
-    height: 700px;
-
-    transform:
-      translate(
-        -350px,
-        -350px
-      );
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
   }
 
 
   .message-panel-header {
     height: 31px;
-  }
-
-
-  .message-panel-status {
-    display: none;
   }
 
 
