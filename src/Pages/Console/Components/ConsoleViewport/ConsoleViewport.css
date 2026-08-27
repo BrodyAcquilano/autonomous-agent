@@ -154,46 +154,36 @@
 .console-viewport-scale {
   position: absolute;
 
-  right: 13px;
-  bottom: 11px;
+ right: 25px;
+  bottom: 12px;
 
   z-index: 80;
 
   padding:
     5px
-    8px;
+    20px;
 
-  border:
+   border:
     1px solid
-    rgba(
-      86,
-      144,
-      181,
-      0.24
-    );
+    rgb(180, 185, 192);
 
   background:
     rgba(
-      10,
-      40,
-      61,
-      0.68
+      0,
+      0,
+      0,
+      0.72
     );
 
   color:
-    rgba(
-      220,
-      246,
-      255,
-      0.8
-    );
+    rgba(253, 254, 255, 0.759);
 
   font-family:
     "Courier New",
     Consolas,
     monospace;
 
-  font-size: 9px;
+  font-size: 14px;
 
   letter-spacing: 1px;
 
@@ -211,3 +201,4 @@
 
   user-select: none;
 }
+

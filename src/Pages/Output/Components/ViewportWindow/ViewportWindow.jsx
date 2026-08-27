@@ -224,14 +224,16 @@ function ViewportWindow({
         1200,
 
       /*
-       * ViewportWindow is centered by its
-       * CSS base transform.
+       * Output windows now use a true
+       * top-left workspace base position.
        *
-       * This keeps edge resizing behaving
-       * like a normal desktop window.
+       * North/west resizing therefore moves
+       * the persisted draggable offset while
+       * east/south resizing leaves the top-left
+       * corner fixed.
        */
       anchorMode:
-        "center",
+        "top-left",
 
       size,
 

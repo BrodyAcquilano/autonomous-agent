@@ -33,7 +33,7 @@ function MessagePanel({
 
   portalTargetRef,
 }) {
-  const messagesEndRef =
+  const messageScreenRef =
     useRef(
       null,
     );
@@ -118,12 +118,48 @@ function MessagePanel({
 
   useEffect(
     () => {
-      messagesEndRef
-        .current
-        ?.scrollIntoView({
-          behavior:
-            "smooth",
-        });
+      const screen =
+        messageScreenRef.current;
+
+
+      if (
+        !screen
+      ) {
+        return;
+      }
+
+
+      /*
+       * Do not use scrollIntoView here.
+       *
+       * This panel lives inside a transformed
+       * virtual viewport. scrollIntoView can
+       * scroll ancestor containers as well as
+       * this inner message surface, which can
+       * make the whole Console appear to pan
+       * when a new message is appended.
+       *
+       * Scroll only the message surface itself.
+       */
+      const frame =
+        window.requestAnimationFrame(
+          () => {
+            screen.scrollTo({
+              top:
+                screen.scrollHeight,
+
+              behavior:
+                "smooth",
+            });
+          },
+        );
+
+
+      return () => {
+        window.cancelAnimationFrame(
+          frame,
+        );
+      };
     },
     [
       messages,
@@ -201,6 +237,9 @@ function MessagePanel({
 
 
         <div
+          ref={
+            messageScreenRef
+          }
           className="message-panel-screen"
           data-console-wheel-scroll="true"
         >
@@ -232,13 +271,6 @@ function MessagePanel({
                   </div>
                 ),
               )}
-
-
-              <div
-                ref={
-                  messagesEndRef
-                }
-              />
             </div>
           )}
         </div>

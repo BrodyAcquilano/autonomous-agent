@@ -10,7 +10,7 @@
     var(
       --resize-width,
       clamp(
-        390px,
+        1000px,
         40vw,
         620px
       )
@@ -20,7 +20,7 @@
     var(
       --resize-height,
       clamp(
-        420px,
+        572px,
         58vh,
         560px
       )
@@ -40,7 +40,7 @@
         )
       ),
       calc(
-        -200px +
+        -230px +
         var(
           --drag-y,
           0px
@@ -231,7 +231,7 @@
     Consolas,
     monospace;
 
-  font-size: 12.5px;
+  font-size: 14px;
 
   letter-spacing: 1.8px;
 

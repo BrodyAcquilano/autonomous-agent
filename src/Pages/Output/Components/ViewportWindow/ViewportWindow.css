@@ -1,8 +1,16 @@
 .viewport-window {
   position: absolute;
 
-  left: 50%;
-  top: 50%;
+  /*
+   * Output windows now originate from the
+   * top-left of the virtual stage instead
+   * of all sharing a centered base.
+   *
+   * At the default 25% zoom this becomes
+   * a modest 24px screen-space margin.
+   */
+  left: 96px;
+  top: 96px;
 
   z-index: 20;
 
@@ -29,7 +37,6 @@
   transform:
     translate(
       calc(
-        -50% +
         var(
           --drag-x,
           0px
@@ -40,7 +47,6 @@
         )
       ),
       calc(
-        -50% +
         var(
           --drag-y,
           0px

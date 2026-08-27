@@ -88,22 +88,21 @@
 .output-viewport-scale {
   position: absolute;
 
-  right: 14px;
+  right: 25px;
   bottom: 12px;
 
   z-index: 15;
 
   padding:
     5px
-    8px;
+    20px;
 
   border:
     1px solid
-    rgba(
+    rgb(
       180,
       185,
-      192,
-      0.18
+      192
     );
 
   background:
@@ -116,10 +115,10 @@
 
   color:
     rgba(
-      205,
-      210,
-      218,
-      0.48
+      253,
+      254,
+      255,
+      0.759
     );
 
   font-family:
@@ -127,7 +126,7 @@
     Consolas,
     monospace;
 
-  font-size: 9px;
+  font-size: 14px;
 
   letter-spacing: 1px;
 

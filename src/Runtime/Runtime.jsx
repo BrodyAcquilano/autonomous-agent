@@ -636,23 +636,11 @@ async function hydrateContainerFile(
 
 
 /* --------------------------------
-   OUTPUT WINDOW LAYOUT
+   OUTPUT WINDOW LAYOUT STATE
 -------------------------------- */
 
 const OUTPUT_PLACEHOLDER_KEY =
   "__output-placeholder__";
-
-
-const OUTPUT_WIDGETS_PER_ROW =
-  5;
-
-
-const OUTPUT_WIDGET_COLUMN_SPACING =
-  440;
-
-
-const OUTPUT_WIDGET_ROW_SPACING =
-  590;
 
 
 function getOutputWidgetKey(
@@ -671,26 +659,31 @@ function createOutputWidgetOffsets(
   currentOffsets = {},
 ) {
   /*
-   * The empty Output window is a real
-   * draggable workspace window too.
+   * Runtime remembers user-arranged
+   * positions, but it no longer decides
+   * the automatic grid geometry.
    *
-   * Keep its offset permanently even
-   * while normal output files exist so
-   * it can be restored when Output is
-   * cleared without needing separate
-   * placeholder state.
+   * A null value means:
+   *
+   * "This window has never been manually
+   * arranged. Output may place it using
+   * the current virtual-stage width."
+   *
+   * Once the user drags/resizes from a
+   * north/west edge, setOutputWidgetOffset
+   * replaces null with the real x/y value.
    */
   const nextOffsets = {
     [OUTPUT_PLACEHOLDER_KEY]:
-      currentOffsets[
-        OUTPUT_PLACEHOLDER_KEY
-      ] || {
-        x:
-          0,
-
-        y:
-          0,
-      },
+      Object.prototype
+        .hasOwnProperty.call(
+          currentOffsets,
+          OUTPUT_PLACEHOLDER_KEY,
+        )
+        ? currentOffsets[
+            OUTPUT_PLACEHOLDER_KEY
+          ]
+        : null,
   };
 
 
@@ -705,107 +698,36 @@ function createOutputWidgetOffsets(
   }
 
 
-  const rowCount =
-    Math.ceil(
-      files.length /
-      OUTPUT_WIDGETS_PER_ROW,
-    );
-
-
-  for (
-    let rowIndex = 0;
-    rowIndex <
-    rowCount;
-    rowIndex += 1
-  ) {
-    const rowStartIndex =
-      rowIndex *
-      OUTPUT_WIDGETS_PER_ROW;
-
-
-    const filesInRow =
-      Math.min(
-        OUTPUT_WIDGETS_PER_ROW,
-
-        files.length -
-        rowStartIndex,
-      );
-
-
-    const centerColumn =
-      (
-        filesInRow -
-        1
-      ) /
-      2;
-
-
-    for (
-      let columnIndex = 0;
-      columnIndex <
-      filesInRow;
-      columnIndex += 1
-    ) {
-      const fileIndex =
-        rowStartIndex +
-        columnIndex;
-
-
-      const file =
-        files[
-          fileIndex
-        ];
-
-
+  files.forEach(
+    (
+      file,
+      index,
+    ) => {
       const widgetKey =
         getOutputWidgetKey(
           file,
-          fileIndex,
+          index,
         );
-
-
-      /*
-       * Preserve user-arranged
-       * positions during hydration.
-       */
-      if (
-        currentOffsets[
-          widgetKey
-        ]
-      ) {
-        nextOffsets[
-          widgetKey
-        ] =
-          currentOffsets[
-            widgetKey
-          ];
-
-
-        continue;
-      }
 
 
       nextOffsets[
         widgetKey
-      ] = {
-        x:
-          (
-            columnIndex -
-            centerColumn
-          ) *
-          OUTPUT_WIDGET_COLUMN_SPACING,
-
-        y:
-          rowIndex *
-          OUTPUT_WIDGET_ROW_SPACING,
-      };
-    }
-  }
+      ] =
+        Object.prototype
+          .hasOwnProperty.call(
+            currentOffsets,
+            widgetKey,
+          )
+          ? currentOffsets[
+              widgetKey
+            ]
+          : null;
+    },
+  );
 
 
   return nextOffsets;
 }
-
 
 function createEmptyWidgetSize() {
   return {
@@ -1029,13 +951,16 @@ function useRuntime() {
     setOutputWidgetOffsets,
   ] =
     useState({
-      [OUTPUT_PLACEHOLDER_KEY]: {
-        x:
-          0,
-
-        y:
-          0,
-      },
+      /*
+       * null means the placeholder has not
+       * been manually arranged yet.
+       *
+       * Output will place it using the same
+       * evenly-spaced stage layout as normal
+       * output windows.
+       */
+      [OUTPUT_PLACEHOLDER_KEY]:
+        null,
     });
 
 
@@ -1402,12 +1327,16 @@ function useRuntime() {
 
 
         /*
-         * A new output run begins
-         * centered again.
+         * A new output run returns to the
+         * Output viewport's default camera.
          *
-         * Route changes alone do not
-         * reset this because response
-         * does not change.
+         * The Output viewport defines that
+         * default as fully zoomed out and
+         * centered on the finite stage.
+         *
+         * Route changes alone do not reset
+         * this because response does not
+         * change.
          */
         setOutputViewportView(
           null,

@@ -430,7 +430,7 @@ function Viewport({
 
       commitView(
         getCenteredView(
-          1,
+          MIN_ZOOM,
         ),
       );
     },
@@ -798,6 +798,25 @@ function Viewport({
 
 
   /*
+   * Output may provide normal JSX children
+   * or a render function.
+   *
+   * The render-function form lets Output
+   * use the exact virtual-stage dimensions
+   * when calculating its automatic window
+   * layout without moving DOM measurements
+   * into Runtime.
+   */
+  const renderedChildren =
+    typeof children ===
+      "function"
+      ? children({
+          stageSize,
+        })
+      : children;
+
+
+  /*
    * Output Viewport has only one
    * direct child type: ViewportWindow.
    *
@@ -806,7 +825,7 @@ function Viewport({
    */
   const enhancedChildren =
     Children.map(
-      children,
+      renderedChildren,
       (
         child,
       ) => {

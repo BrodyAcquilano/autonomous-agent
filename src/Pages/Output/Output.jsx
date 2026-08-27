@@ -35,6 +35,141 @@ const EMPTY_FILE_TYPES = {
 
 
 /* --------------------------------
+   AUTOMATIC WINDOW LAYOUT
+-------------------------------- */
+
+/*
+ * Keep five slots per row.
+ *
+ * 430px matches the widest standard
+ * non-resized Output window footprint:
+ * document/text/code/markdown windows.
+ *
+ * Image windows are slightly narrower,
+ * so they simply receive a little more
+ * visual breathing room.
+ */
+const OUTPUT_WINDOWS_PER_ROW =
+  5;
+
+
+const OUTPUT_LAYOUT_WINDOW_WIDTH =
+  430;
+
+
+/*
+ * ViewportWindow currently supplies this
+ * shared world-space base position:
+ *
+ *   left: 96px;
+ *   top: 96px;
+ *
+ * Automatic offsets are relative to that
+ * base, so subtract it from the calculated
+ * absolute stage position.
+ */
+const OUTPUT_WINDOW_BASE_LEFT =
+  96;
+
+
+const OUTPUT_WIDGET_ROW_SPACING =
+  590;
+
+
+/*
+ * Six horizontal gaps for five windows:
+ *
+ * | gap | window | gap | window | ... | gap |
+ *
+ * This gives the left edge, four inner
+ * spaces, and right edge the same share
+ * of the unused virtual-stage width.
+ */
+function getAutomaticWindowOffset(
+  index,
+  stageWidth,
+) {
+  const safeStageWidth =
+    Number.isFinite(
+      stageWidth,
+    ) &&
+    stageWidth >
+      0
+      ? stageWidth
+      : 3200;
+
+
+  const totalWindowWidth =
+    OUTPUT_WINDOWS_PER_ROW *
+    OUTPUT_LAYOUT_WINDOW_WIDTH;
+
+
+  const horizontalGap =
+    Math.max(
+      0,
+      (
+        safeStageWidth -
+        totalWindowWidth
+      ) /
+      (
+        OUTPUT_WINDOWS_PER_ROW +
+        1
+      ),
+    );
+
+
+  const columnIndex =
+    index %
+    OUTPUT_WINDOWS_PER_ROW;
+
+
+  const rowIndex =
+    Math.floor(
+      index /
+      OUTPUT_WINDOWS_PER_ROW,
+    );
+
+
+  const absoluteX =
+    horizontalGap +
+    columnIndex *
+    (
+      OUTPUT_LAYOUT_WINDOW_WIDTH +
+      horizontalGap
+    );
+
+
+  return {
+    /*
+     * ViewportWindow.css already contributes
+     * its 96px base-left value.
+     */
+    x:
+      absoluteX -
+      OUTPUT_WINDOW_BASE_LEFT,
+
+    y:
+      rowIndex *
+      OUTPUT_WIDGET_ROW_SPACING,
+  };
+}
+
+
+function isStoredWindowOffset(
+  value,
+) {
+  return (
+    Number.isFinite(
+      value?.x,
+    ) &&
+    Number.isFinite(
+      value?.y,
+    )
+  );
+}
+
+
+/* --------------------------------
    FILE HELPERS
 -------------------------------- */
 
@@ -628,159 +763,178 @@ function Output({
           setViewportView
         }
       >
-        {windows.map(
-          (
-            file,
-            index,
-          ) => {
-            const fileId =
-              file.id ||
-              `${file.fileName || "output"}-${index}`;
+        {({
+          stageSize,
+        }) =>
+          windows.map(
+            (
+              file,
+              index,
+            ) => {
+              const fileId =
+                file.id ||
+                `${file.fileName || "output"}-${index}`;
 
 
-            const rendererType =
-              getRendererType(
-                file,
-                fileTypes,
-              );
-
-
-            const windowVariant =
-              getWindowVariant(
-                rendererType,
-              );
-
-
-            const offset =
-              widgetOffsets[
-                fileId
-              ] || {
-                x:
-                  0,
-
-                y:
-                  0,
-              };
-
-
-            const size =
-              widgetSizes[
-                fileId
-              ] ||
-              null;
-
-
-            const aspectRatio =
-              rendererType ===
-                "image"
-                ? imageAspectRatios[
-                    fileId
-                  ] ||
-                  null
-                : null;
-
-
-            const canSave =
-              canSaveOutputFile(
-                file,
-              );
-
-
-            return (
-              <ViewportWindow
-                key={
-                  fileId
-                }
-
-                offset={
-                  offset
-                }
-
-                onOffsetChange={(
-                  nextOffset,
-                ) => {
-                  if (
-                    typeof setWidgetOffset ===
-                    "function"
-                  ) {
-                    setWidgetOffset(
-                      fileId,
-                      nextOffset,
-                    );
-                  }
-                }}
-
-                size={
-                  size
-                }
-
-                onSizeChange={(
-                  nextSize,
-                ) => {
-                  if (
-                    typeof setWidgetSize ===
-                    "function"
-                  ) {
-                    setWidgetSize(
-                      fileId,
-                      nextSize,
-                    );
-                  }
-                }}
-
-                zIndex={
-                  20 +
-                  index
-                }
-
-                variant={
-                  windowVariant
-                }
-
-                aspectRatio={
-                  aspectRatio
-                }
-
-                ariaLabel={
-                  file.placeholder
-                    ? "Empty output window"
-                    : file.fileName ||
-                      `Output file ${index + 1}`
-                }
-
-                showSave={
-                  !file.placeholder
-                }
-
-                canSave={
-                  canSave
-                }
-
-                onSave={() => {
-                  saveOutputFile(
-                    file,
-                  );
-                }}
-              >
-                {renderOutputFile({
+              const rendererType =
+                getRendererType(
                   file,
+                  fileTypes,
+                );
 
+
+              const windowVariant =
+                getWindowVariant(
                   rendererType,
+                );
 
-                  onImageAspectRatio:
-                    (
-                      ratio,
-                    ) => {
-                      handleImageAspectRatio(
+
+              const storedOffset =
+                widgetOffsets[
+                  fileId
+                ];
+
+
+              /*
+               * Runtime only stores an offset
+               * after the user has actually
+               * arranged this window.
+               *
+               * Otherwise calculate the default
+               * five-column position from the
+               * exact current virtual-stage width.
+               */
+              const offset =
+                isStoredWindowOffset(
+                  storedOffset,
+                )
+                  ? storedOffset
+                  : getAutomaticWindowOffset(
+                      index,
+                      stageSize
+                        ?.width,
+                    );
+
+
+              const size =
+                widgetSizes[
+                  fileId
+                ] ||
+                null;
+
+
+              const aspectRatio =
+                rendererType ===
+                  "image"
+                  ? imageAspectRatios[
+                      fileId
+                    ] ||
+                    null
+                  : null;
+
+
+              const canSave =
+                canSaveOutputFile(
+                  file,
+                );
+
+
+              return (
+                <ViewportWindow
+                  key={
+                    fileId
+                  }
+
+                  offset={
+                    offset
+                  }
+
+                  onOffsetChange={(
+                    nextOffset,
+                  ) => {
+                    if (
+                      typeof setWidgetOffset ===
+                      "function"
+                    ) {
+                      setWidgetOffset(
                         fileId,
-                        ratio,
+                        nextOffset,
                       );
-                    },
-                })}
-              </ViewportWindow>
-            );
-          },
-        )}
+                    }
+                  }}
+
+                  size={
+                    size
+                  }
+
+                  onSizeChange={(
+                    nextSize,
+                  ) => {
+                    if (
+                      typeof setWidgetSize ===
+                      "function"
+                    ) {
+                      setWidgetSize(
+                        fileId,
+                        nextSize,
+                      );
+                    }
+                  }}
+
+                  zIndex={
+                    20 +
+                    index
+                  }
+
+                  variant={
+                    windowVariant
+                  }
+
+                  aspectRatio={
+                    aspectRatio
+                  }
+
+                  ariaLabel={
+                    file.placeholder
+                      ? "Empty output window"
+                      : file.fileName ||
+                        `Output file ${index + 1}`
+                  }
+
+                  showSave={
+                    !file.placeholder
+                  }
+
+                  canSave={
+                    canSave
+                  }
+
+                  onSave={() => {
+                    saveOutputFile(
+                      file,
+                    );
+                  }}
+                >
+                  {renderOutputFile({
+                    file,
+
+                    rendererType,
+
+                    onImageAspectRatio:
+                      (
+                        ratio,
+                      ) => {
+                        handleImageAspectRatio(
+                          fileId,
+                          ratio,
+                        );
+                      },
+                  })}
+                </ViewportWindow>
+              );
+            },
+          )
+        }
       </Viewport>
     </main>
   );
