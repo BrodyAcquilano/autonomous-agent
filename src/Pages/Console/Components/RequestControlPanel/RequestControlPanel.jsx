@@ -44,25 +44,32 @@ const IMAGE_SIZES = [
 
 function RequestControlPanel({
   model,
+
   requestSettings,
   setRequestSettings,
+
   boundsRef,
 
+  scale = 1,
+
   offset,
+
   onOffsetChange,
 }) {
   const {
-  dragRef,
-  dragHandleProps,
-  dragStyle,
-} =
-  useDraggable({
-    boundsRef,
+    dragRef,
+    dragHandleProps,
+    dragStyle,
+  } =
+    useDraggable({
+      boundsRef,
 
-    offset,
+      scale,
 
-    onOffsetChange,
-  });
+      offset,
+
+      onOffsetChange,
+    });
 
 
   function updateReasoning(
@@ -133,32 +140,34 @@ function RequestControlPanel({
     );
   }
 
+
   function updateToolEnabled(
-  toolKey,
-  enabled,
-) {
-  setRequestSettings(
-    (
-      current,
-    ) => ({
-      ...current,
+    toolKey,
+    enabled,
+  ) {
+    setRequestSettings(
+      (
+        current,
+      ) => ({
+        ...current,
 
-      tools: {
-        ...current.tools,
+        tools: {
+          ...current.tools,
 
-        [toolKey]: {
-          ...current
-            .tools
-            ?.[
-              toolKey
-            ],
+          [toolKey]: {
+            ...current
+              .tools
+              ?.[
+                toolKey
+              ],
 
-          enabled,
+            enabled,
+          },
         },
-      },
-    }),
-  );
-}
+      }),
+    );
+  }
+
 
   function updateMaxOutputTokens(
     value,
@@ -177,6 +186,7 @@ function RequestControlPanel({
             null,
         }),
       );
+
 
       return;
     }
@@ -206,8 +216,10 @@ function RequestControlPanel({
         max_output_tokens:
           Math.min(
             128000,
+
             Math.max(
               1,
+
               Math.trunc(
                 parsedValue,
               ),
@@ -227,20 +239,31 @@ function RequestControlPanel({
         false,
 
       quality:
-        "high",
+        "auto",
 
       size:
-        "1024x1024",
+        "auto",
     };
 
-    const codeInterpreter =
-  requestSettings
-    .tools
-    ?.code_interpreter ||
-  {
-    enabled:
-      false,
-  };
+
+  const codeInterpreter =
+    requestSettings
+      .tools
+      ?.code_interpreter ||
+    {
+      enabled:
+        false,
+    };
+
+
+  const webSearch =
+    requestSettings
+      .tools
+      ?.web_search ||
+    {
+      enabled:
+        false,
+    };
 
 
   return (
@@ -261,6 +284,7 @@ function RequestControlPanel({
           REQUEST CONTROL
         </span>
 
+
         <span className="request-control-panel-model">
           {model}
         </span>
@@ -278,6 +302,7 @@ function RequestControlPanel({
             <span className="request-control-label">
               REASONING EFFORT
             </span>
+
 
             <select
               value={
@@ -319,6 +344,7 @@ function RequestControlPanel({
               REASONING MODE
             </span>
 
+
             <select
               value={
                 requestSettings
@@ -358,6 +384,7 @@ function RequestControlPanel({
             <span className="request-control-label">
               VERBOSITY
             </span>
+
 
             <select
               value={
@@ -399,6 +426,7 @@ function RequestControlPanel({
               MAX OUTPUT TOKENS
             </span>
 
+
             <input
               type="number"
               min="1"
@@ -423,168 +451,210 @@ function RequestControlPanel({
 
 
       <div className="request-control-panel-section request-control-tools-section">
-  <div className="request-control-panel-section-title">
-    TOOLS
-  </div>
+        <div className="request-control-panel-section-title">
+          TOOLS
+        </div>
 
 
-  <div className="request-control-tools-list">
-    <div className="request-control-tool">
-      <label className="request-control-tool-row">
-        <input
-          type="checkbox"
-          checked={
-            imageGeneration.enabled
-          }
-          onChange={(
-            event,
-          ) => {
-            updateToolEnabled(
-              "image_generation",
-              event.target.checked,
-            );
-          }}
-        />
+        <div className="request-control-tools-list">
+          <div className="request-control-tool">
+            <label className="request-control-tool-row">
+              <input
+                type="checkbox"
+                checked={
+                  imageGeneration.enabled
+                }
+                onChange={(
+                  event,
+                ) => {
+                  updateToolEnabled(
+                    "image_generation",
+                    event.target.checked,
+                  );
+                }}
+              />
 
 
-        <span className="request-control-tool-copy">
-          <span className="request-control-tool-name">
-            IMAGE GENERATION
-          </span>
-
-          <span className="request-control-tool-description">
-            OPTIONAL IMAGE OUTPUT USING GPT-IMAGE-2
-          </span>
-        </span>
-      </label>
+              <span className="request-control-tool-copy">
+                <span className="request-control-tool-name">
+                  IMAGE GENERATION
+                </span>
 
 
-      <div
-        className={`request-control-panel-grid request-control-tool-options ${
-          imageGeneration.enabled
-            ? ""
-            : "disabled"
-        }`}
-      >
-        <label className="request-control-field">
-          <span className="request-control-label">
-            QUALITY
-          </span>
+                <span className="request-control-tool-description">
+                  OPTIONAL IMAGE OUTPUT USING GPT-IMAGE-2
+                </span>
+              </span>
+            </label>
 
-          <select
-            disabled={
-              !imageGeneration.enabled
-            }
-            value={
-              imageGeneration.quality
-            }
-            onChange={(
-              event,
-            ) => {
-              updateImageGeneration(
-                "quality",
-                event.target.value,
-              );
-            }}
-          >
-            {IMAGE_QUALITIES.map(
-              (
-                option,
-              ) => (
-                <option
-                  key={
-                    option
+
+            <div
+              className={`request-control-panel-grid request-control-tool-options ${
+                imageGeneration.enabled
+                  ? ""
+                  : "disabled"
+              }`}
+            >
+              <label className="request-control-field">
+                <span className="request-control-label">
+                  QUALITY
+                </span>
+
+
+                <select
+                  disabled={
+                    !imageGeneration.enabled
                   }
                   value={
-                    option
+                    imageGeneration.quality
                   }
+                  onChange={(
+                    event,
+                  ) => {
+                    updateImageGeneration(
+                      "quality",
+                      event.target.value,
+                    );
+                  }}
                 >
-                  {option.toUpperCase()}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
+                  {IMAGE_QUALITIES.map(
+                    (
+                      option,
+                    ) => (
+                      <option
+                        key={
+                          option
+                        }
+                        value={
+                          option
+                        }
+                      >
+                        {option.toUpperCase()}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
 
 
-        <label className="request-control-field">
-          <span className="request-control-label">
-            SIZE
-          </span>
+              <label className="request-control-field">
+                <span className="request-control-label">
+                  SIZE
+                </span>
 
-          <select
-            disabled={
-              !imageGeneration.enabled
-            }
-            value={
-              imageGeneration.size
-            }
-            onChange={(
-              event,
-            ) => {
-              updateImageGeneration(
-                "size",
-                event.target.value,
-              );
-            }}
-          >
-            {IMAGE_SIZES.map(
-              (
-                option,
-              ) => (
-                <option
-                  key={
-                    option
+
+                <select
+                  disabled={
+                    !imageGeneration.enabled
                   }
                   value={
-                    option
+                    imageGeneration.size
                   }
+                  onChange={(
+                    event,
+                  ) => {
+                    updateImageGeneration(
+                      "size",
+                      event.target.value,
+                    );
+                  }}
                 >
-                  {option.toUpperCase()}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
+                  {IMAGE_SIZES.map(
+                    (
+                      option,
+                    ) => (
+                      <option
+                        key={
+                          option
+                        }
+                        value={
+                          option
+                        }
+                      >
+                        {option.toUpperCase()}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+            </div>
+          </div>
+
+
+          <div className="request-control-tool">
+            <label className="request-control-tool-row">
+              <input
+                type="checkbox"
+                checked={
+                  codeInterpreter.enabled
+                }
+                onChange={(
+                  event,
+                ) => {
+                  updateToolEnabled(
+                    "code_interpreter",
+                    event.target.checked,
+                  );
+                }}
+              />
+
+
+              <span className="request-control-tool-copy">
+                <span className="request-control-tool-name">
+                  CODE INTERPRETER
+                </span>
+
+
+                <span className="request-control-tool-description">
+                  FILE GENERATION + PYTHON CODE EXECUTION
+                </span>
+
+
+                <span className="request-control-tool-formats">
+                  PDF · MD · TXT · CSV · XLSX · CODE · IMAGES · ZIP + MORE
+                </span>
+              </span>
+            </label>
+          </div>
+
+
+          <div className="request-control-tool">
+            <label className="request-control-tool-row">
+              <input
+                type="checkbox"
+                checked={
+                  webSearch.enabled
+                }
+                onChange={(
+                  event,
+                ) => {
+                  updateToolEnabled(
+                    "web_search",
+                    event.target.checked,
+                  );
+                }}
+              />
+
+
+              <span className="request-control-tool-copy">
+                <span className="request-control-tool-name">
+                  WEB SEARCH
+                </span>
+
+
+                <span className="request-control-tool-description">
+                  SEARCH CURRENT PUBLIC WEB INFORMATION
+                </span>
+
+
+                <span className="request-control-tool-formats">
+                  CURRENT INFORMATION · SOURCES · CITATIONS
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
-    </div>
-
-
-    <div className="request-control-tool">
-      <label className="request-control-tool-row">
-        <input
-          type="checkbox"
-          checked={
-            codeInterpreter.enabled
-          }
-          onChange={(
-            event,
-          ) => {
-            updateToolEnabled(
-              "code_interpreter",
-              event.target.checked,
-            );
-          }}
-        />
-
-
-        <span className="request-control-tool-copy">
-          <span className="request-control-tool-name">
-            CODE INTERPRETER
-          </span>
-
-          <span className="request-control-tool-description">
-            FILE GENERATION + PYTHON CODE EXECUTION
-          </span>
-
-          <span className="request-control-tool-formats">
-            PDF · MD · TXT · CSV · XLSX · CODE · IMAGES · ZIP + MORE
-          </span>
-        </span>
-      </label>
-    </div>
-  </div>
-</div>
     </section>
   );
 }

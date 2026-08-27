@@ -1,80 +1,177 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import useDraggable from "../../../../Hooks/useDraggable";
 
 import "./MessagePanel.css";
 
+
 function MessagePanel({
   messages,
+
   boundsRef,
 
+  scale = 1,
+
   offset,
+
   onOffsetChange,
 }) {
-  const messagesEndRef = useRef(null);
+  const messagesEndRef =
+    useRef(
+      null,
+    );
 
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  const { dragRef, dragHandleProps, dragStyle } = useDraggable({
-  boundsRef,
+  const [
+    isExpanded,
+    setIsExpanded,
+  ] =
+    useState(
+      false,
+    );
 
-  offset,
 
-  onOffsetChange,
-});
+  const {
+    dragRef,
+    dragHandleProps,
+    dragStyle,
+  } =
+    useDraggable({
+      boundsRef,
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
+      scale,
+
+      offset,
+
+      onOffsetChange,
     });
-  }, [messages]);
+
+
+  useEffect(
+    () => {
+      messagesEndRef
+        .current
+        ?.scrollIntoView({
+          behavior:
+            "smooth",
+        });
+    },
+    [
+      messages,
+    ],
+  );
+
 
   return (
     <section
-      ref={dragRef}
-      className={`message-panel ${isExpanded ? "expanded" : ""}`}
-      style={dragStyle}
+      ref={
+        dragRef
+      }
+      className={`message-panel ${
+        isExpanded
+          ? "expanded"
+          : ""
+      }`}
+      style={
+        dragStyle
+      }
     >
-      <div className="message-panel-header" {...dragHandleProps}>
-        <span className="message-panel-title">CONSOLE OUTPUT</span>
+      <div
+        className="message-panel-header"
+        {...dragHandleProps}
+      >
+        <span className="message-panel-title">
+          CONSOLE OUTPUT
+        </span>
+
 
         <div className="message-panel-controls">
-          <span className="message-panel-status">COMMUNICATION CHANNEL</span>
+          <span className="message-panel-status">
+            COMMUNICATION CHANNEL
+          </span>
+
 
           <button
             type="button"
             className="message-panel-window-button"
             aria-label={
-              isExpanded ? "Restore console window" : "Maximize console window"
+              isExpanded
+                ? "Restore console window"
+                : "Maximize console window"
             }
-            title={isExpanded ? "Restore" : "Maximize"}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => setIsExpanded((current) => !current)}
+            title={
+              isExpanded
+                ? "Restore"
+                : "Maximize"
+            }
+            onPointerDown={(
+              event,
+            ) => {
+              event.stopPropagation();
+            }}
+            onClick={() => {
+              setIsExpanded(
+                (
+                  current,
+                ) =>
+                  !current,
+              );
+            }}
           >
-            {isExpanded ? "❐" : "□"}
+            {isExpanded
+              ? "❐"
+              : "□"}
           </button>
         </div>
       </div>
 
+
       <div className="message-panel-screen">
-        {messages.length === 0 ? (
-          <div className="message-panel-empty">AWAITING INPUT...</div>
+        {messages.length ===
+        0 ? (
+          <div className="message-panel-empty">
+            AWAITING INPUT...
+          </div>
         ) : (
           <div className="message-list">
-            {messages.map((message) => (
-              <div key={message.id} className={`message ${message.role}`}>
-                <div className="message-label">{message.label}</div>
+            {messages.map(
+              (
+                message,
+              ) => (
+                <div
+                  key={
+                    message.id
+                  }
+                  className={`message ${message.role}`}
+                >
+                  <div className="message-label">
+                    {message.label}
+                  </div>
 
-                <div className="message-content">{message.content}</div>
-              </div>
-            ))}
 
-            <div ref={messagesEndRef} />
+                  <div className="message-content">
+                    {message.content}
+                  </div>
+                </div>
+              ),
+            )}
+
+
+            <div
+              ref={
+                messagesEndRef
+              }
+            />
           </div>
         )}
       </div>
     </section>
   );
 }
+
 
 export default MessagePanel;

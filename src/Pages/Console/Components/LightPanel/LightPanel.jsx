@@ -16,10 +16,12 @@ const STATUS_LABELS = {
 
 
 function LightPanel({
-  boundsRef,
-
   systemStatus =
     "ready",
+
+  boundsRef,
+
+  scale = 1,
 
   offset,
 
@@ -32,6 +34,8 @@ function LightPanel({
   } =
     useDraggable({
       boundsRef,
+
+      scale,
 
       offset,
 

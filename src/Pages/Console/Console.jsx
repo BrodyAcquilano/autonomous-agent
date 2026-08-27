@@ -1,7 +1,4 @@
-import {
-  useRef,
-  useState,
-} from "react";
+import ConsoleViewport from "./Components/ConsoleViewport/ConsoleViewport";
 
 import CommandShell from "./Components/CommandShell/CommandShell";
 import CommunicationArray from "./Components/CommunicationArray/CommunicationArray";
@@ -61,171 +58,163 @@ function Console({
 
   reportError,
 
-  widgetOffsets,
-  setWidgetOffset,
+  requestSettings,
+  setRequestSettings,
+
+  consoleWidgetOffsets,
+  setConsoleWidgetOffset,
+
+  viewportView,
+  setViewportView,
 }) {
-  const [
-    requestSettings,
-    setRequestSettings,
-  ] =
-    useState({
-      reasoning: {
-        effort:
-          "medium",
-
-        mode:
-          "standard",
-      },
-
-      max_output_tokens:
-        12000,
-
-      text: {
-        verbosity:
-          "medium",
-      },
-
-      tools: {
-        image_generation: {
-          enabled:
-            false,
-
-          quality:
-            "high",
-
-          size:
-            "1024x1024",
-        },
-
-        code_interpreter: {
-          enabled:
-            false,
-        },
-      },
-    });
-
-
-  const widgetBoundsRef =
-    useRef(
-      null,
-    );
-
-
   return (
     <main className="console-page">
-      <div
-        className="retro-background"
-        aria-hidden="true"
-      >
-        <div className="deep-space-glow" />
-
-
-        <pre className="terminal-stars terminal-stars-one">
-          {STAR_FIELD_ONE}
-        </pre>
-
-
-        <pre className="terminal-stars terminal-stars-two">
-          {STAR_FIELD_TWO}
-        </pre>
-
-
-        <div className="scanlines" />
-
-
-        <div className="screen-vignette" />
-      </div>
-
-
-      <pre
-        className="terminal-man-banner"
-        aria-hidden="true"
-      >
-        {TERMINAL_MAN_BANNER}
-      </pre>
-
-
-      <section className="console-workspace">
-        <CommunicationArray />
-      </section>
-
-
-      <div
-        ref={
-          widgetBoundsRef
-        }
-        className="console-widget-layer"
-      >
-        <LightPanel
-          systemStatus={
-            systemStatus
+      <div className="console-viewport-layer">
+        <ConsoleViewport
+          view={
+            viewportView
           }
-          boundsRef={
-            widgetBoundsRef
+          onViewChange={
+            setViewportView
           }
-          offset={
-            widgetOffsets
-              ?.lightPanel
-          }
-          onOffsetChange={(
-            nextOffset,
-          ) => {
-            setWidgetOffset(
-              "lightPanel",
-              nextOffset,
-            );
-          }}
-        />
+        >
+          {({
+            boundsRef,
+            scale,
+          }) => (
+            <>
+              <div
+                className="retro-background"
+                aria-hidden="true"
+              >
+                <div className="deep-space-glow" />
 
 
-        <RequestControlPanel
-          model={
-            ROUTER_MODEL_ID
-          }
-          requestSettings={
-            requestSettings
-          }
-          setRequestSettings={
-            setRequestSettings
-          }
-          boundsRef={
-            widgetBoundsRef
-          }
-          offset={
-            widgetOffsets
-              ?.requestControlPanel
-          }
-          onOffsetChange={(
-            nextOffset,
-          ) => {
-            setWidgetOffset(
-              "requestControlPanel",
-              nextOffset,
-            );
-          }}
-        />
+                <pre className="terminal-stars terminal-stars-one">
+                  {STAR_FIELD_ONE}
+                </pre>
 
 
-        <MessagePanel
-          messages={
-            messages
-          }
-          boundsRef={
-            widgetBoundsRef
-          }
-          offset={
-            widgetOffsets
-              ?.messagePanel
-          }
-          onOffsetChange={(
-            nextOffset,
-          ) => {
-            setWidgetOffset(
-              "messagePanel",
-              nextOffset,
-            );
-          }}
-        />
+                <pre className="terminal-stars terminal-stars-two">
+                  {STAR_FIELD_TWO}
+                </pre>
+
+
+                <div className="scanlines" />
+
+
+                <div className="screen-vignette" />
+              </div>
+
+
+              <pre
+                className="terminal-man-banner"
+                aria-hidden="true"
+              >
+                {TERMINAL_MAN_BANNER}
+              </pre>
+
+
+              <section className="console-workspace">
+                <CommunicationArray />
+              </section>
+
+
+              <LightPanel
+                systemStatus={
+                  systemStatus
+                }
+
+                boundsRef={
+                  boundsRef
+                }
+
+                scale={
+                  scale
+                }
+
+                offset={
+                  consoleWidgetOffsets
+                    ?.lightPanel
+                }
+
+                onOffsetChange={(
+                  nextOffset,
+                ) => {
+                  setConsoleWidgetOffset(
+                    "lightPanel",
+                    nextOffset,
+                  );
+                }}
+              />
+
+
+              <RequestControlPanel
+                model={
+                  ROUTER_MODEL_ID
+                }
+
+                requestSettings={
+                  requestSettings
+                }
+                setRequestSettings={
+                  setRequestSettings
+                }
+
+                boundsRef={
+                  boundsRef
+                }
+
+                scale={
+                  scale
+                }
+
+                offset={
+                  consoleWidgetOffsets
+                    ?.requestControlPanel
+                }
+
+                onOffsetChange={(
+                  nextOffset,
+                ) => {
+                  setConsoleWidgetOffset(
+                    "requestControlPanel",
+                    nextOffset,
+                  );
+                }}
+              />
+
+
+              <MessagePanel
+                messages={
+                  messages
+                }
+
+                boundsRef={
+                  boundsRef
+                }
+
+                scale={
+                  scale
+                }
+
+                offset={
+                  consoleWidgetOffsets
+                    ?.messagePanel
+                }
+
+                onOffsetChange={(
+                  nextOffset,
+                ) => {
+                  setConsoleWidgetOffset(
+                    "messagePanel",
+                    nextOffset,
+                  );
+                }}
+              />
+            </>
+          )}
+        </ConsoleViewport>
       </div>
 
 
@@ -234,18 +223,22 @@ function Console({
           model={
             ROUTER_MODEL_ID
           }
+
           requestSettings={
             requestSettings
           }
+
           setMessages={
             setMessages
           }
           setResponse={
             setResponse
           }
+
           setSystemStatus={
             setSystemStatus
           }
+
           reportError={
             reportError
           }

@@ -6,24 +6,45 @@
 
   z-index: 1;
 
-  --signal-axis: 50%;
-  --ascii-antenna-column: 25.5ch;
+  pointer-events: none;
+
+  user-select: none;
+}
+
+
+.communication-array-scene {
+  width: 520px;
+  height: 390px;
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  --signal-axis:
+    50%;
+
+  --ascii-antenna-column:
+    25.5ch;
 
   font-family:
     "Courier New",
     Consolas,
     monospace;
-
-  user-select: none;
 }
+
+
+/* --------------------------------
+   DISH GLOW
+-------------------------------- */
 
 .communication-array-glow {
   position: absolute;
 
+  inset: 0;
+
   width: 520px;
   height: 390px;
-
-  inset: 0;
 
   border-radius: 50%;
 
@@ -31,16 +52,26 @@
     radial-gradient(
       ellipse,
       rgba(
-        48,
-        168,
-        73,
-        0.09
+        75,
+        255,
+        203,
+        0.12
       ),
-      transparent 70%
+      rgba(
+        68,
+        228,
+        210,
+        0.04
+      )
+      44%,
+      transparent
+      72%
     );
 
   filter:
-    blur(22px);
+    blur(
+      24px
+    );
 }
 
 
@@ -74,10 +105,10 @@
 
   color:
     rgba(
-      98,
+      106,
       255,
-      126,
-      0.78
+      209,
+      0.92
     );
 
   font-family:
@@ -93,170 +124,97 @@
   text-shadow:
     0
     0
-    4px
+    5px
     rgba(
       76,
       255,
-      106,
-      0.44
+      205,
+      0.68
     ),
     0
     0
-    12px
+    14px
     rgba(
-      76,
-      255,
-      106,
-      0.13
+      65,
+      236,
+      214,
+      0.24
     );
 }
 
 
 /* --------------------------------
-   SIGNAL BEAMS
+   OUTWARD RADIO WAVES
 -------------------------------- */
 
-.signal-beam {
+/*
+ * The top of the ASCII antenna is at
+ * roughly y = 132px in the original
+ * 520 x 390 scene.
+ *
+ * The wave emitter is anchored there.
+ * Because the entire scene is scaled 2x,
+ * this automatically becomes the correct
+ * 2x position on screen.
+ */
+.signal-waves {
   position: absolute;
 
-  left: 50%;
+  left:
+    var(
+      --signal-axis
+    );
+
   top: 132px;
 
   z-index: 3;
 
-  width: 230px;
-  height: 3px;
-
-  display: flex;
-
-  gap: 22px;
-
-  transform-origin:
-    0
-    50%;
+  width: 1px;
+  height: 1px;
 
   pointer-events: none;
 }
 
 
-.signal-beam-left {
+/*
+ * Each pulse begins close to the antenna
+ * and then moves upward while spreading
+ * horizontally and fading.
+ */
+.signal-wave-pulse {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 170px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
   transform:
-    rotate(225deg);
-}
+    translate(
+      -50%,
+      -50%
+    )
+    scaleX(
+      0.42
+    );
 
-
-.signal-beam-center {
-  transform:
-    rotate(270deg);
-}
-
-
-.signal-beam-right {
-  transform:
-    rotate(315deg);
-}
-
-
-.signal-dash {
-  width: 15px;
-  height: 2px;
-
-  flex-shrink: 0;
+  transform-origin:
+    center;
 
   opacity: 0;
 
-  background:
-    rgba(
-      102,
-      255,
-      130,
-      0.95
-    );
-
-  box-shadow:
-    0
-    0
-    6px
-    rgba(
-      78,
-      255,
-      107,
-      0.72
-    );
-
-  animation:
-    signal-dash-pulse
-    4.8s
-    linear
-    infinite;
-
-  animation-delay:
-    calc(
-      var(--dash-index) *
-      0.15s
-    );
-}
-
-
-@keyframes signal-dash-pulse {
-  0% {
-    opacity: 0;
-
-    transform:
-      translateX(0);
-  }
-
-  4% {
-    opacity: 1;
-  }
-
-  10% {
-    opacity: 1;
-
-    transform:
-      translateX(8px);
-  }
-
-  18% {
-    opacity: 0;
-
-    transform:
-      translateX(18px);
-  }
-
-  100% {
-    opacity: 0;
-
-    transform:
-      translateX(18px);
-  }
-}
-
-
-/* --------------------------------
-   RADIO WAVES
--------------------------------- */
-
-.signal-waves {
-  position: absolute;
-
-  top: 12px;
-  left: 50%;
-
-  z-index: 3;
-
-  width: 330px;
-  height: 110px;
-
-  transform:
-    translateX(-50%);
-
   color:
     rgba(
-      102,
+      112,
       255,
-      130,
-      0.75
+      224,
+      0.92
     );
 
   font-family:
@@ -264,114 +222,129 @@
 
   font-size: 12px;
 
+  line-height: 1;
+
   text-shadow:
     0
     0
     5px
     rgba(
-      78,
+      79,
       255,
-      107,
-      0.5
+      220,
+      0.68
+    ),
+    0
+    0
+    14px
+    rgba(
+      65,
+      236,
+      214,
+      0.22
     );
 
-  pointer-events: none;
+  animation:
+    communication-wave-pulse
+    7.2s
+    ease-out
+    infinite;
+
+  animation-delay:
+    calc(
+      var(
+        --wave-index
+      ) *
+      1.8s
+    );
 }
 
 
-.signal-wave {
-  position: absolute;
-
-  left: 50%;
-
-  transform:
-    translateX(-50%);
+.signal-wave-left,
+.signal-wave-right {
+  display: block;
 
   white-space: pre;
-
-  animation:
-    signal-wave-flicker
-    3.8s
-    steps(1)
-    infinite;
 }
 
 
-.signal-wave-outer {
-  top: 0;
-
-  opacity: 0.32;
-
-  animation-delay:
-    -0.6s;
-}
-
-
-.signal-wave-middle {
-  top: 25px;
-
-  opacity: 0.52;
-
-  animation-delay:
-    -1.3s;
-}
-
-
-.signal-wave-inner {
-  top: 50px;
-
-  opacity: 0.72;
-
-  animation-delay:
-    -2.1s;
-}
-
-
-@keyframes signal-wave-flicker {
+@keyframes communication-wave-pulse {
   0% {
-    opacity: 0.15;
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -10px
+      )
+      scaleX(
+        0.38
+      )
+      scaleY(
+        0.82
+      );
   }
 
   8% {
-    opacity: 0.8;
+    opacity: 0.82;
   }
 
-  19% {
-    opacity: 0.35;
+  48% {
+    opacity: 0.56;
+
+    transform:
+      translate(
+        -50%,
+        -90px
+      )
+      scaleX(
+        0.92
+      )
+      scaleY(
+        1
+      );
   }
 
-  28% {
-    opacity: 0.95;
-  }
-
-  46% {
-    opacity: 0.3;
-  }
-
-  57% {
-    opacity: 0.72;
-  }
-
-  73% {
-    opacity: 0.18;
-  }
-
-  82% {
-    opacity: 0.88;
+  78% {
+    opacity: 0.22;
   }
 
   100% {
-    opacity: 0.25;
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -175px
+      )
+      scaleX(
+        1.5
+      )
+      scaleY(
+        1.08
+      );
   }
 }
 
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
 
 @media (
   max-width: 720px
 ) {
   .communication-array {
+    width: 780px;
+    height: 585px;
+  }
+
+
+  .communication-array-scene {
     transform:
-      scale(0.82);
+      scale(
+        1.5
+      );
   }
 }
 
@@ -380,10 +353,25 @@
   prefers-reduced-motion:
   reduce
 ) {
-  .signal-dash,
-  .signal-wave {
+  .signal-wave-pulse {
     animation: none;
 
-    opacity: 0.65;
+    opacity: 0.55;
+
+    transform:
+      translate(
+        -50%,
+        -95px
+      )
+      scaleX(
+        0.95
+      );
+  }
+
+
+  .signal-wave-pulse:not(
+    :first-child
+  ) {
+    display: none;
   }
 }

@@ -9,6 +9,10 @@ const DRAG_THRESHOLD =
   4;
 
 
+/* --------------------------------
+   NORMALIZATION
+-------------------------------- */
+
 function normalizeOffset(
   value,
 ) {
@@ -29,6 +33,25 @@ function normalizeOffset(
   };
 }
 
+
+function normalizeScale(
+  value,
+) {
+  return (
+    Number.isFinite(
+      value,
+    ) &&
+    value >
+      0
+      ? value
+      : 1
+  );
+}
+
+
+/* --------------------------------
+   DRAGGABLE
+-------------------------------- */
 
 function useDraggable({
   boundsRef,
@@ -110,13 +133,28 @@ function useDraggable({
 
 
   /*
-   * Pointer handlers need the newest
-   * offset without depending on the
-   * timing of React renders.
+   * Keep the current position available
+   * synchronously to pointer handlers.
+   *
+   * This is especially important while
+   * the viewport changes scale during
+   * an active drag.
    */
   const offsetRef =
     useRef(
       activeOffset,
+    );
+
+
+  /*
+   * Keep the current viewport scale in
+   * a ref for active pointer handlers.
+   */
+  const scaleRef =
+    useRef(
+      normalizeScale(
+        scale,
+      ),
     );
 
 
@@ -132,6 +170,116 @@ function useDraggable({
   );
 
 
+  /*
+   * If the viewport zoom changes while
+   * the pointer is still holding this
+   * component, the original drag
+   * measurements are no longer valid.
+   *
+   * Rebase the drag at the cursor's
+   * current position using:
+   *
+   * - the newest scale
+   * - the newest element rectangle
+   * - the newest bounds rectangle
+   * - the current drag offset
+   *
+   * This allows:
+   *
+   * drag → zoom → continue dragging
+   *
+   * without the component jumping or
+   * escaping its bounds.
+   */
+  useEffect(
+    () => {
+      const nextScale =
+        normalizeScale(
+          scale,
+        );
+
+
+      const previousScale =
+        scaleRef.current;
+
+
+      scaleRef.current =
+        nextScale;
+
+
+      if (
+        previousScale ===
+        nextScale
+      ) {
+        return;
+      }
+
+
+      const drag =
+        dragStateRef.current;
+
+
+      if (
+        !drag
+      ) {
+        return;
+      }
+
+
+      const element =
+        dragRef.current;
+
+
+      const bounds =
+        boundsRef?.current;
+
+
+      if (
+        !element ||
+        !bounds
+      ) {
+        return;
+      }
+
+
+      /*
+       * Restart the drag calculation
+       * from wherever the pointer is
+       * currently being held.
+       */
+      drag.startX =
+        drag.lastX;
+
+
+      drag.startY =
+        drag.lastY;
+
+
+      drag.startOffset = {
+        ...offsetRef.current,
+      };
+
+
+      /*
+       * These rectangles now reflect
+       * the newly rendered zoom level.
+       */
+      drag.elementRect =
+        element
+          .getBoundingClientRect();
+
+
+      drag.boundsRect =
+        bounds
+          .getBoundingClientRect();
+    },
+    [
+      scale,
+      boundsRef,
+    ],
+  );
+
+
   function updateOffset(
     nextOffset,
   ) {
@@ -141,6 +289,10 @@ function useDraggable({
       );
 
 
+    /*
+     * Update immediately rather than
+     * waiting for React to rerender.
+     */
     offsetRef.current =
       normalized;
 
@@ -164,6 +316,10 @@ function useDraggable({
     }
   }
 
+
+  /* --------------------------------
+     POINTER DOWN
+  -------------------------------- */
 
   function handlePointerDown(
     event,
@@ -209,27 +365,59 @@ function useDraggable({
       pointerId:
         event.pointerId,
 
+      /*
+       * Current drag calculation
+       * origin.
+       */
       startX:
         event.clientX,
 
       startY:
         event.clientY,
 
+      /*
+       * Latest known cursor position.
+       *
+       * These are used to rebase the
+       * drag if viewport scale changes.
+       */
+      lastX:
+        event.clientX,
+
+      lastY:
+        event.clientY,
+
+      /*
+       * Current offset at the point
+       * this drag calculation begins.
+       */
       startOffset: {
         ...offsetRef.current,
       },
 
+      /*
+       * Screen-space geometry.
+       *
+       * These are recalculated if the
+       * viewport zoom changes.
+       */
       elementRect:
-        element.getBoundingClientRect(),
+        element
+          .getBoundingClientRect(),
 
       boundsRect:
-        bounds.getBoundingClientRect(),
+        bounds
+          .getBoundingClientRect(),
 
       isDragging:
         false,
     };
   }
 
+
+  /* --------------------------------
+     POINTER MOVE
+  -------------------------------- */
 
   function handlePointerMove(
     event,
@@ -245,6 +433,22 @@ function useDraggable({
     ) {
       return;
     }
+
+
+    /*
+     * Always remember the newest
+     * pointer location.
+     *
+     * Even if the pointer has barely
+     * moved, a later zoom event may
+     * need this position to rebase.
+     */
+    drag.lastX =
+      event.clientX;
+
+
+    drag.lastY =
+      event.clientY;
 
 
     const pointerX =
@@ -305,6 +509,10 @@ function useDraggable({
     }
 
 
+    /*
+     * Geometry is stored in browser
+     * screen coordinates.
+     */
     const minimumX =
       drag.boundsRect.left -
       drag.elementRect.left;
@@ -345,14 +553,16 @@ function useDraggable({
       );
 
 
+    /*
+     * Pointer movement is measured in
+     * screen pixels.
+     *
+     * Widget offsets are stored in
+     * virtual-stage/world pixels, so
+     * divide by the current scale.
+     */
     const safeScale =
-      Number.isFinite(
-        scale,
-      ) &&
-      scale >
-        0
-        ? scale
-        : 1;
+      scaleRef.current;
 
 
     updateOffset({
@@ -372,6 +582,10 @@ function useDraggable({
     });
   }
 
+
+  /* --------------------------------
+     FINISH DRAG
+  -------------------------------- */
 
   function finishDrag(
     event,
@@ -418,6 +632,10 @@ function useDraggable({
   }
 
 
+  /* --------------------------------
+     EVENT PROPS
+  -------------------------------- */
+
   const dragHandleProps = {
     onPointerDown:
       handlePointerDown,
@@ -433,6 +651,10 @@ function useDraggable({
   };
 
 
+  /* --------------------------------
+     STYLE
+  -------------------------------- */
+
   const dragStyle = {
     "--drag-x":
       `${activeOffset.x}px`,
@@ -444,7 +666,9 @@ function useDraggable({
 
   return {
     dragRef,
+
     dragHandleProps,
+
     dragStyle,
 
     offset:

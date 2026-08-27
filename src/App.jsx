@@ -33,8 +33,20 @@ function App() {
 
     reportError,
 
+    requestSettings,
+    setRequestSettings,
+
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
+
+    outputWidgetOffsets,
+    setOutputWidgetOffset,
+
+    consoleViewportView,
+    setConsoleViewportView,
+
+    outputViewportView,
+    setOutputViewportView,
   } =
     useRuntime();
 
@@ -56,20 +68,37 @@ function App() {
                 setResponse={
                   setResponse
                 }
+
                 systemStatus={
                   systemStatus
                 }
                 setSystemStatus={
                   setSystemStatus
                 }
+
                 reportError={
                   reportError
                 }
-                widgetOffsets={
+
+                requestSettings={
+                  requestSettings
+                }
+                setRequestSettings={
+                  setRequestSettings
+                }
+
+                consoleWidgetOffsets={
                   consoleWidgetOffsets
                 }
-                setWidgetOffset={
+                setConsoleWidgetOffset={
                   setConsoleWidgetOffset
+                }
+
+                viewportView={
+                  consoleViewportView
+                }
+                setViewportView={
+                  setConsoleViewportView
                 }
               />
             }
@@ -83,8 +112,23 @@ function App() {
                 outputFiles={
                   outputFiles
                 }
+
                 fileTypes={
                   outputFileTypes
+                }
+
+                widgetOffsets={
+                  outputWidgetOffsets
+                }
+                setWidgetOffset={
+                  setOutputWidgetOffset
+                }
+
+                viewportView={
+                  outputViewportView
+                }
+                setViewportView={
+                  setOutputViewportView
                 }
               />
             }

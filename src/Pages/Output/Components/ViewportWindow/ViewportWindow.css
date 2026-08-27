@@ -20,14 +20,18 @@
 
   box-sizing: border-box;
 
+  /*
+   * Every output window has the same
+   * CSS base position.
+   *
+   * Runtime now supplies the complete
+   * workspace offset through --drag-x
+   * and --drag-y.
+   */
   transform:
     translate(
       calc(
         -50% +
-        var(
-          --window-start-x,
-          0px
-        ) +
         var(
           --drag-x,
           0px
@@ -35,10 +39,6 @@
       ),
       calc(
         -50% +
-        var(
-          --window-start-y,
-          0px
-        ) +
         var(
           --drag-y,
           0px

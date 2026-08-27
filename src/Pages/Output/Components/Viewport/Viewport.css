@@ -44,7 +44,12 @@
   background-image:
     radial-gradient(
       circle,
-      rgba(148, 149, 151, 0.937)
+      rgba(
+        148,
+        149,
+        151,
+        0.937
+      )
       1px,
       transparent
       1.2px

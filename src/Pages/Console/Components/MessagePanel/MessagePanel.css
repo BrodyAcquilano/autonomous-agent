@@ -1,9 +1,8 @@
 .message-panel {
   position: absolute;
 
-  top: 96px;
-  left: 26px;
-  bottom: 0;
+  top: 50%;
+  left: 50%;
 
   z-index: 40;
 
@@ -14,20 +13,35 @@
       620px
     );
 
+  height:
+    clamp(
+      420px,
+      58vh,
+      560px
+    );
+
   transform:
     translate(
-      var(
-        --drag-x,
-        0px
+      calc(
+        -850px +
+        var(
+          --drag-x,
+          0px
+        )
       ),
-      var(
-        --drag-y,
-        0px
+      calc(
+        -200px +
+        var(
+          --drag-y,
+          0px
+        )
       )
     );
 
   display: flex;
   flex-direction: column;
+
+  box-sizing: border-box;
 
   padding:
     15px
@@ -36,69 +50,107 @@
 
   border:
     1px solid
-    rgba(
-      97,
-      165,
-      237,
-      0.4
+    var(
+      --console-glass-border,
+      rgba(
+        145,
+        244,
+        236,
+        0.48
+      )
     );
 
   background:
-    linear-gradient(
-      135deg,
+    var(
+      --console-glass-background,
       rgba(
-        27,
-        76,
-        137,
-        0.57
-      ),
-      rgba(
-        7,
-        29,
-        71,
-        0.34
+        120,
+        188,
+        210,
+        0.16
       )
     );
 
   backdrop-filter:
-    blur(32px)
-    saturate(140%);
+    blur(
+      24px
+    )
+    saturate(
+      160%
+    );
+
+  -webkit-backdrop-filter:
+    blur(
+      24px
+    )
+    saturate(
+      160%
+    );
 
   box-shadow:
     inset
     0
+    1px
     0
-    35px
+    var(
+      --console-glass-highlight,
+      rgba(
+        224,
+        255,
+        252,
+        0.22
+      )
+    ),
+    inset
+    0
+    0
+    26px
     rgba(
-      89,
-      161,
-      244,
-      0.07
+      127,
+      246,
+      233,
+      0.08
     ),
     0
-    8px
-    30px
-    rgba(
-      0,
-      0,
-      0,
-      0.45
+    0
+    20px
+    var(
+      --console-glass-glow,
+      rgba(
+        72,
+        232,
+        216,
+        0.24
+      )
+    ),
+    0
+    14px
+    36px
+    var(
+      --console-glass-shadow,
+      rgba(
+        8,
+        28,
+        57,
+        0.34
+      )
     );
 }
+
 
 /* --------------------------------
    EXPANDED WINDOW
 -------------------------------- */
 
 .message-panel.expanded {
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  width: 1200px;
+  height: 900px;
 
-  width: auto;
-
-  transform: none;
+  transform:
+    translate(
+      -600px,
+      -450px
+    );
 }
 
 
@@ -132,7 +184,13 @@
 
 
 .message-panel-title {
-  color: #d8ebff;
+  color:
+    rgba(
+      235,
+      252,
+      255,
+      0.96
+    );
 
   font-family:
     "Courier New",
@@ -140,17 +198,29 @@
     monospace;
 
   font-size: 11px;
+
   letter-spacing: 2px;
+
+  text-shadow:
+    0
+    0
+    8px
+    rgba(
+      132,
+      255,
+      239,
+      0.18
+    );
 }
 
 
 .message-panel-status {
   color:
     rgba(
-      146,
-      192,
-      242,
-      0.55
+      208,
+      245,
+      248,
+      0.62
     );
 
   font-family:
@@ -159,8 +229,10 @@
     monospace;
 
   font-size: 8px;
+
   letter-spacing: 1.4px;
 }
+
 
 /* --------------------------------
    CONTROLS
@@ -191,53 +263,75 @@
   border:
     1px solid
     rgba(
-      151,
-      196,
-      244,
-      0.38
+      182,
+      255,
+      247,
+      0.46
     );
 
   background:
     rgba(
-      7,
-      24,
-      52,
-      0.58
+      94,
+      184,
+      199,
+      0.18
     );
 
   color:
     rgba(
-      197,
-      222,
-      250,
-      0.78
+      236,
+      255,
+      252,
+      0.86
     );
 
   font-size: 12px;
   line-height: 1;
 
   cursor: pointer;
+
+  backdrop-filter:
+    blur(
+      10px
+    );
+
+  -webkit-backdrop-filter:
+    blur(
+      10px
+    );
 }
 
 
 .message-panel-window-button:hover {
   border-color:
     rgba(
-      174,
-      216,
+      210,
       255,
-      0.72
+      250,
+      0.84
     );
 
   background:
     rgba(
-      30,
-      73,
-      119,
-      0.72
+      118,
+      219,
+      219,
+      0.28
     );
 
-  color: #e2f1ff;
+  color:
+    #fff;
+
+  box-shadow:
+    0
+    0
+    10px
+    rgba(
+      91,
+      244,
+      226,
+      0.25
+    );
 }
 
 
@@ -264,11 +358,16 @@
       225,
       235,
       245,
-      0.8
+      0.88
     );
 
   background:
-    #f5f7fb;
+    rgba(
+      247,
+      250,
+      253,
+      0.97
+    );
 
   box-shadow:
     inset
@@ -279,15 +378,35 @@
       15,
       31,
       50,
-      0.18
+      0.15
+    ),
+    0
+    0
+    0
+    1px
+    rgba(
+      255,
+      255,
+      255,
+      0.16
     );
 
-  color: #101927;
+  color:
+    #101927;
 
   font-family:
     "Courier New",
     Consolas,
     monospace;
+
+  user-select: text;
+
+  touch-action: auto;
+}
+
+
+.message-panel-screen * {
+  user-select: text;
 }
 
 
@@ -314,6 +433,7 @@
     );
 
   font-size: 11px;
+
   letter-spacing: 2px;
 }
 
@@ -348,6 +468,7 @@
 
 .message-content {
   font-size: 13px;
+
   line-height: 1.55;
 
   white-space: pre-wrap;
@@ -358,37 +479,43 @@
 
 .message.user
 .message-label {
-  color: #8b5b12;
+  color:
+    #8b5b12;
 }
 
 
 .message.assistant
 .message-label {
-  color: #1b5f9c;
+  color:
+    #1b5f9c;
 }
 
 
 .message.error
 .message-label {
-  color: #a72c32;
+  color:
+    #a72c32;
 }
 
 
 .message.user
 .message-content {
-  color: #342916;
+  color:
+    #342916;
 }
 
 
 .message.assistant
 .message-content {
-  color: #13263a;
+  color:
+    #13263a;
 }
 
 
 .message.error
 .message-content {
-  color: #74252a;
+  color:
+    #74252a;
 }
 
 
@@ -419,47 +546,39 @@
    RESPONSIVE
 -------------------------------- */
 
-
-
 @media (
-  max-width: 900px
+  max-width: 1000px
 ) {
   .message-panel {
-    width:
-      min(
-        520px,
-        calc(
-          100% - 52px
-        )
-      );
+    width: 520px;
   }
 }
+
 
 @media (
   max-width: 720px
 ) {
-  .message-panel,
-  .message-panel.expanded {
-    width:
-      calc(
-        100% - 24px
-      );
+  .message-panel {
+    width: 360px;
 
-    height:
-      min(
-        58vh,
-        520px
-      );
-
-    top: 47%;
-    left: 50%;
-    right: auto;
-    bottom: auto;
+    height: 500px;
 
     transform:
       translate(
-        -50%,
-        -50%
+        calc(
+          -410px +
+          var(
+            --drag-x,
+            0px
+          )
+        ),
+        calc(
+          -180px +
+          var(
+            --drag-y,
+            0px
+          )
+        )
       );
 
     padding:
@@ -469,17 +588,24 @@
   }
 
 
+  .message-panel.expanded {
+    width: 700px;
+    height: 700px;
+
+    transform:
+      translate(
+        -350px,
+        -350px
+      );
+  }
+
+
   .message-panel-header {
     height: 31px;
   }
 
 
   .message-panel-status {
-    display: none;
-  }
-
-
-  .message-panel-window-button {
     display: none;
   }
 

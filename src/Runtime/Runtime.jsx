@@ -1,120 +1,186 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import openAIResponsesApi from "../Api/Azure/OpenAIResponses";
+
 
 /* --------------------------------
    OUTPUT FILE TYPES
 -------------------------------- */
 
-const CODE_EXTENSIONS = new Set([
-  "js",
-  "jsx",
-  "mjs",
-  "cjs",
+const CODE_EXTENSIONS =
+  new Set([
+    "js",
+    "jsx",
+    "mjs",
+    "cjs",
 
-  "ts",
-  "tsx",
+    "ts",
+    "tsx",
 
-  "py",
+    "py",
 
-  "java",
-  "c",
-  "h",
-  "cpp",
-  "hpp",
-  "cs",
+    "java",
+    "c",
+    "h",
+    "cpp",
+    "hpp",
+    "cs",
 
-  "go",
-  "rs",
+    "go",
+    "rs",
 
-  "php",
-  "rb",
-  "swift",
-  "kt",
+    "php",
+    "rb",
+    "swift",
+    "kt",
 
-  "html",
-  "htm",
-  "css",
-  "scss",
-  "sass",
-  "less",
+    "html",
+    "htm",
+    "css",
+    "scss",
+    "sass",
+    "less",
 
-  "sql",
+    "sql",
 
-  "sh",
-  "bash",
-  "ps1",
+    "sh",
+    "bash",
+    "ps1",
 
-  "xml",
-  "yaml",
-  "yml",
-]);
+    "xml",
+    "yaml",
+    "yml",
+  ]);
 
-const TEXT_EXTENSIONS = new Set(["txt", "log", "csv", "tsv", "json"]);
 
-const MARKDOWN_EXTENSIONS = new Set(["md", "mdx", "markdown"]);
+const TEXT_EXTENSIONS =
+  new Set([
+    "txt",
+    "log",
 
-const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
+    "csv",
+    "tsv",
+
+    "json",
+  ]);
+
+
+const MARKDOWN_EXTENSIONS =
+  new Set([
+    "md",
+    "mdx",
+    "markdown",
+  ]);
+
+
+const IMAGE_EXTENSIONS =
+  new Set([
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "gif",
+  ]);
+
 
 const OUTPUT_FILE_TYPES = {
-  codeExtensions: CODE_EXTENSIONS,
+  codeExtensions:
+    CODE_EXTENSIONS,
 
-  textExtensions: TEXT_EXTENSIONS,
+  textExtensions:
+    TEXT_EXTENSIONS,
 
-  markdownExtensions: MARKDOWN_EXTENSIONS,
+  markdownExtensions:
+    MARKDOWN_EXTENSIONS,
 
-  imageExtensions: IMAGE_EXTENSIONS,
+  imageExtensions:
+    IMAGE_EXTENSIONS,
 };
 
-/*
- * These extensions all contain text
- * internally, even though Output may
- * render them differently.
- */
-const TEXT_CONTENT_EXTENSIONS = new Set([
-  ...CODE_EXTENSIONS,
-  ...TEXT_EXTENSIONS,
-  ...MARKDOWN_EXTENSIONS,
-]);
+
+const TEXT_CONTENT_EXTENSIONS =
+  new Set([
+    ...CODE_EXTENSIONS,
+    ...TEXT_EXTENSIONS,
+    ...MARKDOWN_EXTENSIONS,
+  ]);
+
 
 /* --------------------------------
    FILE HELPERS
 -------------------------------- */
 
-function getFileExtension(fileName) {
-  if (typeof fileName !== "string") {
+function getFileExtension(
+  fileName,
+) {
+  if (
+    typeof fileName !==
+    "string"
+  ) {
     return "";
   }
 
-  const parts = fileName.toLowerCase().split(".");
 
-  if (parts.length < 2) {
+  const parts =
+    fileName
+      .toLowerCase()
+      .split(
+        ".",
+      );
+
+
+  if (
+    parts.length <
+    2
+  ) {
     return "";
   }
 
-  return parts.pop() || "";
+
+  return (
+    parts.pop() ||
+    ""
+  );
 }
 
-function getMimeType(fileName) {
-  const extension = getFileExtension(fileName);
 
-  switch (extension) {
+function getMimeType(
+  fileName,
+) {
+  const extension =
+    getFileExtension(
+      fileName,
+    );
+
+
+  switch (
+    extension
+  ) {
     case "pdf":
       return "application/pdf";
+
 
     case "csv":
       return "text/csv";
 
+
     case "tsv":
       return "text/tab-separated-values";
 
+
     case "json":
       return "application/json";
+
 
     case "md":
     case "mdx":
     case "markdown":
       return "text/markdown";
+
 
     case "js":
     case "jsx":
@@ -122,255 +188,426 @@ function getMimeType(fileName) {
     case "cjs":
       return "text/javascript";
 
+
     case "html":
     case "htm":
       return "text/html";
 
+
     case "css":
       return "text/css";
+
 
     case "xml":
       return "application/xml";
 
+
     case "png":
       return "image/png";
+
 
     case "jpg":
     case "jpeg":
       return "image/jpeg";
 
+
     case "webp":
       return "image/webp";
+
 
     case "gif":
       return "image/gif";
 
+
     case "zip":
       return "application/zip";
+
 
     case "xlsx":
       return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+
     case "docx":
       return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
+
     default:
-      if (TEXT_CONTENT_EXTENSIONS.has(extension)) {
+      if (
+        TEXT_CONTENT_EXTENSIONS.has(
+          extension,
+        )
+      ) {
         return "text/plain";
       }
+
 
       return "application/octet-stream";
   }
 }
 
+
 /* --------------------------------
-   RESPONSE EXTRACTION
+   RESPONSE FILE EXTRACTION
 -------------------------------- */
 
-function extractResponseFiles(response) {
-  const files = [];
+function extractResponseFiles(
+  response,
+) {
+  const files =
+    [];
 
-  let generatedImageIndex = 0;
 
-  if (Array.isArray(response?.output)) {
-    const seenFiles = new Set();
+  let generatedImageIndex =
+    0;
 
-    response.output.forEach((outputItem) => {
-      /*
-       * Image-generation tool output.
-       */
-      if (
-        outputItem?.type === "image_generation_call" &&
-        typeof outputItem.result === "string" &&
-        outputItem.result
-      ) {
-        generatedImageIndex += 1;
 
-        files.push({
-          id:
-            outputItem.id ||
-            `image-generation-${response?.id || Date.now()}-${generatedImageIndex}`,
+  if (
+    Array.isArray(
+      response?.output,
+    )
+  ) {
+    const seenFiles =
+      new Set();
 
-          type: "image",
 
-          fileName: `generated-${generatedImageIndex}.png`,
+    response.output.forEach(
+      (
+        outputItem,
+      ) => {
+        /*
+         * Responses Image Generation.
+         */
+        if (
+          outputItem?.type ===
+            "image_generation_call" &&
+          typeof outputItem.result ===
+            "string" &&
+          outputItem.result
+        ) {
+          generatedImageIndex +=
+            1;
 
-          mimeType: "image/png",
 
-          base64: outputItem.result,
-        });
-      }
+          files.push({
+            id:
+              outputItem.id ||
+              `image-generation-${response?.id || Date.now()}-${generatedImageIndex}`,
 
-      /*
-       * Code Interpreter and other
-       * container-generated files.
-       */
-      if (!Array.isArray(outputItem?.content)) {
-        return;
-      }
+            type:
+              "image",
 
-      outputItem.content.forEach((contentItem) => {
-        if (!Array.isArray(contentItem?.annotations)) {
+            fileName:
+              `generated-${generatedImageIndex}.png`,
+
+            mimeType:
+              "image/png",
+
+            base64:
+              outputItem.result,
+          });
+        }
+
+
+        /*
+         * Code Interpreter /
+         * container-generated files.
+         */
+        if (
+          !Array.isArray(
+            outputItem?.content,
+          )
+        ) {
           return;
         }
 
-        contentItem.annotations.forEach((annotation) => {
-          if (
-            annotation?.type !== "container_file_citation" ||
-            !annotation.file_id
-          ) {
-            return;
-          }
 
-          const id = `${annotation.container_id || "container"}:${annotation.file_id}`;
+        outputItem.content.forEach(
+          (
+            contentItem,
+          ) => {
+            if (
+              !Array.isArray(
+                contentItem?.annotations,
+              )
+            ) {
+              return;
+            }
 
-          if (seenFiles.has(id)) {
-            return;
-          }
 
-          seenFiles.add(id);
+            contentItem.annotations.forEach(
+              (
+                annotation,
+              ) => {
+                if (
+                  annotation?.type !==
+                    "container_file_citation" ||
+                  !annotation.file_id
+                ) {
+                  return;
+                }
 
-          files.push({
-            id,
 
-            type: "container-file",
+                const id =
+                  `${annotation.container_id || "container"}:${annotation.file_id}`;
 
-            fileId: annotation.file_id,
 
-            containerId: annotation.container_id || null,
+                if (
+                  seenFiles.has(
+                    id,
+                  )
+                ) {
+                  return;
+                }
 
-            fileName: annotation.filename || annotation.file_id,
-          });
-        });
-      });
-    });
+
+                seenFiles.add(
+                  id,
+                );
+
+
+                files.push({
+                  id,
+
+                  type:
+                    "container-file",
+
+                  fileId:
+                    annotation.file_id,
+
+                  containerId:
+                    annotation.container_id ||
+                    null,
+
+                  fileName:
+                    annotation.filename ||
+                    annotation.file_id,
+                });
+              },
+            );
+          },
+        );
+      },
+    );
   }
+
 
   /*
    * Standalone Images API output.
    */
-  if (Array.isArray(response?.images)) {
-    response.images.forEach((image) => {
-      const mimeType = image.mimeType || "image/png";
+  if (
+    Array.isArray(
+      response?.images,
+    )
+  ) {
+    response.images.forEach(
+      (
+        image,
+      ) => {
+        const mimeType =
+          image.mimeType ||
+          "image/png";
 
-      let extension = "png";
 
-      if (mimeType === "image/jpeg") {
-        extension = "jpg";
-      }
+        let extension =
+          "png";
 
-      if (mimeType === "image/webp") {
-        extension = "webp";
-      }
 
-      files.push({
-        id: `image-${response.created || Date.now()}-${image.index}`,
+        if (
+          mimeType ===
+          "image/jpeg"
+        ) {
+          extension =
+            "jpg";
+        }
 
-        type: "image",
 
-        fileName: `generated-${image.index + 1}.${extension}`,
+        if (
+          mimeType ===
+          "image/webp"
+        ) {
+          extension =
+            "webp";
+        }
 
-        mimeType,
 
-        base64: image.base64,
-      });
-    });
+        files.push({
+          id:
+            `image-${response.created || Date.now()}-${image.index}`,
+
+          type:
+            "image",
+
+          fileName:
+            `generated-${image.index + 1}.${extension}`,
+
+          mimeType,
+
+          base64:
+            image.base64,
+        });
+      },
+    );
   }
+
 
   return files;
 }
 
+
 /* --------------------------------
-   TEXT OUTPUT
+   NORMAL TEXT OUTPUT
 -------------------------------- */
 
-function createTextOutputFile(response, outputText) {
-  if (!outputText) {
+function createTextOutputFile(
+  response,
+  outputText,
+) {
+  if (
+    !outputText
+  ) {
     return null;
   }
 
+
   return {
-    id: `response-text-${response?.id || Date.now()}`,
+    id:
+      `response-text-${response?.id || Date.now()}`,
 
-    type: "text",
+    type:
+      "text",
 
-    fileName: "response.txt",
+    fileName:
+      "response.txt",
 
-    mimeType: "text/plain",
+    mimeType:
+      "text/plain",
 
-    content: outputText,
+    content:
+      outputText,
   };
 }
+
 
 /* --------------------------------
    ERROR OUTPUT
 -------------------------------- */
 
-function createErrorOutputFile(content) {
+function createErrorOutputFile(
+  content,
+) {
   return {
-    id: `error-${crypto.randomUUID()}`,
+    id:
+      `error-${crypto.randomUUID()}`,
 
-    type: "text",
+    type:
+      "text",
 
-    fileName: "error.txt",
+    fileName:
+      "error.txt",
 
-    mimeType: "text/plain",
+    mimeType:
+      "text/plain",
 
     content,
   };
 }
 
-function getResponseErrorMessage(response) {
-  if (!response) {
+
+function getResponseErrorMessage(
+  response,
+) {
+  if (
+    !response
+  ) {
     return null;
   }
 
-  if (typeof response.error === "string") {
+
+  if (
+    typeof response.error ===
+    "string"
+  ) {
     return response.error;
   }
 
-  if (typeof response.error?.message === "string") {
+
+  if (
+    typeof response.error?.message ===
+    "string"
+  ) {
     return response.error.message;
   }
 
-  if (response.status === "failed") {
+
+  if (
+    response.status ===
+    "failed"
+  ) {
     return "The model response failed.";
   }
 
+
   return null;
 }
+
 
 /* --------------------------------
    CONTAINER FILE HYDRATION
 -------------------------------- */
 
-async function hydrateContainerFile(file) {
-  if (file?.type !== "container-file" || !file.containerId || !file.fileId) {
+async function hydrateContainerFile(
+  file,
+) {
+  if (
+    file?.type !==
+      "container-file" ||
+    !file.containerId ||
+    !file.fileId
+  ) {
     return file;
   }
 
-  const blob = await openAIResponsesApi.getContainerFileContent(
-    file.containerId,
-    file.fileId,
-  );
 
-  const extension = getFileExtension(file.fileName);
+  const blob =
+    await openAIResponsesApi
+      .getContainerFileContent(
+        file.containerId,
+        file.fileId,
+      );
 
-  const mimeType = getMimeType(file.fileName);
 
-  const typedBlob = new Blob([blob], {
-    type: mimeType,
-  });
+  const extension =
+    getFileExtension(
+      file.fileName,
+    );
 
-  /*
-   * Text-like files become strings.
-   *
-   * Output still decides whether that
-   * string uses TextRenderer,
-   * MarkdownRenderer or CodeRenderer.
-   */
-  if (TEXT_CONTENT_EXTENSIONS.has(extension)) {
-    const content = await typedBlob.text();
+
+  const mimeType =
+    getMimeType(
+      file.fileName,
+    );
+
+
+  const typedBlob =
+    new Blob(
+      [
+        blob,
+      ],
+      {
+        type:
+          mimeType,
+      },
+    );
+
+
+  if (
+    TEXT_CONTENT_EXTENSIONS.has(
+      extension,
+    )
+  ) {
+    const content =
+      await typedBlob.text();
+
 
     return {
       ...file,
@@ -381,10 +618,12 @@ async function hydrateContainerFile(file) {
     };
   }
 
-  /*
-   * Binary files use browser blob URLs.
-   */
-  const blobUrl = URL.createObjectURL(typedBlob);
+
+  const blobUrl =
+    URL.createObjectURL(
+      typedBlob,
+    );
+
 
   return {
     ...file,
@@ -395,309 +634,882 @@ async function hydrateContainerFile(file) {
   };
 }
 
+
 /* --------------------------------
-   WIDGET POSITIONS (save positions so changing pages doesn't move them)
+   OUTPUT WINDOW LAYOUT
 -------------------------------- */
 
-const DEFAULT_CONSOLE_WIDGET_OFFSETS = {
-  lightPanel: {
-    x: 0,
-    y: 0,
-  },
+const OUTPUT_PLACEHOLDER_KEY =
+  "__output-placeholder__";
 
-  messagePanel: {
-    x: 0,
-    y: 0,
-  },
 
-  requestControlPanel: {
-    x: 0,
-    y: 0,
-  },
-};
+const OUTPUT_WIDGETS_PER_ROW =
+  5;
+
+
+const OUTPUT_WIDGET_COLUMN_SPACING =
+  440;
+
+
+const OUTPUT_WIDGET_ROW_SPACING =
+  590;
+
+
+function getOutputWidgetKey(
+  file,
+  index,
+) {
+  return (
+    file?.id ||
+    `${file?.fileName || "output"}-${index}`
+  );
+}
+
+
+function createOutputWidgetOffsets(
+  files,
+  currentOffsets = {},
+) {
+  /*
+   * The empty Output window is a real
+   * draggable workspace window too.
+   *
+   * Keep its offset permanently even
+   * while normal output files exist so
+   * it can be restored when Output is
+   * cleared without needing separate
+   * placeholder state.
+   */
+  const nextOffsets = {
+    [OUTPUT_PLACEHOLDER_KEY]:
+      currentOffsets[
+        OUTPUT_PLACEHOLDER_KEY
+      ] || {
+        x:
+          0,
+
+        y:
+          0,
+      },
+  };
+
+
+  if (
+    !Array.isArray(
+      files,
+    ) ||
+    files.length ===
+      0
+  ) {
+    return nextOffsets;
+  }
+
+
+  const rowCount =
+    Math.ceil(
+      files.length /
+      OUTPUT_WIDGETS_PER_ROW,
+    );
+
+
+  for (
+    let rowIndex = 0;
+    rowIndex <
+    rowCount;
+    rowIndex += 1
+  ) {
+    const rowStartIndex =
+      rowIndex *
+      OUTPUT_WIDGETS_PER_ROW;
+
+
+    const filesInRow =
+      Math.min(
+        OUTPUT_WIDGETS_PER_ROW,
+
+        files.length -
+        rowStartIndex,
+      );
+
+
+    const centerColumn =
+      (
+        filesInRow -
+        1
+      ) /
+      2;
+
+
+    for (
+      let columnIndex = 0;
+      columnIndex <
+      filesInRow;
+      columnIndex += 1
+    ) {
+      const fileIndex =
+        rowStartIndex +
+        columnIndex;
+
+
+      const file =
+        files[
+          fileIndex
+        ];
+
+
+      const widgetKey =
+        getOutputWidgetKey(
+          file,
+          fileIndex,
+        );
+
+
+      /*
+       * Preserve user-arranged
+       * positions during hydration.
+       */
+      if (
+        currentOffsets[
+          widgetKey
+        ]
+      ) {
+        nextOffsets[
+          widgetKey
+        ] =
+          currentOffsets[
+            widgetKey
+          ];
+
+
+        continue;
+      }
+
+
+      nextOffsets[
+        widgetKey
+      ] = {
+        x:
+          (
+            columnIndex -
+            centerColumn
+          ) *
+          OUTPUT_WIDGET_COLUMN_SPACING,
+
+        y:
+          rowIndex *
+          OUTPUT_WIDGET_ROW_SPACING,
+      };
+    }
+  }
+
+
+  return nextOffsets;
+}
+
 
 /* --------------------------------
    RUNTIME
 -------------------------------- */
 
 function useRuntime() {
-  const [messages, setMessages] = useState([]);
+  const [
+    messages,
+    setMessages,
+  ] =
+    useState([]);
 
-  const [response, setResponse] = useState(null);
 
-  const [outputFiles, setOutputFiles] = useState([]);
+  const [
+    response,
+    setResponse,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    requestSettings,
+    setRequestSettings,
+  ] =
+    useState({
+      reasoning: {
+        effort:
+          "medium",
+
+        mode:
+          "standard",
+      },
+
+      max_output_tokens:
+        12000,
+
+      text: {
+        verbosity:
+          "medium",
+      },
+
+      tools: {
+        image_generation: {
+          enabled:
+            false,
+
+          quality:
+            "auto",
+
+          size:
+            "auto",
+        },
+
+        code_interpreter: {
+          enabled:
+            false,
+        },
+
+        web_search: {
+          enabled:
+            false,
+        },
+      },
+    });
+
 
   /*
-   * This is application lifecycle state,
-   * NOT a live Azure health check.
+   * Each page owns a different
+   * viewport implementation.
    *
-   * ready:
-   * no request is running and the latest
-   * execution finished successfully.
-   *
-   * busy:
-   * waiting for model response or
-   * hydrating generated output files.
-   *
-   * error:
-   * latest execution or file hydration
-   * failed.
+   * Runtime only remembers the
+   * camera state.
    */
-  const [systemStatus, setSystemStatus] = useState("ready");
+  const [
+    consoleViewportView,
+    setConsoleViewportView,
+  ] =
+    useState(
+      null,
+    );
 
-  const [consoleWidgetOffsets, setConsoleWidgetOffsets] = useState(
-    DEFAULT_CONSOLE_WIDGET_OFFSETS,
-  );
 
-  function setConsoleWidgetOffset(widgetKey, nextOffset) {
-    if (
-      !Object.prototype.hasOwnProperty.call(
-        DEFAULT_CONSOLE_WIDGET_OFFSETS,
+  const [
+    outputViewportView,
+    setOutputViewportView,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    outputFiles,
+    setOutputFiles,
+  ] =
+    useState([]);
+
+
+  /*
+   * Frontend execution status.
+   *
+   * This is not an Azure health check.
+   */
+  const [
+    systemStatus,
+    setSystemStatus,
+  ] =
+    useState(
+      "ready",
+    );
+
+
+  /*
+   * Console widget movement is stored
+   * separately from Output movement.
+   *
+   * CSS defines the base positions.
+   * These values are only offsets.
+   */
+  const [
+    consoleWidgetOffsets,
+    setConsoleWidgetOffsets,
+  ] =
+    useState({
+      lightPanel: {
+        x:
+          0,
+
+        y:
+          0,
+      },
+
+      messagePanel: {
+        x:
+          0,
+
+        y:
+          0,
+      },
+
+      requestControlPanel: {
+        x:
+          0,
+
+        y:
+          0,
+      },
+    });
+
+
+  /*
+   * Dynamic Output windows are keyed
+   * by their output file IDs.
+   */
+  const [
+    outputWidgetOffsets,
+    setOutputWidgetOffsets,
+  ] =
+    useState({
+      [OUTPUT_PLACEHOLDER_KEY]: {
+        x:
+          0,
+
+        y:
+          0,
+      },
+    });
+
+
+  const setConsoleWidgetOffset =
+    useCallback(
+      (
         widgetKey,
-      )
-    ) {
-      return;
-    }
-
-    if (!Number.isFinite(nextOffset?.x) || !Number.isFinite(nextOffset?.y)) {
-      return;
-    }
-
-    setConsoleWidgetOffsets((current) => ({
-      ...current,
-
-      [widgetKey]: {
-        x: nextOffset.x,
-
-        y: nextOffset.y,
-      },
-    }));
-  }
-
-  /*
-   * Shared error path for request errors.
-   *
-   * Makes the same error visible in:
-   *
-   * 1. MessagePanel
-   * 2. Output
-   * 3. LightPanel
-   */
-  function reportError(content) {
-    const message =
-      typeof content === "string" && content.trim()
-        ? content.trim()
-        : "Unknown system error.";
-
-    setMessages((currentMessages) => [
-      ...currentMessages,
-
-      {
-        id: crypto.randomUUID(),
-
-        role: "error",
-
-        label: "SYSTEM",
-
-        content: message,
-      },
-    ]);
-
-    setOutputFiles([createErrorOutputFile(message)]);
-
-    setSystemStatus("error");
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const createdBlobUrls = [];
-
-    /*
-     * CommandShell sets response to null
-     * when a new execution starts.
-     *
-     * Output clears immediately, but
-     * systemStatus remains BUSY because
-     * CommandShell controls that state.
-     */
-    if (!response) {
-      setOutputFiles([]);
-
-      return undefined;
-    }
-
-    async function processResponse() {
-      /*
-       * Runtime also asserts BUSY here
-       * because file hydration belongs
-       * to the same execution lifecycle.
-       */
-      setSystemStatus("busy");
-
-      const responseError = getResponseErrorMessage(response);
-
-      if (responseError) {
-        if (!cancelled) {
-          reportError(responseError);
+        nextOffset,
+      ) => {
+        if (
+          !Number.isFinite(
+            nextOffset?.x,
+          ) ||
+          !Number.isFinite(
+            nextOffset?.y,
+          )
+        ) {
+          return;
         }
 
-        return;
-      }
 
-      const outputText =
-        typeof response.output_text === "string"
-          ? response.output_text.trim()
-          : "";
-
-      /*
-       * Console message history.
-       */
-      if (outputText) {
-        setMessages((currentMessages) => [
-          ...currentMessages,
-
-          {
-            id: crypto.randomUUID(),
-
-            role: "assistant",
-
-            label: "ASSISTANT",
-
-            content: outputText,
-          },
-        ]);
-      }
-
-      const currentOutputFiles = [];
-
-      /*
-       * Normal assistant response also
-       * becomes response.txt.
-       */
-      const textFile = createTextOutputFile(response, outputText);
-
-      if (textFile) {
-        currentOutputFiles.push(textFile);
-      }
-
-      const extractedFiles = extractResponseFiles(response);
-
-      /*
-       * Display descriptors immediately
-       * while generated files download.
-       */
-      if (!cancelled) {
-        setOutputFiles([...currentOutputFiles, ...extractedFiles]);
-      }
-
-      /*
-       * Hydrate every generated container
-       * file in parallel.
-       */
-      const hydrationResults = await Promise.all(
-        extractedFiles.map(async (file) => {
-          try {
-            const hydratedFile = await hydrateContainerFile(file);
-
-            if (hydratedFile?.blobUrl) {
-              createdBlobUrls.push(hydratedFile.blobUrl);
+        setConsoleWidgetOffsets(
+          (
+            current,
+          ) => {
+            if (
+              !Object.prototype
+                .hasOwnProperty.call(
+                  current,
+                  widgetKey,
+                )
+            ) {
+              return current;
             }
 
-            return {
-              file: hydratedFile,
-
-              error: null,
-            };
-          } catch (error) {
-            const errorMessage = `${file.fileName || "Output file"}: ${
-              error.message || "Failed to load output file."
-            }`;
 
             return {
-              file: {
-                ...file,
+              ...current,
 
-                loadError: errorMessage,
+              [widgetKey]: {
+                x:
+                  nextOffset.x,
+
+                y:
+                  nextOffset.y,
               },
-
-              error: errorMessage,
             };
-          }
-        }),
-      );
+          },
+        );
+      },
+      [],
+    );
 
-      if (cancelled) {
-        createdBlobUrls.forEach((blobUrl) => {
-          URL.revokeObjectURL(blobUrl);
-        });
 
-        return;
-      }
+  const setOutputWidgetOffset =
+    useCallback(
+      (
+        widgetKey,
+        nextOffset,
+      ) => {
+        if (
+          !Number.isFinite(
+            nextOffset?.x,
+          ) ||
+          !Number.isFinite(
+            nextOffset?.y,
+          )
+        ) {
+          return;
+        }
 
-      const hydratedFiles = hydrationResults.map((result) => result.file);
 
-      const hydrationErrors = hydrationResults
-        .map((result) => result.error)
-        .filter(Boolean);
+        setOutputWidgetOffsets(
+          (
+            current,
+          ) => {
+            if (
+              !Object.prototype
+                .hasOwnProperty.call(
+                  current,
+                  widgetKey,
+                )
+            ) {
+              return current;
+            }
 
-      /*
-       * One or more generated files failed
-       * to download.
-       *
-       * Keep successful files, but also
-       * surface a SYSTEM error.
-       */
-      if (hydrationErrors.length > 0) {
-        const errorMessage = ["OUTPUT FILE ERROR", ...hydrationErrors].join(
-          "\n",
+
+            return {
+              ...current,
+
+              [widgetKey]: {
+                x:
+                  nextOffset.x,
+
+                y:
+                  nextOffset.y,
+              },
+            };
+          },
+        );
+      },
+      [],
+    );
+
+
+  const setCurrentOutputFiles =
+    useCallback(
+      (
+        nextFiles,
+      ) => {
+        const files =
+          Array.isArray(
+            nextFiles,
+          )
+            ? nextFiles
+            : [];
+
+
+        setOutputFiles(
+          files,
         );
 
-        setMessages((currentMessages) => [
-          ...currentMessages,
 
-          {
-            id: crypto.randomUUID(),
+        setOutputWidgetOffsets(
+          (
+            currentOffsets,
+          ) =>
+            createOutputWidgetOffsets(
+              files,
+              currentOffsets,
+            ),
+        );
+      },
+      [],
+    );
 
-            role: "error",
 
-            label: "SYSTEM",
+  /*
+   * Shared request-error path.
+   */
+  const reportError =
+    useCallback(
+      (
+        content,
+      ) => {
+        const message =
+          typeof content ===
+            "string" &&
+          content.trim()
+            ? content.trim()
+            : "Unknown system error.";
 
-            content: errorMessage,
-          },
-        ]);
 
-        setOutputFiles([
-          ...currentOutputFiles,
-          ...hydratedFiles,
+        setMessages(
+          (
+            currentMessages,
+          ) => [
+            ...currentMessages,
 
-          createErrorOutputFile(errorMessage),
-        ]);
+            {
+              id:
+                crypto.randomUUID(),
 
-        setSystemStatus("error");
+              role:
+                "error",
 
-        return;
-      }
+              label:
+                "SYSTEM",
+
+              content:
+                message,
+            },
+          ],
+        );
+
+
+        setCurrentOutputFiles(
+          [
+            createErrorOutputFile(
+              message,
+            ),
+          ],
+        );
+
+
+        setSystemStatus(
+          "error",
+        );
+      },
+      [
+        setCurrentOutputFiles,
+      ],
+    );
+
+
+  useEffect(
+    () => {
+      let cancelled =
+        false;
+
+
+      const createdBlobUrls =
+        [];
+
 
       /*
-       * Response and all generated files
-       * completed successfully.
+       * A new execution clears the
+       * previous Output run.
        */
-      setOutputFiles([...currentOutputFiles, ...hydratedFiles]);
+      if (
+        !response
+      ) {
+        setCurrentOutputFiles(
+          [],
+        );
 
-      setSystemStatus("ready");
-    }
 
-    processResponse();
+        /*
+         * A new output run begins
+         * centered again.
+         *
+         * Route changes alone do not
+         * reset this because response
+         * does not change.
+         */
+        setOutputViewportView(
+          null,
+        );
 
-    return () => {
-      cancelled = true;
 
-      createdBlobUrls.forEach((blobUrl) => {
-        URL.revokeObjectURL(blobUrl);
-      });
-    };
-  }, [response]);
+        return undefined;
+      }
+
+
+      async function processResponse() {
+        setSystemStatus(
+          "busy",
+        );
+
+
+        const responseError =
+          getResponseErrorMessage(
+            response,
+          );
+
+
+        if (
+          responseError
+        ) {
+          if (
+            !cancelled
+          ) {
+            reportError(
+              responseError,
+            );
+          }
+
+
+          return;
+        }
+
+
+        const outputText =
+          typeof response.output_text ===
+            "string"
+            ? response.output_text.trim()
+            : "";
+
+
+        if (
+          outputText
+        ) {
+          setMessages(
+            (
+              currentMessages,
+            ) => [
+              ...currentMessages,
+
+              {
+                id:
+                  crypto.randomUUID(),
+
+                role:
+                  "assistant",
+
+                label:
+                  "ASSISTANT",
+
+                content:
+                  outputText,
+              },
+            ],
+          );
+        }
+
+
+        const currentOutputFiles =
+          [];
+
+
+        const textFile =
+          createTextOutputFile(
+            response,
+            outputText,
+          );
+
+
+        if (
+          textFile
+        ) {
+          currentOutputFiles.push(
+            textFile,
+          );
+        }
+
+
+        const extractedFiles =
+          extractResponseFiles(
+            response,
+          );
+
+
+        /*
+         * Put file descriptors into Output
+         * immediately while hydration runs.
+         */
+        if (
+          !cancelled
+        ) {
+          setCurrentOutputFiles(
+            [
+              ...currentOutputFiles,
+              ...extractedFiles,
+            ],
+          );
+        }
+
+
+        const hydrationResults =
+          await Promise.all(
+            extractedFiles.map(
+              async (
+                file,
+              ) => {
+                try {
+                  const hydratedFile =
+                    await hydrateContainerFile(
+                      file,
+                    );
+
+
+                  if (
+                    hydratedFile
+                      ?.blobUrl
+                  ) {
+                    createdBlobUrls.push(
+                      hydratedFile.blobUrl,
+                    );
+                  }
+
+
+                  return {
+                    file:
+                      hydratedFile,
+
+                    error:
+                      null,
+                  };
+                } catch (
+                  error
+                ) {
+                  const errorMessage =
+                    `${file.fileName || "Output file"}: ${
+                      error.message ||
+                      "Failed to load output file."
+                    }`;
+
+
+                  return {
+                    file: {
+                      ...file,
+
+                      loadError:
+                        errorMessage,
+                    },
+
+                    error:
+                      errorMessage,
+                  };
+                }
+              },
+            ),
+          );
+
+
+        if (
+          cancelled
+        ) {
+          createdBlobUrls.forEach(
+            (
+              blobUrl,
+            ) => {
+              URL.revokeObjectURL(
+                blobUrl,
+              );
+            },
+          );
+
+
+          return;
+        }
+
+
+        const hydratedFiles =
+          hydrationResults.map(
+            (
+              result,
+            ) =>
+              result.file,
+          );
+
+
+        const hydrationErrors =
+          hydrationResults
+            .map(
+              (
+                result,
+              ) =>
+                result.error,
+            )
+            .filter(
+              Boolean,
+            );
+
+
+        if (
+          hydrationErrors.length >
+          0
+        ) {
+          const errorMessage =
+            [
+              "OUTPUT FILE ERROR",
+              ...hydrationErrors,
+            ].join(
+              "\n",
+            );
+
+
+          setMessages(
+            (
+              currentMessages,
+            ) => [
+              ...currentMessages,
+
+              {
+                id:
+                  crypto.randomUUID(),
+
+                role:
+                  "error",
+
+                label:
+                  "SYSTEM",
+
+                content:
+                  errorMessage,
+              },
+            ],
+          );
+
+
+          setCurrentOutputFiles(
+            [
+              ...currentOutputFiles,
+              ...hydratedFiles,
+
+              createErrorOutputFile(
+                errorMessage,
+              ),
+            ],
+          );
+
+
+          setSystemStatus(
+            "error",
+          );
+
+
+          return;
+        }
+
+
+        /*
+         * Hydrated files keep the same IDs,
+         * so Output window positions survive.
+         */
+        setCurrentOutputFiles(
+          [
+            ...currentOutputFiles,
+            ...hydratedFiles,
+          ],
+        );
+
+
+        setSystemStatus(
+          "ready",
+        );
+      }
+
+
+      processResponse();
+
+
+      return () => {
+        cancelled =
+          true;
+
+
+        createdBlobUrls.forEach(
+          (
+            blobUrl,
+          ) => {
+            URL.revokeObjectURL(
+              blobUrl,
+            );
+          },
+        );
+      };
+    },
+    [
+      response,
+      reportError,
+      setCurrentOutputFiles,
+    ],
+  );
+
 
   return {
     messages,
@@ -708,16 +1520,30 @@ function useRuntime() {
 
     outputFiles,
 
-    outputFileTypes: OUTPUT_FILE_TYPES,
+    outputFileTypes:
+      OUTPUT_FILE_TYPES,
 
     systemStatus,
     setSystemStatus,
 
     reportError,
 
+    requestSettings,
+    setRequestSettings,
+
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
+
+    outputWidgetOffsets,
+    setOutputWidgetOffset,
+
+    consoleViewportView,
+    setConsoleViewportView,
+
+    outputViewportView,
+    setOutputViewportView,
   };
 }
+
 
 export default useRuntime;

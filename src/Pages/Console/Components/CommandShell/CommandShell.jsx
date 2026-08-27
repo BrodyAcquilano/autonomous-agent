@@ -80,12 +80,14 @@ function formatFileSize(
 
 function CommandShell({
   model,
+
   requestSettings,
 
   setMessages,
   setResponse,
 
   setSystemStatus,
+
   reportError,
 }) {
   const [
@@ -190,6 +192,7 @@ function CommandShell({
             `${file.name}: unsupported file type.`,
           );
 
+
           return;
         }
 
@@ -202,6 +205,7 @@ function CommandShell({
             `${file.name}: file exceeds the 20 MB limit.`,
           );
 
+
           return;
         }
 
@@ -213,6 +217,7 @@ function CommandShell({
           errors.push(
             `Maximum of ${MAX_ATTACHMENTS} attachments allowed.`,
           );
+
 
           return;
         }
@@ -259,6 +264,7 @@ function CommandShell({
           errors.push(
             "Combined attachments exceed the 40 MB limit.",
           );
+
 
           return;
         }
@@ -357,17 +363,11 @@ function CommandShell({
       );
 
 
-      /*
-       * Entire request lifecycle begins.
-       */
       setSystemStatus(
         "busy",
       );
 
 
-      /*
-       * Clear previous response/output.
-       */
       setResponse(
         null,
       );
@@ -451,6 +451,25 @@ function CommandShell({
       }
 
 
+      /*
+       * Web Search
+       */
+      const webSearch =
+        requestSettings
+          .tools
+          ?.web_search;
+
+
+      if (
+        webSearch?.enabled
+      ) {
+        tools.push({
+          type:
+            "web_search",
+        });
+      }
+
+
       const request = {
         model,
 
@@ -498,12 +517,6 @@ function CommandShell({
           );
 
 
-        /*
-         * Runtime takes over from here.
-         *
-         * It keeps status BUSY while
-         * container files hydrate.
-         */
         setResponse(
           response,
         );
@@ -528,13 +541,6 @@ function CommandShell({
           "Request failed.";
 
 
-        /*
-         * Runtime puts this into:
-         *
-         * MessagePanel
-         * Output/error.txt
-         * systemStatus = error
-         */
         reportError(
           errorMessage,
         );
@@ -569,6 +575,7 @@ function CommandShell({
                   <span className="command-attachment-name">
                     {file.name}
                   </span>
+
 
                   <span className="command-attachment-size">
                     {formatFileSize(

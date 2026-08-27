@@ -110,9 +110,16 @@ function ViewportWindow({
   children,
 
   boundsRef,
-  portalTargetRef,
 
   scale = 1,
+
+  portalTargetRef,
+
+  offset =
+    null,
+
+  onOffsetChange =
+    null,
 
   zIndex = 20,
 
@@ -121,14 +128,6 @@ function ViewportWindow({
 
   aspectRatio =
     null,
-
-  initialOffset = {
-    x:
-      0,
-
-    y:
-      0,
-  },
 
   ariaLabel =
     "Output window",
@@ -183,6 +182,10 @@ function ViewportWindow({
 
       ignoreSelector:
         '[data-window-selectable="true"]',
+
+      offset,
+
+      onOffsetChange,
     });
 
 
@@ -198,12 +201,6 @@ function ViewportWindow({
 
   const windowStyle = {
     ...dragStyle,
-
-    "--window-start-x":
-      `${initialOffset.x}px`,
-
-    "--window-start-y":
-      `${initialOffset.y}px`,
 
     "--window-width":
       `${dimensions.width}px`,
@@ -318,6 +315,8 @@ function ViewportWindow({
               event,
             ) => {
               if (
+                event.target instanceof
+                  Element &&
                 event.target.closest(
                   '[data-window-selectable="true"]',
                 )

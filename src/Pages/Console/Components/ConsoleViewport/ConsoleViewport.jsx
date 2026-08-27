@@ -1,34 +1,35 @@
 import {
-  Children,
-  cloneElement,
-  isValidElement,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-import "./Viewport.css";
+import "./ConsoleViewport.css";
 
 
 const MIN_STAGE_WIDTH =
-  3200;
+  2500;
 
 
 const MIN_STAGE_HEIGHT =
-  2200;
+  1500;
 
 
 const EXTRA_STAGE_WIDTH =
-  1800;
+  900;
 
 
 const EXTRA_STAGE_HEIGHT =
-  1300;
+  700;
 
 
-const MIN_ZOOM =
-  0.25;
+const DEFAULT_MIN_ZOOM =
+  0.4;
+
+
+const ABSOLUTE_MIN_ZOOM =
+  0.12;
 
 
 const MAX_ZOOM =
@@ -80,7 +81,78 @@ function normalizeView(
 }
 
 
-function Viewport({
+function getInitialScale(
+  viewportWidth,
+) {
+  if (
+    viewportWidth <=
+    720
+  ) {
+    return 0.55;
+  }
+
+
+  if (
+    viewportWidth <=
+    1100
+  ) {
+    return 0.7;
+  }
+
+
+  return 0.82;
+}
+
+
+function getMinimumZoom(
+  viewportSize,
+  stageSize,
+) {
+  if (
+    viewportSize.width <=
+      0 ||
+    viewportSize.height <=
+      0 ||
+    stageSize.width <=
+      0 ||
+    stageSize.height <=
+      0
+  ) {
+    return DEFAULT_MIN_ZOOM;
+  }
+
+
+  /*
+   * Console has less vertical room than
+   * Output because the CommandShell lives
+   * below it.
+   *
+   * Allow the complete virtual stage to
+   * fit inside the actual Console viewport,
+   * even on shorter screens.
+   */
+  const fitScale =
+    Math.min(
+      viewportSize.width /
+        stageSize.width,
+
+      viewportSize.height /
+        stageSize.height,
+    );
+
+
+  return Math.max(
+    ABSOLUTE_MIN_ZOOM,
+
+    Math.min(
+      DEFAULT_MIN_ZOOM,
+      fitScale,
+    ),
+  );
+}
+
+
+function ConsoleViewport({
   children,
 
   view =
@@ -96,12 +168,6 @@ function Viewport({
 
 
   const stageRef =
-    useRef(
-      null,
-    );
-
-
-  const expandedLayerRef =
     useRef(
       null,
     );
@@ -280,6 +346,23 @@ function Viewport({
     );
 
 
+  const minimumZoom =
+    useMemo(
+      () =>
+        getMinimumZoom(
+          viewportSize,
+          stageSize,
+        ),
+      [
+        viewportSize.width,
+        viewportSize.height,
+
+        stageSize.width,
+        stageSize.height,
+      ],
+    );
+
+
   function commitView(
     nextValue,
   ) {
@@ -305,7 +388,7 @@ function Viewport({
 
 
   function getCenteredView(
-    scale = 1,
+    scale,
   ) {
     return {
       scale,
@@ -411,8 +494,8 @@ function Viewport({
 
 
   /*
-   * Runtime uses null when a fresh
-   * Output workspace needs centering.
+   * Runtime uses null to mean this
+   * viewport has never initialized.
    */
   useEffect(
     () => {
@@ -428,9 +511,15 @@ function Viewport({
       }
 
 
+      const scale =
+        getInitialScale(
+          viewportSize.width,
+        );
+
+
       commitView(
         getCenteredView(
-          1,
+          scale,
         ),
       );
     },
@@ -458,18 +547,14 @@ function Viewport({
 
 
     /*
-     * Output windows own their
-     * pointer interaction.
-     *
-     * This is what keeps window
-     * dragging separate from stage
-     * panning.
+     * Widgets control their own
+     * dragging.
      */
     if (
       event.target instanceof
         Element &&
       event.target.closest(
-        ".viewport-window",
+        ".light-panel, .message-panel, .request-control-panel",
       )
     ) {
       return;
@@ -652,7 +737,7 @@ function Viewport({
     const newScale =
       clamp(
         nextScale,
-        MIN_ZOOM,
+        minimumZoom,
         MAX_ZOOM,
       );
 
@@ -722,30 +807,23 @@ function Viewport({
     event,
   ) {
     /*
-     * Expanded windows are outside
-     * the virtual stage.
+     * Keep normal wheel behavior on
+     * form controls themselves.
+     *
+     * MessagePanel remains zoomable,
+     * including over the message screen.
      */
     if (
       event.target instanceof
         Element &&
       event.target.closest(
-        ".viewport-window.expanded",
+        "input, select, textarea",
       )
     ) {
       return;
     }
 
 
-    /*
-     * Important:
-     *
-     * Do NOT ignore normal output
-     * windows here.
-     *
-     * Wheel zoom therefore still
-     * works while the cursor is over
-     * an image/text/code window.
-     */
     event.preventDefault();
 
 
@@ -797,43 +875,17 @@ function Viewport({
   }
 
 
-  /*
-   * Output Viewport has only one
-   * direct child type: ViewportWindow.
-   *
-   * Inject viewport-specific dragging
-   * information directly into them.
-   */
-  const enhancedChildren =
-    Children.map(
-      children,
-      (
-        child,
-      ) => {
-        if (
-          !isValidElement(
-            child,
-          )
-        ) {
-          return child;
-        }
+  const renderedChildren =
+    typeof children ===
+      "function"
+      ? children({
+          boundsRef:
+            stageRef,
 
-
-        return cloneElement(
-          child,
-          {
-            boundsRef:
-              stageRef,
-
-            scale:
-              activeView.scale,
-
-            portalTargetRef:
-              expandedLayerRef,
-          },
-        );
-      },
-    );
+          scale:
+            activeView.scale,
+        })
+      : children;
 
 
   return (
@@ -841,13 +893,13 @@ function Viewport({
       ref={
         containerRef
       }
-      className={`output-viewport ${
+      className={`console-viewport ${
         isPanning
           ? "is-panning"
           : ""
       }`}
       role="region"
-      aria-label="Output workspace"
+      aria-label="Console workspace"
       onPointerDown={
         handlePointerDown
       }
@@ -868,7 +920,7 @@ function Viewport({
         ref={
           stageRef
         }
-        className="output-viewport-stage"
+        className="console-viewport-stage"
         style={{
           width:
             `${stageSize.width}px`,
@@ -880,20 +932,12 @@ function Viewport({
             `translate(${activeView.x}px, ${activeView.y}px) scale(${activeView.scale})`,
         }}
       >
-        {enhancedChildren}
+        {renderedChildren}
       </div>
 
 
       <div
-        ref={
-          expandedLayerRef
-        }
-        className="output-viewport-expanded-layer"
-      />
-
-
-      <div
-        className="output-viewport-scale"
+        className="console-viewport-scale"
         aria-hidden="true"
       >
         {Math.round(
@@ -907,4 +951,4 @@ function Viewport({
 }
 
 
-export default Viewport;
+export default ConsoleViewport;

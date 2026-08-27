@@ -1,354 +1,109 @@
 .console-page {
+  --command-shell-bottom:
+    83px;
+
+  --command-shell-height:
+    58px;
+
+  --console-viewport-gap:
+    13px;
+
+  --console-glass-background:
+    linear-gradient(
+      135deg,
+      rgba(
+        180,
+        226,
+        255,
+        0.18
+      ),
+      rgba(
+        65,
+        151,
+        193,
+        0.12
+      )
+    );
+
+  --console-glass-border:
+    rgba(
+      145,
+      244,
+      236,
+      0.48
+    );
+
+  --console-glass-highlight:
+    rgba(
+      224,
+      255,
+      252,
+      0.22
+    );
+
+  --console-glass-glow:
+    rgba(
+      72,
+      232,
+      216,
+      0.24
+    );
+
+  --console-glass-shadow:
+    rgba(
+      8,
+      28,
+      57,
+      0.34
+    );
+
   width: 100%;
   height: 100%;
 
   position: relative;
 
-  display: flex;
-  flex-direction: column;
-
   overflow: hidden;
 
-  background: #000;
+  background:
+    #000;
 }
 
+
 /* --------------------------------
-   RETRO SPACE BACKGROUND
+   CONSOLE VIEWPORT AREA
 -------------------------------- */
 
-.retro-background {
+.console-viewport-layer {
   position: absolute;
-  inset: 0;
+
+  top: 12px;
+  left: 12px;
+  right: 12px;
+
+  bottom:
+    calc(
+      var(
+        --command-shell-bottom
+      ) +
+      var(
+        --command-shell-height
+      ) +
+      var(
+        --console-viewport-gap
+      )
+    );
+
+  z-index: 2;
 
   overflow: hidden;
 
   background:
-    linear-gradient(
-      180deg,
-      #01030a 0%,
-      #020713 42%,
-      #00030a 72%,
-      #000 100%
-    );
-
-  pointer-events: none;
-}
-
-
-.deep-space-glow {
-  position: absolute;
-
-  width: 90%;
-  height: 85%;
-
-  left: 5%;
-  top: -10%;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(
-        17,
-        47,
-        105,
-        0.28
-      ) 0%,
-      rgba(
-        5,
-        15,
-        45,
-        0.16
-      ) 42%,
-      transparent 75%
-    );
-
-  filter: blur(35px);
+    #000;
 }
 
 
 /* --------------------------------
-   ASCII STAR FIELDS
--------------------------------- */
-
-.terminal-stars {
-  position: absolute;
-
-  width: 100%;
-
-  margin: 0;
-
-  overflow: hidden;
-
-  color:
-    rgba(
-      255,
-      255,
-      255,
-      0.78
-    );
-
-  font-family:
-    "Courier New",
-    Consolas,
-    monospace;
-
-  font-size: 16px;
-  line-height: 2.8;
-
-  letter-spacing: 15px;
-
-  white-space: pre;
-
-  text-shadow:
-    0
-    0
-    6px
-    rgba(
-      255,
-      255,
-      255,
-      0.45
-    );
-
-  user-select: none;
-}
-
-
-.terminal-stars-one {
-  top: 4%;
-  left: 2%;
-
-  animation:
-    terminal-twinkle-one
-    3.2s
-    steps(2)
-    infinite;
-}
-
-
-.terminal-stars-two {
-  top: 35%;
-  left: 7%;
-
-  opacity: 0.55;
-
-  transform:
-    scaleX(1.12);
-
-  animation:
-    terminal-twinkle-two
-    4.1s
-    steps(2)
-    infinite;
-}
-
-
-@keyframes terminal-twinkle-one {
-  0% {
-    opacity: 0.32;
-  }
-
-  25% {
-    opacity: 0.9;
-  }
-
-  50% {
-    opacity: 0.48;
-  }
-
-  75% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.4;
-  }
-}
-
-
-@keyframes terminal-twinkle-two {
-  0% {
-    opacity: 0.72;
-  }
-
-  30% {
-    opacity: 0.3;
-  }
-
-  60% {
-    opacity: 0.88;
-  }
-
-  100% {
-    opacity: 0.48;
-  }
-}
-
-
-/* --------------------------------
-   CRT EFFECT
--------------------------------- */
-
-.scanlines {
-  position: absolute;
-  inset: 0;
-
-  opacity: 0.12;
-
-  background:
-    repeating-linear-gradient(
-      180deg,
-      transparent 0,
-      transparent 3px,
-      rgba(
-        105,
-        255,
-        135,
-        0.04
-      ) 3px,
-      rgba(
-        105,
-        255,
-        135,
-        0.04
-      ) 4px
-    );
-}
-
-
-.screen-vignette {
-  position: absolute;
-  inset: 0;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      transparent 50%,
-      rgba(
-        0,
-        0,
-        0,
-        0.48
-      ) 100%
-    );
-}
-
-
-/* --------------------------------
-   LARGE ASCII TITLE
--------------------------------- */
-
-.terminal-man-banner {
-  position: absolute;
-
-  top: 18px;
-  right: 48px;
-
-  z-index: 4;
-
-  margin: 0;
-
-  overflow: visible;
-
-  color:
-    rgba(
-      78,
-      228,
-      107,
-      0.36
-    );
-
-  font-family:
-    "Courier New",
-    Consolas,
-    monospace;
-
-  font-size:
-    clamp(
-      5px,
-      0.48vw,
-      8px
-    );
-
-  line-height: 1.05;
-
-  white-space: pre;
-
-  text-align: left;
-
-  text-shadow:
-    0
-    0
-    8px
-    rgba(
-      74,
-      255,
-      111,
-      0.12
-    );
-
-  user-select: none;
-}
-
-
-/* --------------------------------
-   CONSOLE WORKSPACE
--------------------------------- */
-
-.console-workspace {
-  position: relative;
-
-  z-index: 1;
-
-  flex: 1;
-  min-height: 0;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  padding:
-    100px
-    32px
-    285px;
-
-  overflow: hidden;
-}
-
-/* --------------------------------
-   DRAGGABLE WIDGET AREA
--------------------------------- */
-
-.console-widget-layer {
-  position: absolute;
-
-  top: 0;
-  left: 0;
-  right: 0;
-
-  /*
-   * Ends above the command shell.
-   *
-   * 83px command-shell bottom
-   * + 58px shell height
-   * + 13px separation
-   */
-  bottom: 154px;
-
-  pointer-events: none;
-
-  overflow: hidden;
-}
-
-
-.console-widget-layer > * {
-  pointer-events: auto;
-}
-
-
-/* --------------------------------
-   LOWER FLOATING INTERFACE
+   LOWER INTERFACE
 -------------------------------- */
 
 .console-lower-interface {
@@ -357,7 +112,10 @@
   left: 0;
   right: 0;
 
-  bottom: 83px;
+  bottom:
+    var(
+      --command-shell-bottom
+    );
 
   z-index: 60;
 
@@ -379,40 +137,27 @@
 -------------------------------- */
 
 @media (
-  max-width: 900px
-) {
-  .terminal-man-banner {
-    display: none;
-  }
-}
-
-
-@media (
   max-width: 720px
 ) {
-  .console-workspace {
-    padding:
-      70px
-      15px
-      300px;
+  .console-page {
+    --command-shell-bottom:
+      66px;
+
+    --console-viewport-gap:
+      10px;
   }
 
 
-  .console-widget-layer {
-    bottom: 134px;
+  .console-viewport-layer {
+    top: 8px;
+    left: 8px;
+    right: 8px;
   }
 
 
   .console-lower-interface {
-    bottom: 66px;
-
     padding:
       0
       12px;
-  }
-
-
-  .terminal-stars {
-    font-size: 11px;
   }
 }

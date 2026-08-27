@@ -15,6 +15,10 @@ import UnknownRenderer from "./Renderers/UnknownRenderer/UnknownRenderer";
 import "./Output.css";
 
 
+const OUTPUT_PLACEHOLDER_KEY =
+  "__output-placeholder__";
+
+
 const EMPTY_FILE_TYPES = {
   codeExtensions:
     new Set(),
@@ -39,7 +43,7 @@ function getFileExtension(
 ) {
   if (
     typeof fileName !==
-      "string"
+    "string"
   ) {
     return "";
   }
@@ -300,9 +304,6 @@ function saveOutputFile(
     "output";
 
 
-  /*
-   * Runtime-hydrated binary file.
-   */
   if (
     file.blobUrl
   ) {
@@ -316,9 +317,6 @@ function saveOutputFile(
   }
 
 
-  /*
-   * Existing URL or data URL.
-   */
   if (
     file.dataUrl ||
     file.url
@@ -326,6 +324,7 @@ function saveOutputFile(
     triggerDownload(
       file.dataUrl ||
       file.url,
+
       fileName,
     );
 
@@ -334,9 +333,6 @@ function saveOutputFile(
   }
 
 
-  /*
-   * Image-generation base64 output.
-   */
   if (
     typeof file.base64 ===
       "string" &&
@@ -367,10 +363,6 @@ function saveOutputFile(
   }
 
 
-  /*
-   * Text, Markdown, code, CSV, JSON,
-   * response.txt and error.txt.
-   */
   const content =
     typeof file.content ===
       "string"
@@ -380,7 +372,7 @@ function saveOutputFile(
 
   if (
     typeof content ===
-      "string"
+    "string"
   ) {
     const blob =
       new Blob(
@@ -437,59 +429,6 @@ function getWindowVariant(
     default:
       return "default";
   }
-}
-
-
-/* --------------------------------
-   WINDOW POSITION
--------------------------------- */
-
-function getWindowOffset(
-  index,
-  count,
-) {
-  const columns =
-    Math.min(
-      Math.max(
-        count,
-        1,
-      ),
-      3,
-    );
-
-
-  const column =
-    index %
-    columns;
-
-
-  const row =
-    Math.floor(
-      index /
-      columns,
-    );
-
-
-  const centerColumn =
-    (
-      columns -
-      1
-    ) /
-    2;
-
-
-  return {
-    x:
-      (
-        column -
-        centerColumn
-      ) *
-      470,
-
-    y:
-      row *
-      590,
-  };
 }
 
 
@@ -584,8 +523,20 @@ function renderOutputFile({
 
 function Output({
   outputFiles = [],
+
   fileTypes =
     EMPTY_FILE_TYPES,
+
+  widgetOffsets = {},
+
+  setWidgetOffset =
+    null,
+
+  viewportView =
+    null,
+
+  setViewportView =
+    null,
 }) {
   const [
     imageAspectRatios,
@@ -609,7 +560,7 @@ function Output({
       : [
           {
             id:
-              "__output-placeholder__",
+              OUTPUT_PLACEHOLDER_KEY,
 
             placeholder:
               true,
@@ -664,7 +615,14 @@ function Output({
       role="region"
       aria-label="Output"
     >
-      <Viewport>
+      <Viewport
+        view={
+          viewportView
+        }
+        onViewChange={
+          setViewportView
+        }
+      >
         {windows.map(
           (
             file,
@@ -688,11 +646,16 @@ function Output({
               );
 
 
-            const initialOffset =
-              getWindowOffset(
-                index,
-                windows.length,
-              );
+            const offset =
+              widgetOffsets[
+                fileId
+              ] || {
+                x:
+                  0,
+
+                y:
+                  0,
+              };
 
 
             const aspectRatio =
@@ -716,31 +679,53 @@ function Output({
                 key={
                   fileId
                 }
-                initialOffset={
-                  initialOffset
+
+                offset={
+                  offset
                 }
+
+                onOffsetChange={(
+                  nextOffset,
+                ) => {
+                  if (
+                    typeof setWidgetOffset ===
+                    "function"
+                  ) {
+                    setWidgetOffset(
+                      fileId,
+                      nextOffset,
+                    );
+                  }
+                }}
+
                 zIndex={
                   20 +
                   index
                 }
+
                 variant={
                   windowVariant
                 }
+
                 aspectRatio={
                   aspectRatio
                 }
+
                 ariaLabel={
                   file.placeholder
                     ? "Empty output window"
                     : file.fileName ||
                       `Output file ${index + 1}`
                 }
+
                 showSave={
                   !file.placeholder
                 }
+
                 canSave={
                   canSave
                 }
+
                 onSave={() => {
                   saveOutputFile(
                     file,
