@@ -40,7 +40,15 @@
     Consolas,
     monospace;
 
-  font-size: 13px;
+  font-size:
+    calc(
+      13px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
+
   line-height: 1.6;
 
   white-space: pre-wrap;
@@ -74,7 +82,14 @@
     Consolas,
     monospace;
 
-  font-size: 10px;
+  font-size:
+    calc(
+      10px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 
   letter-spacing: 1.2px;
 

@@ -20,7 +20,15 @@
     Helvetica,
     sans-serif;
 
-  font-size: 14px;
+  font-size:
+    calc(
+      14px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
+
   line-height: 1.65;
 
   scrollbar-width: thin;
@@ -37,7 +45,14 @@
     0
     24px;
 
-  font-size: 30px;
+  font-size:
+    calc(
+      30px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 }
 
 
@@ -58,7 +73,14 @@
       0.15
     );
 
-  font-size: 21px;
+  font-size:
+    calc(
+      21px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 }
 
 
@@ -68,7 +90,14 @@
     0
     10px;
 
-  font-size: 17px;
+  font-size:
+    calc(
+      17px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 }
 
 
@@ -124,7 +153,14 @@
     Consolas,
     monospace;
 
-  font-size: 10px;
+  font-size:
+    calc(
+      10px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 
   letter-spacing: 1.2px;
 }

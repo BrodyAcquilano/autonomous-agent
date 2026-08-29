@@ -44,7 +44,14 @@
       0.72
     );
 
-  font-size: 11px;
+  font-size:
+    calc(
+      11px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 
   letter-spacing: 1.8px;
 }
@@ -63,7 +70,14 @@
       0.88
     );
 
-  font-size: 12px;
+  font-size:
+    calc(
+      12px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 
   text-overflow: ellipsis;
 
@@ -80,7 +94,14 @@
       0.45
     );
 
-  font-size: 9px;
+  font-size:
+    calc(
+      9px *
+      var(
+        --viewport-content-scale,
+        1
+      )
+    );
 
   letter-spacing: 0.8px;
 }

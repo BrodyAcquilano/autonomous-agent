@@ -30,6 +30,70 @@ function clamp(
 }
 
 
+/* --------------------------------
+   HEIGHT-DRIVEN CONTENT SCALE
+-------------------------------- */
+
+/*
+ * Existing typography is the minimum, same
+ * convention as Console's MessagePanel/
+ * LightPanel: shrinking a window never makes
+ * its renderer's text smaller than default.
+ */
+const MIN_CONTENT_SCALE =
+  1;
+
+
+/*
+ * ViewportWindow allows a maximum height of
+ * 1200px. The smallest default window height
+ * (360x460 "default" variant) would reach
+ * 1200 / 460 ~= 2.6, so 2.5 gives generous
+ * headroom without an oddly precise number.
+ */
+const MAX_CONTENT_SCALE =
+  2.5;
+
+
+/*
+ * Scale is driven by how tall THIS window
+ * currently is relative to its own variant's
+ * default height (not a single shared
+ * baseline) — a "document" window and a
+ * "default" window both start at scale 1,
+ * regardless of their different default sizes.
+ *
+ * Exposed as a unitless CSS custom property
+ * so it inherits down to whichever renderer
+ * is mounted as children — each renderer's
+ * own CSS decides which base font sizes to
+ * multiply it against (PDF/Image renderers
+ * fill their space naturally and can ignore
+ * it entirely).
+ */
+function getContentScale(
+  height,
+  baseHeight,
+) {
+  const normalizedHeight =
+    Number.isFinite(
+      height,
+    )
+      ? height
+      : baseHeight;
+
+
+  return clamp(
+    normalizedHeight /
+      baseHeight,
+
+    MIN_CONTENT_SCALE,
+
+    MAX_CONTENT_SCALE,
+  );
+}
+
+
 function getWindowDimensions(
   variant,
   aspectRatio,
@@ -201,6 +265,9 @@ function ViewportWindow({
   const {
     resizeStyle,
     getResizeHandleProps,
+
+    size:
+      resizedSize,
   } =
     useResizable({
       targetRef:
@@ -255,6 +322,26 @@ function ViewportWindow({
   }
 
 
+  /*
+   * IMPORTANT:
+   *
+   * Content scale comes only from the
+   * window's persisted HEIGHT relative to
+   * its own variant's default height.
+   *
+   * Width-only resizing leaves it unchanged,
+   * matching Console's MessagePanel/
+   * LightPanel convention.
+   */
+  const contentScale =
+    getContentScale(
+      resizedSize
+        ?.height,
+
+      dimensions.height,
+    );
+
+
   const windowStyle = {
     ...dragStyle,
     ...resizeStyle,
@@ -264,6 +351,9 @@ function ViewportWindow({
 
     "--window-height":
       `${dimensions.height}px`,
+
+    "--viewport-content-scale":
+      contentScale,
 
     zIndex:
       isExpanded
