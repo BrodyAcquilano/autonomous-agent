@@ -13,7 +13,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 There is no test suite/framework configured in this repository (no test files, no test script beyond the placeholder `script.js` entry in `package.json`).
 
-## Architecture
+## Target architecture
+
+`docs/architecture/` is the canonical specification for the target autonomous-agent architecture
+(Execution Brain, Agent Organization, project workflow, skills, ontology versioning,
+maintenance, analytics, organizational governance, and the build roadmap). Read it before making
+any design decision that goes beyond the current scaffold described below. The application
+runtime described in this file is a working scaffold, not an implementation of that target
+architecture — per `docs/architecture/09-implementation-roadmap.md`, the runtime is currently
+treated as paused while the architecture and a MongoDB-backed operational knowledge base are
+established, so do not refactor it to match the target architecture until that roadmap says to.
+
+## Current repo architecture
 
 This is an "autonomous agent" console app: a React (v19) + Vite frontend backed by an Express (v5) server that proxies requests to **Azure OpenAI's Responses API** (not OpenAI directly, and not the standard Chat Completions API).
 

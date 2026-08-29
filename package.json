@@ -9,8 +9,7 @@
     "client": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "script.js": "node script.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@azure/ai-projects": "^2.5.0",
