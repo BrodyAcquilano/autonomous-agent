@@ -15,6 +15,14 @@ that must be kept separate:
 Both read from the same underlying event data. The user should never have to manually read
 charts and then explain them to an AI — that synthesis is the Analytics Agent's job.
 
+## Initial (v1) scope
+
+The full event/reporting system below is the target; its first implementation can be limited to
+reading basic event records and calculating a small set of simple metrics or summaries, without
+yet feeding the organizational-governance loop (`08-organizational-governance.md`) in a
+sophisticated way. It grows into the fuller system described here over time, per the
+staged-capability principle in `00-overview.md`.
+
 ## Event-driven design
 
 The runtime kernel (`03-agent-organization.md`) emits an event at every meaningful transition:

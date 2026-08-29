@@ -15,7 +15,38 @@ frontend/server to match the target architecture described in this documentation
 roadmap explicitly reaches that phase (Step 10 below). Changes driven purely by "this doesn't
 match the target architecture yet" are out of scope until then.
 
+## This is a strategy, not a locked commitment
+
+Building top-down is a bet that a working management organization will make the rest of the
+company faster and easier to build and maintain — it is not an irreversible architectural
+decision. If management-first development produces too much infrastructure/design sprawl before
+it delivers useful leverage, the implementation order can change.
+
+A partially-prepared bottom-up alternative remains available:
+
+```
+Router → Worker → (later) QC → Planner → Coordinator → management
+```
+
+A Router can operate against a limited slice of the Execution Brain (`01-execution-brain.md`) —
+models, model-specific APIs, tools, capabilities — without any Organizational Brain
+(`03-agent-organization.md`) or management organization (`08-organizational-governance.md`)
+existing yet. A Worker can then consume the resulting route plus relevant skills
+(`04-skills.md`). That slice alone would prove a significant part of the structural-brain/
+database design on its own.
+
+**Consequence for MongoDB design:** the Execution Brain is the shared foundation useful under
+either strategy and should be designed and seeded first regardless of which path is chosen. The
+Organizational Brain and the management-organization collections are specifically required by
+the top-down path — avoid designing the database so it only works if the entire management
+organization is built first. Whether the first executable slice is a lightweight management
+agent or a Router/Worker pair is an open decision (see `decisions/open-decisions.md`), to be made
+once MongoDB schema design is underway.
+
 ## Sequence
+
+The sequence below reflects the current top-down strategy; see the alternate path above if
+priorities change.
 
 1. **Establish the canonical architecture documentation** — this directory. *(Current phase.)*
 2. Connect Claude Code to MongoDB through the official MongoDB MCP tooling.
@@ -23,7 +54,10 @@ match the target architecture yet" are out of scope until then.
    ontology-version records — the concrete schemas intentionally deferred by
    `01-execution-brain.md`, `03-agent-organization.md`, `04-skills.md`, and
    `05-ontology-versioning.md`).
-4. Establish versioning, backup, rollback, governance, and structural indexing mechanisms.
+4. Establish **minimal** version-awareness, backup, and structural indexing (stable IDs, a
+   `version` field, active/deprecated status). The full automated governance lifecycle
+   (propose/validate/snapshot/migrate/activate/measure/rollback) is a later capability, not a
+   prerequisite here — see `05-ontology-versioning.md`.
 5. Populate foundational operational knowledge: models, APIs, tools, skills, relationships,
    agents, directory entries, request types.
 6. Build the management organization: CEO, HR, Maintenance, Analytics (initially Advisory /

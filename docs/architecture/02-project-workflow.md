@@ -80,6 +80,9 @@ None of this workflow exists in the current runtime. `server/Runtime/Supervisor`
 `server/Runtime/Worker`, `server/Runtime/State/RunMachine.js`, and
 `server/Runtime/State/createRunState.js` are empty scaffold files with no implementation. The
 current Console page performs a single direct call from the user to a fixed router model with no
-Planner, Router, Worker, or QC involved. This workflow is explicitly the **last** layer to be
-built, after the management organization exists (see `09-implementation-roadmap.md`) — do not
-implement it prematurely.
+Planner, Router, Worker, or QC involved. Under the current top-down strategy this full workflow
+is built after the management organization exists (see `09-implementation-roadmap.md`); that
+ordering is a strategic choice, not a fixed dependency — `09-implementation-roadmap.md` also
+describes a bottom-up fallback in which a minimal Router/Worker slice is built directly against
+the Execution Brain (`01-execution-brain.md`) before any management agent exists. Do not build
+ahead of whichever ordering is currently active.

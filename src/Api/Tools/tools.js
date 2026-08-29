@@ -1,20 +1,20 @@
 import apiClient from "../axios";
 
 
-const apisApi = {
+const toolsApi = {
   async getAll(
     params,
   ) {
     const response =
       await apiClient.get(
-        "/apis",
+        "/tools",
         {
           params,
         },
       );
 
 
-    return response.data.apis;
+    return response.data.tools;
   },
 
 
@@ -23,13 +23,13 @@ const apisApi = {
   ) {
     const response =
       await apiClient.get(
-        `/apis/${id}`,
+        `/tools/${id}`,
       );
 
 
-    return response.data.api;
+    return response.data.tool;
   },
 };
 
 
-export default apisApi;
+export default toolsApi;

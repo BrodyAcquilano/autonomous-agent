@@ -17,26 +17,13 @@ const MODEL_IMAGES =
 
 
 function getModelArtwork(
-  modelId,
+  imagePath,
 ) {
   if (
-    !modelId
+    !imagePath
   ) {
     return null;
   }
-
-
-  const expectedCardNames = [
-    `/${modelId}-card.png`,
-    `/${modelId}-card.jpg`,
-    `/${modelId}-card.jpeg`,
-    `/${modelId}-card.webp`,
-
-    `/${modelId}.png`,
-    `/${modelId}.jpg`,
-    `/${modelId}.jpeg`,
-    `/${modelId}.webp`,
-  ];
 
 
   const match =
@@ -48,13 +35,8 @@ function getModelArtwork(
           path,
         ],
       ) =>
-        expectedCardNames.some(
-          (
-            fileName,
-          ) =>
-            path.endsWith(
-              fileName,
-            ),
+        path.endsWith(
+          `/${imagePath}`,
         ),
     );
 
@@ -72,7 +54,7 @@ function DisplayCard({
 }) {
   const image =
     getModelArtwork(
-      model.modelId,
+      model.imagePath,
     );
 
 
@@ -91,7 +73,7 @@ function DisplayCard({
             src={
               image
             }
-            alt={`${model.name} artwork`}
+            alt={`${model.displayName} artwork`}
           />
         ) : (
           <div className="model-display-card-image-placeholder">
@@ -109,11 +91,11 @@ function DisplayCard({
 
       <div className="model-display-card-content">
         <h2>
-          {model.name}
+          {model.displayName}
         </h2>
 
         <span className="model-display-card-provider">
-          {model.provider}
+          {model.providerLabel}
         </span>
 
         <p>
@@ -123,17 +105,17 @@ function DisplayCard({
 
         <div className="model-display-card-footer">
           <code>
-            {model.modelId}
+            {model.name}
           </code>
 
           <span
             className={`model-display-card-status ${
-              model.markdown
+              model.contentMarkdown
                 ? "available"
                 : "missing"
             }`}
           >
-            {model.markdown
+            {model.contentMarkdown
               ? "READY"
               : "FILE MISSING"}
           </span>

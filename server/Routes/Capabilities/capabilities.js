@@ -1,9 +1,9 @@
 import express from "express";
 
 import {
-  getAllModels,
-  getModelById,
-} from "../../Services/MongoDB/Models.js";
+  getAllCapabilities,
+  getCapabilityById,
+} from "../../Services/MongoDB/Capabilities.js";
 
 
 const router =
@@ -17,18 +17,25 @@ router.get(
     res,
   ) => {
     try {
-      const models =
-        await getAllModels();
+      const {
+        tool,
+      } = req.query;
+
+
+      const capabilities =
+        await getAllCapabilities({
+          tool,
+        });
 
 
       return res.json({
-        models,
+        capabilities,
       });
     } catch (
       error
     ) {
       console.error(
-        "Failed to load models:",
+        "Failed to load capabilities:",
         error,
       );
 
@@ -37,7 +44,7 @@ router.get(
         .status(500)
         .json({
           error:
-            "Failed to load models.",
+            "Failed to load capabilities.",
 
           message:
             error.message,
@@ -59,32 +66,32 @@ router.get(
       } = req.params;
 
 
-      const model =
-        await getModelById(
+      const capability =
+        await getCapabilityById(
           id,
         );
 
 
       if (
-        !model
+        !capability
       ) {
         return res
           .status(404)
           .json({
             error:
-              "Model not found.",
+              "Capability not found.",
           });
       }
 
 
       return res.json({
-        model,
+        capability,
       });
     } catch (
       error
     ) {
       console.error(
-        "Failed to load model:",
+        "Failed to load capability:",
         error,
       );
 
@@ -93,7 +100,7 @@ router.get(
         .status(500)
         .json({
           error:
-            "Failed to load model.",
+            "Failed to load capability.",
 
           message:
             error.message,

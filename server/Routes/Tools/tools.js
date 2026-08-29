@@ -1,9 +1,9 @@
 import express from "express";
 
 import {
-  getAllModels,
-  getModelById,
-} from "../../Services/MongoDB/Models.js";
+  getAllTools,
+  getToolById,
+} from "../../Services/MongoDB/Tools.js";
 
 
 const router =
@@ -17,18 +17,27 @@ router.get(
     res,
   ) => {
     try {
-      const models =
-        await getAllModels();
+      const {
+        model,
+        api,
+      } = req.query;
+
+
+      const tools =
+        await getAllTools({
+          model,
+          api,
+        });
 
 
       return res.json({
-        models,
+        tools,
       });
     } catch (
       error
     ) {
       console.error(
-        "Failed to load models:",
+        "Failed to load tools:",
         error,
       );
 
@@ -37,7 +46,7 @@ router.get(
         .status(500)
         .json({
           error:
-            "Failed to load models.",
+            "Failed to load tools.",
 
           message:
             error.message,
@@ -59,32 +68,32 @@ router.get(
       } = req.params;
 
 
-      const model =
-        await getModelById(
+      const tool =
+        await getToolById(
           id,
         );
 
 
       if (
-        !model
+        !tool
       ) {
         return res
           .status(404)
           .json({
             error:
-              "Model not found.",
+              "Tool not found.",
           });
       }
 
 
       return res.json({
-        model,
+        tool,
       });
     } catch (
       error
     ) {
       console.error(
-        "Failed to load model:",
+        "Failed to load tool:",
         error,
       );
 
@@ -93,7 +102,7 @@ router.get(
         .status(500)
         .json({
           error:
-            "Failed to load model.",
+            "Failed to load tool.",
 
           message:
             error.message,

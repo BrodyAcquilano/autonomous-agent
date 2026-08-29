@@ -8,6 +8,15 @@ It does not manage organizational design (that is HR — see `08-organizational-
 and does not manage skills content (`04-skills.md`), beyond flagging when a skill references
 something Maintenance has deprecated.
 
+## Initial (v1) scope
+
+The mature Maintenance role described below is the target; its first implementation can be much
+smaller: running on a timer/cron, inspecting a small set of configured records, checking
+configured resources against expectations, applying only already-approved maintenance policies,
+and creating tickets. It does not need sophisticated research or fully generalized
+backup/rollback machinery on day one — capability grows over time, per the staged-capability
+principle in `00-overview.md`.
+
 ## Resolved default policy
 
 For modifications or removals of **existing** configuration or brain records, Maintenance

@@ -1,22 +1,22 @@
 
 
-function Resources() {
+function Directory() {
   return (
     <main className="module-page">
       <section className="module-workspace">
         <div className="workspace-panel">
           <div className="workspace-panel-header">
-            <span>Resources</span>
+            <span>Directory</span>
 
             <span className="workspace-panel-module">TERMINAL MAN MODULE</span>
           </div>
 
           <div className="workspace-panel-content">
             <div className="workspace-terminal-line">
-              &gt; MODULE: RESOURCES
+              &gt; MODULE: DIRECTORY
             </div>
 
-            <h2>Resources</h2>
+            <h2>Directory</h2>
 
             <p>MODULE AWAITING CONFIGURATION.</p>
           </div>
@@ -27,4 +27,4 @@ function Resources() {
   );
 }
 
-export default Resources;
+export default Directory;

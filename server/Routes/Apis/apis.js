@@ -1,193 +1,13 @@
-import {
-  readFile,
-  readdir,
-} from "node:fs/promises";
-
-import {
-  dirname,
-  extname,
-  relative,
-  resolve,
-} from "node:path";
-
-import {
-  fileURLToPath,
-} from "node:url";
-
 import express from "express";
+
+import {
+  getAllApis,
+  getApiById,
+} from "../../Services/MongoDB/Apis.js";
 
 
 const router =
   express.Router();
-
-
-const __filename =
-  fileURLToPath(
-    import.meta.url,
-  );
-
-const __dirname =
-  dirname(
-    __filename,
-  );
-
-
-const APIS_DIRECTORY =
-  resolve(
-    __dirname,
-    "../../../brain/apis",
-  );
-
-
-function getApiId(
-  fileName,
-) {
-  return fileName.replace(
-    /\.md$/i,
-    "",
-  );
-}
-
-
-function isSafePathPart(
-  value,
-) {
-  return (
-    typeof value ===
-      "string" &&
-    /^[a-zA-Z0-9._-]+$/.test(
-      value,
-    )
-  );
-}
-
-
-async function getMarkdownFiles(
-  directory,
-) {
-  const entries =
-    await readdir(
-      directory,
-      {
-        withFileTypes:
-          true,
-      },
-    );
-
-
-  const files =
-    await Promise.all(
-      entries.map(
-        async (
-          entry,
-        ) => {
-          const entryPath =
-            resolve(
-              directory,
-              entry.name,
-            );
-
-
-          if (
-            entry.isDirectory()
-          ) {
-            return getMarkdownFiles(
-              entryPath,
-            );
-          }
-
-
-          if (
-            entry.isFile() &&
-            extname(
-              entry.name,
-            ).toLowerCase() ===
-              ".md"
-          ) {
-            return [
-              entryPath,
-            ];
-          }
-
-
-          return [];
-        },
-      ),
-    );
-
-
-  return files.flat();
-}
-
-
-async function readApiFile(
-  filePath,
-) {
-  const markdown =
-    await readFile(
-      filePath,
-      "utf8",
-    );
-
-
-  const relativePath =
-    relative(
-      APIS_DIRECTORY,
-      filePath,
-    );
-
-
-  const normalizedPath =
-    relativePath.replace(
-      /\\/g,
-      "/",
-    );
-
-
-  const pathParts =
-    normalizedPath.split(
-      "/",
-    );
-
-
-  const fileName =
-    pathParts[
-      pathParts.length -
-      1
-    ];
-
-
-  const platform =
-    pathParts.length >
-    1
-      ? pathParts[
-          pathParts.length -
-          2
-        ]
-      : null;
-
-
-  const apiId =
-    getApiId(
-      fileName,
-    );
-
-
-  return {
-    apiId,
-
-    apiKey:
-      platform
-        ? `${platform}/${apiId}`
-        : apiId,
-
-    platform,
-
-    fileName,
-
-    markdown,
-  };
-}
 
 
 router.get(
@@ -197,34 +17,15 @@ router.get(
     res,
   ) => {
     try {
-      const markdownFiles =
-        await getMarkdownFiles(
-          APIS_DIRECTORY,
-        );
+      const {
+        model,
+      } = req.query;
 
 
       const apis =
-        await Promise.all(
-          markdownFiles.map(
-            (
-              filePath,
-            ) =>
-              readApiFile(
-                filePath,
-              ),
-          ),
-        );
-
-
-      apis.sort(
-        (
-          a,
-          b,
-        ) =>
-          a.apiKey.localeCompare(
-            b.apiKey,
-          ),
-      );
+        await getAllApis({
+          model,
+        });
 
 
       return res.json({
@@ -234,7 +35,7 @@ router.get(
       error
     ) {
       console.error(
-        "Failed to load API files:",
+        "Failed to load apis:",
         error,
       );
 
@@ -243,7 +44,7 @@ router.get(
         .status(500)
         .json({
           error:
-            "Failed to load API files.",
+            "Failed to load apis.",
 
           message:
             error.message,
@@ -254,47 +55,33 @@ router.get(
 
 
 router.get(
-  "/:platform/:apiId",
+  "/:id",
   async (
     req,
     res,
   ) => {
     try {
       const {
-        platform,
-        apiId,
+        id,
       } = req.params;
 
 
+      const api =
+        await getApiById(
+          id,
+        );
+
+
       if (
-        !isSafePathPart(
-          platform,
-        ) ||
-        !isSafePathPart(
-          apiId,
-        )
+        !api
       ) {
         return res
-          .status(400)
+          .status(404)
           .json({
             error:
-              "Invalid API path.",
+              "API not found.",
           });
       }
-
-
-      const filePath =
-        resolve(
-          APIS_DIRECTORY,
-          platform,
-          `${apiId}.md`,
-        );
-
-
-      const api =
-        await readApiFile(
-          filePath,
-        );
 
 
       return res.json({
@@ -303,21 +90,8 @@ router.get(
     } catch (
       error
     ) {
-      if (
-        error.code ===
-        "ENOENT"
-      ) {
-        return res
-          .status(404)
-          .json({
-            error:
-              "API file not found.",
-          });
-      }
-
-
       console.error(
-        "Failed to load API file:",
+        "Failed to load api:",
         error,
       );
 
@@ -326,7 +100,7 @@ router.get(
         .status(500)
         .json({
           error:
-            "Failed to load API file.",
+            "Failed to load api.",
 
           message:
             error.message,

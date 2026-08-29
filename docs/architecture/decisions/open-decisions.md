@@ -6,24 +6,33 @@ Code discussion when they become blocking, and update this file (moving resolved
 relevant canonical document, with a note of what was decided and why) once they are.
 
 Several items from earlier architecture review are now resolved and are documented in place
-rather than listed here: MongoDB as the persistent brain, task-not-a-tensor-dimension,
+rather than listed here: MongoDB as the persistent brain (with Markdown content stored directly
+as a `contentMarkdown` string field alongside structural metadata — no Git-as-source/Mongo-as-
+index dual system, no object storage for ordinary brain content), task-not-a-tensor-dimension,
 Execution/Organizational Brain separation, delegated calling as the target, the Agent Skills
-standard, ontology-as-versioned-data, the Maintenance default policy, and CEO autonomy
-progression. What remains open:
+standard, ontology-as-versioned-data (with only minimal version-awareness required initially —
+see `05-ontology-versioning.md`), the Maintenance default policy, CEO autonomy progression, and
+Vector Search being optional rather than a prerequisite for the first implementation. What
+remains open:
 
 ## 1. Concrete MongoDB collection schemas
 
-Field-level schema for models, APIs, tools, capabilities, relationships, agents, directory
-edges, request types, skills, skill versions, ontology versions, maintenance tickets, and
-analytics events has not been designed yet. This is explicitly Phase 3 of
-`09-implementation-roadmap.md` and should happen after MongoDB MCP is connected, not guessed at
-in advance.
+**Partially resolved.** The Execution Brain slice is designed and implemented: `models`, `apis`,
+`tools`, `capabilities`, and `platforms` collections exist in MongoDB, following the
+one-directional Model → API → Tool → Capability funnel described in `01-execution-brain.md`, and
+are read live by `server/Routes/{Models,Apis,Tools,Capabilities}` and browsable from the frontend
+Models page. Field-level schema for agents, directory edges, request types, skills, skill
+versions, ontology versions, maintenance tickets, and analytics events (the Organizational Brain
+and governance layer) has not been designed yet — that remains open, to happen when those systems
+are actually built per `09-implementation-roadmap.md`.
 
-## 2. Migration path for the filesystem `brain/` prototype
+## 2. Migration timing/mechanics for the filesystem `brain/` prototype
 
-`brain/models/*.md` and `brain/apis/**/*.md` currently work and are served to the frontend. It
-has not been decided whether/when/how this content gets migrated into MongoDB, whether the
-filesystem routes get replaced outright, or whether a transitional dual-read period is useful.
+MongoDB is the canonical source for operational brain content going forward (resolved) — the
+filesystem `brain/` directory is prototype content, not a permanent parallel source of truth.
+What remains open is *when and how* the existing `brain/models/*.md` / `brain/apis/**/*.md`
+content gets migrated in, and whether the current filesystem-serving routes are replaced outright
+or kept briefly during a transition.
 
 ## 3. Numeric limits for delegated calling
 
@@ -33,10 +42,11 @@ cost budget defaults) have been chosen.
 
 ## 4. Initial seed set
 
-Which specific models, APIs, tools, capabilities, agent roles, and request types get seeded
-first (Step 5 of the roadmap) has not been decided. The intent is to seed a deliberately tiny
-set sufficient to prove traversal logic, not a complete catalog, but the exact seed list is
-still open.
+**Partially resolved.** The Execution Brain is seeded with a deliberately tiny set: 3 models
+(`gpt-5.6-terra`, `gpt-5.3-codex`, `gpt-image-2`), 1 platform, 3 model-scoped API documents, 3
+tools and 3 capabilities (all currently under `gpt-5.6-terra`'s Responses API route) — enough to
+exercise every node of the funnel at least once. Which agent roles and request types get seeded
+first for the Organizational Brain (once that system is built) is still open.
 
 ## 5. Reconciling the current Console flow with the future Router/Worker path
 
@@ -63,3 +73,11 @@ external research tools each role may invoke has not been defined.
 `06-maintenance.md` and `05-ontology-versioning.md` both require backups/archived versions to be
 retained for some period before being eligible for cleanup. No retention policy (e.g. 7/30/90
 days) has been chosen.
+
+## 9. First executable slice: lightweight management agent vs. Router/Worker
+
+Top-down (start with a lightweight management organization) and the bottom-up fallback (start
+with a minimal Router/Worker slice against the Execution Brain) are both viable next steps after
+MongoDB schema design — see `09-implementation-roadmap.md` for the reasoning behind each. Which
+one comes first has not been decided; the plan is to choose based on implementation complexity
+and expected leverage once the schema design work is underway.

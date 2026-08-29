@@ -1,4 +1,8 @@
 import {
+  useEffect,
+} from "react";
+
+import {
   Navigate,
   Route,
   Routes,
@@ -6,14 +10,17 @@ import {
 
 import useRuntime from "./Runtime/Runtime";
 
+import apisApi from "./Api/Apis/apis";
+import modelsApi from "./Api/Models/models";
+
 import NavigationTabs from "./Components/NavigationTabs/NavigationTabs";
 
 import Analytics from "./Pages/Analytics/Analytics";
 import Console from "./Pages/Console/Console";
-import Memory from "./Pages/Memory/Memory";
+import Directory from "./Pages/Directory/Directory";
+import Maintenance from "./Pages/Maintenance/Maintenance";
 import Models from "./Pages/Models/Models";
 import Output from "./Pages/Output/Output";
-import Resources from "./Pages/Resources/Resources";
 
 import "./App.css";
 
@@ -36,6 +43,27 @@ function App() {
     requestSettings,
     setRequestSettings,
 
+    models,
+    setModels,
+
+    apis,
+    setApis,
+
+    modelsLoading,
+    setModelsLoading,
+
+    modelsError,
+    setModelsError,
+
+    selectedModelId,
+    setSelectedModelId,
+
+    modelModalStack,
+    setModelModalStack,
+
+    toolsCatalog,
+    capabilitiesCatalog,
+
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
 
@@ -55,6 +83,97 @@ function App() {
     setOutputViewportView,
   } =
     useRuntime();
+
+
+  /*
+   * Models/APIs are Execution Brain
+   * catalog data — loaded once here so
+   * the Models page (and its info modal
+   * state, also owned by Runtime) survives
+   * navigating away and back.
+   */
+  useEffect(
+    () => {
+      let mounted =
+        true;
+
+
+      const loadModelsAndApis =
+        async () => {
+          try {
+            const [
+              loadedModels,
+              loadedApis,
+            ] =
+              await Promise.all([
+                modelsApi.getAll(),
+                apisApi.getAll(),
+              ]);
+
+
+            if (
+              mounted
+            ) {
+              setModels(
+                loadedModels,
+              );
+
+              setApis(
+                loadedApis,
+              );
+
+              setModelsError(
+                null,
+              );
+            }
+          } catch (
+            loadError
+          ) {
+            console.error(
+              "Failed to load model documentation:",
+              loadError,
+            );
+
+
+            if (
+              mounted
+            ) {
+              setModelsError(
+                loadError
+                  .response
+                  ?.data
+                  ?.message ||
+                loadError.message ||
+                "Failed to load model documentation.",
+              );
+            }
+          } finally {
+            if (
+              mounted
+            ) {
+              setModelsLoading(
+                false,
+              );
+            }
+          }
+        };
+
+
+      loadModelsAndApis();
+
+
+      return () => {
+        mounted =
+          false;
+      };
+    },
+    [
+      setModels,
+      setApis,
+      setModelsError,
+      setModelsLoading,
+    ],
+  );
 
 
   return (
@@ -158,23 +277,54 @@ function App() {
           <Route
             path="/models"
             element={
-              <Models />
+              <Models
+                models={
+                  models
+                }
+                apis={
+                  apis
+                }
+                modelsLoading={
+                  modelsLoading
+                }
+                modelsError={
+                  modelsError
+                }
+                selectedModelId={
+                  selectedModelId
+                }
+                setSelectedModelId={
+                  setSelectedModelId
+                }
+                modelModalStack={
+                  modelModalStack
+                }
+                setModelModalStack={
+                  setModelModalStack
+                }
+                toolsCatalog={
+                  toolsCatalog
+                }
+                capabilitiesCatalog={
+                  capabilitiesCatalog
+                }
+              />
             }
           />
 
 
           <Route
-            path="/resources"
+            path="/directory"
             element={
-              <Resources />
+              <Directory />
             }
           />
 
 
           <Route
-            path="/memory"
+            path="/maintenance"
             element={
-              <Memory />
+              <Maintenance />
             }
           />
 

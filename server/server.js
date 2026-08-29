@@ -6,7 +6,11 @@ import openAIImagesRoutes from "./Routes/Azure/OpenAIImages.js";
 import openAIResponsesRoutes from "./Routes/Azure/OpenAIResponses.js";
 
 import apisRoutes from "./Routes/Apis/apis.js";
+import capabilitiesRoutes from "./Routes/Capabilities/capabilities.js";
 import modelsRoutes from "./Routes/Models/models.js";
+import toolsRoutes from "./Routes/Tools/tools.js";
+
+import { connectDB } from "./Services/MongoDB/MongoDB.js";
 
 
 const app =
@@ -41,6 +45,18 @@ app.use(
 
 
 app.use(
+  "/api/tools",
+  toolsRoutes,
+);
+
+
+app.use(
+  "/api/capabilities",
+  capabilitiesRoutes,
+);
+
+
+app.use(
   "/api/azure/openai-responses",
   openAIResponsesRoutes,
 );
@@ -52,11 +68,34 @@ app.use(
 );
 
 
-app.listen(
-  PORT,
-  () => {
-    console.log(
-      `Server running on port ${PORT}`,
+async function start() {
+  await connectDB();
+
+  console.log(
+    "Connected to MongoDB.",
+  );
+
+
+  app.listen(
+    PORT,
+    () => {
+      console.log(
+        `Server running on port ${PORT}`,
+      );
+    },
+  );
+}
+
+
+start().catch(
+  (error) => {
+    console.error(
+      "Failed to start server:",
+      error,
+    );
+
+    process.exit(
+      1,
     );
   },
 );

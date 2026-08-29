@@ -1,20 +1,20 @@
 import apiClient from "../axios";
 
 
-const apisApi = {
+const capabilitiesApi = {
   async getAll(
     params,
   ) {
     const response =
       await apiClient.get(
-        "/apis",
+        "/capabilities",
         {
           params,
         },
       );
 
 
-    return response.data.apis;
+    return response.data.capabilities;
   },
 
 
@@ -23,13 +23,13 @@ const apisApi = {
   ) {
     const response =
       await apiClient.get(
-        `/apis/${id}`,
+        `/capabilities/${id}`,
       );
 
 
-    return response.data.api;
+    return response.data.capability;
   },
 };
 
 
-export default apisApi;
+export default capabilitiesApi;

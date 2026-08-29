@@ -7,6 +7,16 @@ exist, what each should know, and how they are connected — as opposed to runni
 project. It sits above `03-agent-organization.md` (the live, authoritative directory) and is the
 long-term, automated replacement for the temporary bootstrap team described in `README.md`.
 
+## Initial (v1) scope
+
+The mature roles described below are the target. HR's first implementation can be limited to
+researching possible agent roles and creating basic Job Board proposals, rather than the full
+internal-evidence-driven benchmarking described below. The CEO's first implementation can be
+limited to reading organizational information and reviewing proposals to make advisory
+recommendations — an early, minimal instance of the Advisory-mode starting point described
+below, not its fuller decision-making form. Both mature over time, per the staged-capability
+principle in `00-overview.md`.
+
 ## Roles
 
 ### HR / Organization Research Agent

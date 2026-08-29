@@ -1,18 +1,18 @@
-function Memory() {
+function Maintenance() {
   return (
     <main className="module-page">
       <section className="module-workspace">
         <div className="workspace-panel">
           <div className="workspace-panel-header">
-            <span>Memory</span>
+            <span>Maintenance</span>
 
             <span className="workspace-panel-module">TERMINAL MAN MODULE</span>
           </div>
 
           <div className="workspace-panel-content">
-            <div className="workspace-terminal-line">&gt; MODULE: MEMORY</div>
+            <div className="workspace-terminal-line">&gt; MODULE: MAINTENANCE</div>
 
-            <h2>Memory</h2>
+            <h2>Maintenance</h2>
 
             <p>MODULE AWAITING CONFIGURATION.</p>
           </div>
@@ -22,4 +22,4 @@ function Memory() {
   );
 }
 
-export default Memory;
+export default Maintenance;

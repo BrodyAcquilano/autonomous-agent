@@ -20,12 +20,12 @@ const TABS = [
     path: "/models",
   },
   {
-    label: "Resources",
-    path: "/resources",
+    label: "Directory",
+    path: "/directory",
   },
   {
-    label: "Memory",
-    path: "/memory",
+    label: "Maintenance",
+    path: "/maintenance",
   },
   {
     label: "Analytics",

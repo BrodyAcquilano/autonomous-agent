@@ -43,6 +43,18 @@ both concern "the same" API. This intentionally reduces ambiguity for the agent 
 job, at the cost of some duplication; both a shared and a context-specific representation are
 valid depending on the case.
 
+## Initial scope vs. long-term capability
+
+The full lifecycle below is the target design and should be preserved so future evolution is
+possible cleanly, but it is not a prerequisite for the first MongoDB implementation. The initial
+system only needs: a documented current schema, stable IDs, explicit structural relationships,
+and version-awareness where useful (e.g. a `version` field and an `active`/`deprecated` status on
+records expected to change). The full automated `propose → validate → snapshot → migrate →
+activate → measure → rollback` engine — with HR/CEO actively proposing changes and the system
+autonomously migrating collections — is a later capability, built once the autonomous
+organization has real data, analytics, and an actual reason to evolve its own schema. Do not let
+building this engine block or dominate the first MongoDB implementation.
+
 ## Governance lifecycle
 
 Ontology evolution follows an explicit, staged process rather than direct mutation of the active

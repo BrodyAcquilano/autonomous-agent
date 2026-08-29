@@ -1,341 +1,114 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import apisApi from "../../Api/Apis/apis";
-import modelsApi from "../../Api/Models/models";
-
 import DisplayCard from "./Components/DisplayCard/DisplayCard";
 import ModelInfoModal from "./Components/ModelInfoModal/ModelInfoModal";
 
 import "./Models.css";
 
 
-const MODEL_CATALOG = [
-  {
-    modelId:
-      "gpt-5.6-terra",
-
-    name:
-      "GPT-5.6 Terra",
-
-    provider:
-      "OpenAI · Azure OpenAI",
-
-    category:
-      "GENERAL REASONING",
-
-    description:
-      "Balanced reasoning, long-context analysis, tool use, and general-purpose agent workflows.",
-
-    apiRef: {
-      platform:
-        "azure",
-
-      apiId:
-        "OpenAIResponses",
-    },
-  },
-
-  {
-    modelId:
-      "gpt-5.3-codex",
-
-    name:
-      "GPT-5.3 Codex",
-
-    provider:
-      "OpenAI · Azure OpenAI",
-
-    category:
-      "SOFTWARE DEVELOPMENT",
-
-    description:
-      "Coding-focused reasoning for repository analysis, development, debugging, refactoring, and testing.",
-
-    apiRef: {
-      platform:
-        "azure",
-
-      apiId:
-        "OpenAIResponses",
-    },
-  },
-
-  {
-    modelId:
-      "gpt-image-2",
-
-    name:
-      "GPT-Image-2",
-
-    provider:
-      "OpenAI · Azure OpenAI",
-
-    category:
-      "IMAGE GENERATION",
-
-    description:
-      "Image generation and editing from text and image inputs with flexible visual output.",
-
-    apiRef: {
-      platform:
-        "azure",
-
-      apiId:
-        "OpenAIImages",
-    },
-  },
-];
-
-
-function Models() {
-  const [
-    modelFiles,
-    setModelFiles,
-  ] = useState([]);
-
-
-  const [
-    apiFiles,
-    setApiFiles,
-  ] = useState([]);
-
-
-  const [
-    selectedIndex,
-    setSelectedIndex,
-  ] = useState(
-    null,
-  );
-
-
-  const [
-    isLoading,
-    setIsLoading,
-  ] = useState(
-    true,
-  );
-
-
-  const [
-    error,
-    setError,
-  ] = useState(
-    null,
-  );
-
-
-  useEffect(
-    () => {
-      let mounted =
-        true;
-
-
-      const loadDocumentation =
-        async () => {
-          try {
-            const [
-              models,
-              apis,
-            ] =
-              await Promise.all([
-                modelsApi.getAll(),
-                apisApi.getAll(),
-              ]);
-
-
-            if (
-              mounted
-            ) {
-              setModelFiles(
-                models,
-              );
-
-              setApiFiles(
-                apis,
-              );
-
-              setError(
-                null,
-              );
-            }
-          } catch (
-            loadError
-          ) {
-            console.error(
-              "Failed to load model documentation:",
-              loadError,
-            );
-
-
-            if (
-              mounted
-            ) {
-              setError(
-                loadError
-                  .response
-                  ?.data
-                  ?.message ||
-                loadError.message ||
-                "Failed to load model documentation.",
-              );
-            }
-          } finally {
-            if (
-              mounted
-            ) {
-              setIsLoading(
-                false,
-              );
-            }
-          }
-        };
-
-
-      loadDocumentation();
-
-
-      return () => {
-        mounted =
-          false;
-      };
-    },
-    [],
-  );
-
-
-  const models =
-    useMemo(
-      () => {
-        const filesByModelId =
-          new Map(
-            modelFiles.map(
-              (
-                file,
-              ) => [
-                file.modelId,
-                file,
-              ],
-            ),
-          );
-
-
-        const apisByKey =
-          new Map(
-            apiFiles.map(
-              (
-                api,
-              ) => [
-                api.apiKey,
-                api,
-              ],
-            ),
-          );
-
-
-        return MODEL_CATALOG.map(
-          (
-            definition,
-          ) => {
-            const file =
-              filesByModelId.get(
-                definition.modelId,
-              );
-
-
-            const apiKey =
-              definition.apiRef
-                ? `${definition.apiRef.platform}/${definition.apiRef.apiId}`
-                : null;
-
-
-            const api =
-              apiKey
-                ? apisByKey.get(
-                    apiKey,
-                  ) ||
-                  null
-                : null;
-
-
-            return {
-              ...definition,
-
-              fileName:
-                file?.fileName ||
-                null,
-
-              markdown:
-                file?.markdown ||
-                null,
-
-              api,
-            };
-          },
-        );
-      },
-      [
-        modelFiles,
-        apiFiles,
-      ],
-    );
-
-
+function Models({
+  models,
+  apis,
+  modelsLoading,
+  modelsError,
+  selectedModelId,
+  setSelectedModelId,
+  modelModalStack,
+  setModelModalStack,
+  toolsCatalog,
+  capabilitiesCatalog,
+}) {
   const selectedModel =
-    selectedIndex !==
-      null
-      ? models[
-          selectedIndex
-        ]
+    selectedModelId
+      ? models.find(
+          (
+            model,
+          ) =>
+            model._id ===
+            selectedModelId,
+        ) ||
+        null
       : null;
 
 
+  const selectedIndex =
+    selectedModel
+      ? models.findIndex(
+          (
+            model,
+          ) =>
+            model._id ===
+            selectedModelId,
+        )
+      : null;
+
+
+  function selectModel(
+    modelId,
+  ) {
+    setSelectedModelId(
+      modelId,
+    );
+
+    setModelModalStack(
+      [],
+    );
+  }
+
+
   function handlePrevious() {
-    setSelectedIndex(
+    if (
+      !models.length
+    ) {
+      return;
+    }
+
+
+    const currentIndex =
+      selectedIndex ??
+      0;
+
+
+    const nextIndex =
       (
-        currentIndex,
-      ) => {
-        if (
-          currentIndex ===
-          null
-        ) {
-          return 0;
-        }
+        currentIndex -
+        1 +
+        models.length
+      ) %
+      models.length;
 
 
-        return (
-          currentIndex -
-          1 +
-          models.length
-        ) %
-        models.length;
-      },
+    selectModel(
+      models[
+        nextIndex
+      ]._id,
     );
   }
 
 
   function handleNext() {
-    setSelectedIndex(
+    if (
+      !models.length
+    ) {
+      return;
+    }
+
+
+    const currentIndex =
+      selectedIndex ??
+      0;
+
+
+    const nextIndex =
       (
-        currentIndex,
-      ) => {
-        if (
-          currentIndex ===
-          null
-        ) {
-          return 0;
-        }
+        currentIndex +
+        1
+      ) %
+      models.length;
 
 
-        return (
-          currentIndex +
-          1
-        ) %
-        models.length;
-      },
+    selectModel(
+      models[
+        nextIndex
+      ]._id,
     );
   }
 
@@ -360,32 +133,32 @@ function Models() {
           to Terminal Man and inspect
           their capabilities,
           deployment details, APIs,
-          limits, and intended uses.
+          tools, and capabilities.
         </p>
       </header>
 
 
-      {isLoading && (
+      {modelsLoading && (
         <div className="models-page-message">
           Loading model catalog...
         </div>
       )}
 
 
-      {error && (
+      {modelsError && (
         <div className="models-page-error">
           <strong>
             MODEL CATALOG ERROR
           </strong>
 
           <span>
-            {error}
+            {modelsError}
           </span>
         </div>
       )}
 
 
-      {!isLoading && (
+      {!modelsLoading && (
         <section
           className="models-catalog"
           aria-label="Available models"
@@ -393,18 +166,17 @@ function Models() {
           {models.map(
             (
               model,
-              index,
             ) => (
               <DisplayCard
                 key={
-                  model.modelId
+                  model._id
                 }
                 model={
                   model
                 }
                 onClick={() => {
-                  setSelectedIndex(
-                    index,
+                  selectModel(
+                    model._id,
                   );
                 }}
               />
@@ -425,8 +197,23 @@ function Models() {
           modelCount={
             models.length
           }
+          apis={
+            apis
+          }
+          toolsCatalog={
+            toolsCatalog
+          }
+          capabilitiesCatalog={
+            capabilitiesCatalog
+          }
+          stack={
+            modelModalStack
+          }
+          setStack={
+            setModelModalStack
+          }
           onClose={() => {
-            setSelectedIndex(
+            setSelectedModelId(
               null,
             );
           }}

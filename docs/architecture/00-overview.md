@@ -69,10 +69,14 @@ future design or implementation work in this area:
 6. **Ontology is versioned data.** Entity types, relationship types, and directory schemas are
    not permanently hard-coded; they evolve through an explicit, auditable, reversible governance
    process. See `05-ontology-versioning.md`.
-7. **Staged autonomy.** Every agent capable of delegation, mutation, or organizational change
-   starts with the least authority that lets it be useful (advisory, or a small set of
-   authorized edges) and gains authority deliberately as the system proves itself. Nothing here
-   assumes broad autonomous authority on day one.
+7. **Staged autonomy and staged capability.** Every agent capable of delegation, mutation, or
+   organizational change starts with the least authority that lets it be useful (advisory, or a
+   small set of authorized edges) and gains authority deliberately as the system proves itself.
+   This is separate from, and compounds with, staged *capability*: an agent's first version
+   should also be functionally minimal (e.g. a cron-driven check-and-ticket loop rather than a
+   fully reasoning research agent), maturing in sophistication over time rather than being built
+   to its target intelligence on day one. Nothing here assumes broad autonomous authority or
+   mature capability on day one.
 8. **Human authority over irreversible or external-facing change.** Credentials, paid services,
    new external access, and other high-impact/privilege-expanding actions always require human
    approval, regardless of which agent or automated process identified the need for them.
