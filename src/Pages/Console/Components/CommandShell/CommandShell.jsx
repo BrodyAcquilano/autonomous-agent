@@ -3,7 +3,7 @@ import {
   useState,
 } from "react";
 
-import openAIResponsesApi from "../../../../Api/Azure/OpenAIResponses";
+import openAIResponsesApi from "../../../../Services/Azure/OpenAIResponses";
 
 import "./CommandShell.css";
 

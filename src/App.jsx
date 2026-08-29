@@ -10,8 +10,8 @@ import {
 
 import useRuntime from "./Runtime/Runtime";
 
-import apisApi from "./Api/Apis/apis";
-import modelsApi from "./Api/Models/models";
+import apisApi from "./Services/MongoDB/Apis";
+import modelsApi from "./Services/MongoDB/Models";
 
 import NavigationTabs from "./Components/NavigationTabs/NavigationTabs";
 

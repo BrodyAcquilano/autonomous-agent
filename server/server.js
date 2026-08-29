@@ -5,10 +5,10 @@ import express from "express";
 import openAIImagesRoutes from "./Routes/Azure/OpenAIImages.js";
 import openAIResponsesRoutes from "./Routes/Azure/OpenAIResponses.js";
 
-import apisRoutes from "./Routes/Apis/apis.js";
-import capabilitiesRoutes from "./Routes/Capabilities/capabilities.js";
-import modelsRoutes from "./Routes/Models/models.js";
-import toolsRoutes from "./Routes/Tools/tools.js";
+import apisRoutes from "./Routes/MongoDB/Apis.js";
+import capabilitiesRoutes from "./Routes/MongoDB/Capabilities.js";
+import modelsRoutes from "./Routes/MongoDB/Models.js";
+import toolsRoutes from "./Routes/MongoDB/Tools.js";
 
 import { connectDB } from "./Services/MongoDB/MongoDB.js";
 
