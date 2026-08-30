@@ -30,7 +30,7 @@ import {
 import {
   createMaintenanceTicket,
   getActiveTicket,
-  resolveActiveTicket,
+  deleteTicket,
 } from "../MongoDB/MaintenanceTickets.js";
 
 import {
@@ -597,10 +597,11 @@ async function runRouter({
    * saved `state` is the only thing trusted for
    * "what stage were we at" and "what was
    * already chosen" — the ticket is consumed
-   * (marked resolved) immediately, since a
-   * second failure during the resumed run files
-   * its own new ticket rather than reusing this
-   * one.
+   * (removed from the active queue) immediately,
+   * since a second failure during the resumed
+   * run files its own new ticket rather than
+   * reusing this one. Its permanent per-agent
+   * log entry is untouched.
    */
   let resumeState =
     null;
@@ -634,7 +635,7 @@ async function runRouter({
       resumeState.controlPanelSettings;
 
 
-    await resolveActiveTicket(
+    await deleteTicket(
       resumeTicketId,
     );
   }

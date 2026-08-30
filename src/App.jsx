@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
 } from "react";
 
@@ -13,6 +14,7 @@ import useRuntime from "./Runtime/Runtime";
 import agentsApi from "./Services/MongoDB/Agents";
 import apisApi from "./Services/MongoDB/Apis";
 import directoryApi from "./Services/MongoDB/Directory";
+import maintenanceApi from "./Services/MongoDB/Maintenance";
 import modelsApi from "./Services/MongoDB/Models";
 
 import NavigationTabs from "./Components/NavigationTabs/NavigationTabs";
@@ -93,6 +95,24 @@ function App() {
 
     directoryModalStack,
     setDirectoryModalStack,
+
+    maintenanceTickets,
+    setMaintenanceTickets,
+
+    maintenanceTicketsLoading,
+    setMaintenanceTicketsLoading,
+
+    maintenanceTicketsError,
+    setMaintenanceTicketsError,
+
+    maintenanceLogs,
+    setMaintenanceLogs,
+
+    maintenanceLogsLoading,
+    setMaintenanceLogsLoading,
+
+    maintenanceLogsError,
+    setMaintenanceLogsError,
 
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
@@ -370,6 +390,226 @@ function App() {
   );
 
 
+  /*
+   * Maintenance tickets/logs are wrapped in
+   * useCallback (rather than being inline
+   * effect bodies like the loaders above)
+   * because the Maintenance page also needs to
+   * re-run them on demand after a ticket/log
+   * action (review, ignore, restart, delete) —
+   * re-fetching from the server afterward is
+   * simpler and more trustworthy than predicting
+   * the new state locally.
+   */
+  const loadMaintenanceTickets =
+    useCallback(
+      async () => {
+        try {
+          const loadedTickets =
+            await maintenanceApi.getTickets();
+
+
+          setMaintenanceTickets(
+            loadedTickets,
+          );
+
+          setMaintenanceTicketsError(
+            null,
+          );
+        } catch (
+          loadError
+        ) {
+          console.error(
+            "Failed to load maintenance tickets:",
+            loadError,
+          );
+
+
+          setMaintenanceTicketsError(
+            loadError
+              .response
+              ?.data
+              ?.message ||
+            loadError.message ||
+            "Failed to load maintenance tickets.",
+          );
+        } finally {
+          setMaintenanceTicketsLoading(
+            false,
+          );
+        }
+      },
+      [
+        setMaintenanceTickets,
+        setMaintenanceTicketsError,
+        setMaintenanceTicketsLoading,
+      ],
+    );
+
+
+  useEffect(
+    () => {
+      loadMaintenanceTickets();
+    },
+    [
+      loadMaintenanceTickets,
+    ],
+  );
+
+
+  /*
+   * One maintenance log collection per agent
+   * (named after the agent, e.g.
+   * maintenance.router) — this loads every
+   * agent's log in parallel and merges them into
+   * one array, tagged per entry with which agent
+   * it came from by the server. Waits for the
+   * Agents roster to finish loading first, since
+   * it drives which agent names to fetch; an
+   * agent whose collection has never been
+   * written to (e.g. worker, which never files
+   * its own tickets) simply comes back empty
+   * rather than erroring.
+   */
+  const loadMaintenanceLogs =
+    useCallback(
+      async () => {
+        if (
+          agentsLoading ||
+          !agents.length
+        ) {
+          return;
+        }
+
+
+        try {
+          const results =
+            await Promise.allSettled(
+              agents.map(
+                (
+                  agent,
+                ) =>
+                  maintenanceApi.getLogsForAgent(
+                    agent.name,
+                  ),
+              ),
+            );
+
+
+          const merged =
+            results
+              .filter(
+                (
+                  result,
+                ) =>
+                  result.status ===
+                  "fulfilled",
+              )
+              .flatMap(
+                (
+                  result,
+                ) =>
+                  result.value,
+              );
+
+
+          const failures =
+            results.filter(
+              (
+                result,
+              ) =>
+                result.status ===
+                "rejected",
+            );
+
+
+          if (
+            failures.length
+          ) {
+            console.error(
+              "Some agent maintenance logs failed to load:",
+              failures,
+            );
+          }
+
+
+          setMaintenanceLogs(
+            merged,
+          );
+
+          setMaintenanceLogsError(
+            failures.length &&
+              !merged.length
+              ? "Failed to load maintenance logs."
+              : null,
+          );
+        } catch (
+          loadError
+        ) {
+          console.error(
+            "Failed to load maintenance logs:",
+            loadError,
+          );
+
+
+          setMaintenanceLogsError(
+            "Failed to load maintenance logs.",
+          );
+        } finally {
+          setMaintenanceLogsLoading(
+            false,
+          );
+        }
+      },
+      [
+        agents,
+        agentsLoading,
+        setMaintenanceLogs,
+        setMaintenanceLogsError,
+        setMaintenanceLogsLoading,
+      ],
+    );
+
+
+  useEffect(
+    () => {
+      loadMaintenanceLogs();
+    },
+    [
+      loadMaintenanceLogs,
+    ],
+  );
+
+
+  /*
+   * systemStatus is shared app-wide state, not
+   * something only the Console page produces —
+   * a normal Console request going wrong
+   * (an OpenAI/Azure-level error, or the Router
+   * cancelling and filing a ticket) and a
+   * Maintenance restart going wrong both end by
+   * setting it to "error" via reportError(). A
+   * new maintenance ticket may exist in either
+   * case, so this reacts to the status itself
+   * rather than duplicating a reload call at
+   * every place that can produce an error.
+   */
+  useEffect(
+    () => {
+      if (
+        systemStatus ===
+        "error"
+      ) {
+        loadMaintenanceTickets();
+      }
+    },
+    [
+      systemStatus,
+      loadMaintenanceTickets,
+    ],
+  );
+
+
   return (
     <div className="app">
       <div className="app-pages">
@@ -564,7 +804,47 @@ function App() {
           <Route
             path="/maintenance"
             element={
-              <Maintenance />
+              <Maintenance
+                agents={
+                  agents
+                }
+                tickets={
+                  maintenanceTickets
+                }
+                setTickets={
+                  setMaintenanceTickets
+                }
+                ticketsLoading={
+                  maintenanceTicketsLoading
+                }
+                ticketsError={
+                  maintenanceTicketsError
+                }
+                logs={
+                  maintenanceLogs
+                }
+                logsLoading={
+                  maintenanceLogsLoading
+                }
+                logsError={
+                  maintenanceLogsError
+                }
+                reloadLogs={
+                  loadMaintenanceLogs
+                }
+                systemStatus={
+                  systemStatus
+                }
+                setSystemStatus={
+                  setSystemStatus
+                }
+                setResponse={
+                  setResponse
+                }
+                reportError={
+                  reportError
+                }
+              />
             }
           />
 

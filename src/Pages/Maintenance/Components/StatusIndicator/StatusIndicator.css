@@ -1,0 +1,162 @@
+.maintenance-status-indicator {
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding:
+    9px
+    16px;
+
+  border:
+    1px solid
+    rgba(
+      145,
+      244,
+      236,
+      0.3
+    );
+
+  border-radius: 6px;
+
+  background:
+    rgba(
+      120,
+      188,
+      210,
+      0.1
+    );
+
+  color:
+    rgba(
+      231,
+      250,
+      255,
+      0.9
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+
+.maintenance-status-indicator-light {
+  width: 9px;
+  height: 9px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  animation:
+    maintenance-status-indicator-blink
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+.maintenance-status-indicator-ready
+.maintenance-status-indicator-light {
+  background:
+    #72ff89;
+
+  box-shadow:
+    0
+    0
+    8px
+    rgba(
+      92,
+      255,
+      116,
+      0.9
+    );
+}
+
+
+.maintenance-status-indicator-busy
+.maintenance-status-indicator-light {
+  background:
+    #ffd65a;
+
+  box-shadow:
+    0
+    0
+    8px
+    rgba(
+      255,
+      205,
+      71,
+      0.9
+    );
+
+  animation-duration:
+    0.8s;
+}
+
+
+.maintenance-status-indicator-error
+.maintenance-status-indicator-light {
+  background:
+    #ff5f5f;
+
+  box-shadow:
+    0
+    0
+    9px
+    rgba(
+      255,
+      72,
+      72,
+      0.92
+    );
+}
+
+
+.maintenance-status-indicator-label {
+  white-space: nowrap;
+}
+
+
+@keyframes maintenance-status-indicator-blink {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .maintenance-status-indicator-light {
+    animation: none;
+  }
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .maintenance-status-indicator {
+    padding:
+      7px
+      12px;
+
+    font-size: 10px;
+    letter-spacing: 1.4px;
+  }
+}

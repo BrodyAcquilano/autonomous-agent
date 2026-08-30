@@ -1,0 +1,446 @@
+.maintenance-entry-list {
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  padding: 10px;
+
+  overflow-y: auto;
+
+  border:
+    1px solid
+    rgba(
+      121,
+      133,
+      158,
+      0.28
+    );
+
+  border-radius: 9px;
+
+  background: #0c0d10;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      105,
+      124,
+      158,
+      0.5
+    )
+    transparent;
+}
+
+
+.maintenance-entry-list-message,
+.maintenance-entry-list-empty {
+  padding: 20px;
+
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.56
+    );
+
+  font-size: 12px;
+}
+
+
+.maintenance-entry-list-error {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  padding: 16px;
+
+  border:
+    1px solid
+    rgba(
+      213,
+      71,
+      79,
+      0.4
+    );
+
+  border-radius: 6px;
+
+  color:
+    rgba(
+      255,
+      174,
+      180,
+      0.9
+    );
+
+  font-size: 11px;
+}
+
+
+/* --------------------------------
+   ROW
+-------------------------------- */
+
+.maintenance-entry-row {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  display: grid;
+
+  grid-template-columns:
+    72px
+    100px
+    minmax(
+      0,
+      1fr
+    )
+    72px
+    82px
+    150px;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    11px
+    14px;
+
+  border:
+    1px solid
+    rgba(
+      117,
+      129,
+      152,
+      0.16
+    );
+
+  border-left:
+    3px solid
+    transparent;
+
+  border-radius: 5px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.02
+    );
+
+  color:
+    rgba(
+      226,
+      231,
+      239,
+      0.86
+    );
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.maintenance-entry-row:hover {
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.05
+    );
+}
+
+
+.maintenance-entry-row:disabled {
+  cursor: default;
+
+  opacity: 0.45;
+}
+
+
+.maintenance-entry-row:disabled:hover {
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.02
+    );
+}
+
+
+.maintenance-entry-row.error {
+  border-left-color:
+    rgba(
+      238,
+      103,
+      110,
+      0.75
+    );
+
+  background:
+    rgba(
+      238,
+      103,
+      110,
+      0.05
+    );
+}
+
+
+.maintenance-entry-row.error:hover {
+  background:
+    rgba(
+      238,
+      103,
+      110,
+      0.1
+    );
+}
+
+
+.maintenance-entry-row.request {
+  border-left-color:
+    rgba(
+      226,
+      178,
+      86,
+      0.75
+    );
+
+  background:
+    rgba(
+      226,
+      178,
+      86,
+      0.05
+    );
+}
+
+
+.maintenance-entry-row.request:hover {
+  background:
+    rgba(
+      226,
+      178,
+      86,
+      0.1
+    );
+}
+
+
+.maintenance-entry-type {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+
+  text-transform: uppercase;
+}
+
+
+.maintenance-entry-row.error
+.maintenance-entry-type {
+  color:
+    rgba(
+      255,
+      140,
+      146,
+      0.92
+    );
+}
+
+
+.maintenance-entry-row.request
+.maintenance-entry-type {
+  color:
+    rgba(
+      241,
+      197,
+      108,
+      0.92
+    );
+}
+
+
+.maintenance-entry-agent {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color:
+    rgba(
+      159,
+      180,
+      215,
+      0.72
+    );
+
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-transform: uppercase;
+}
+
+
+.maintenance-entry-message {
+  min-width: 0;
+
+  overflow: hidden;
+
+  font-size: 12.5px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.maintenance-entry-stage {
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.5
+    );
+
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+
+  text-transform: uppercase;
+}
+
+
+.maintenance-entry-status {
+  padding:
+    3px
+    7px;
+
+  border-radius: 4px;
+
+  text-align: center;
+
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+
+.maintenance-entry-status.new {
+  border:
+    1px solid
+    rgba(
+      101,
+      214,
+      203,
+      0.5
+    );
+
+  background:
+    rgba(
+      101,
+      214,
+      203,
+      0.12
+    );
+
+  color:
+    rgba(
+      154,
+      240,
+      230,
+      0.95
+    );
+}
+
+
+.maintenance-entry-status.reviewed {
+  border:
+    1px solid
+    rgba(
+      163,
+      177,
+      202,
+      0.3
+    );
+
+  background:
+    rgba(
+      163,
+      177,
+      202,
+      0.08
+    );
+
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.72
+    );
+}
+
+
+.maintenance-entry-time {
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.44
+    );
+
+  font-size: 10px;
+
+  text-align: right;
+
+  white-space: nowrap;
+}
+
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
+
+@media (
+  max-width: 900px
+) {
+  .maintenance-entry-row {
+    grid-template-columns:
+      60px
+      minmax(
+        0,
+        1fr
+      )
+      60px;
+  }
+
+
+  .maintenance-entry-agent,
+  .maintenance-entry-stage,
+  .maintenance-entry-time {
+    display: none;
+  }
+}

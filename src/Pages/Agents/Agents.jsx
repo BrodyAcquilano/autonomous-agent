@@ -117,10 +117,10 @@ function Agents({
         </h1>
 
         <p>
-          Meet the standing agents behind
-          the company — who they are, what
-          they do, and the exact prompt
-          each one runs on.
+          Meet the agents behind the
+          autonomous company — who they
+          are, what they do, and the
+          exact prompt each one runs on.
         </p>
       </header>
 

@@ -9,6 +9,7 @@ import agentsRoutes from "./Routes/MongoDB/Agents.js";
 import apisRoutes from "./Routes/MongoDB/Apis.js";
 import capabilitiesRoutes from "./Routes/MongoDB/Capabilities.js";
 import directoryRoutes from "./Routes/MongoDB/Directory.js";
+import maintenanceRoutes from "./Routes/MongoDB/Maintenance.js";
 import modelsRoutes from "./Routes/MongoDB/Models.js";
 import toolsRoutes from "./Routes/MongoDB/Tools.js";
 
@@ -89,6 +90,12 @@ app.use(
 app.use(
   "/api/directory",
   directoryRoutes,
+);
+
+
+app.use(
+  "/api/maintenance",
+  maintenanceRoutes,
 );
 
 

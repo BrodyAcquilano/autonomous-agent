@@ -123,7 +123,13 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
   profile portraits, and a Directory page (`src/Pages/Directory/`) that browses the three-layer
   Organizational Brain tensor — Agent → Contact → Request Types — live from the `directory`
   collection, mirroring the Capabilities Brain's browsing pattern at one fewer layer (see
-  `03-agent-organization.md`).
+  `03-agent-organization.md`). The Maintenance page (`src/Pages/Maintenance/`) is also real now,
+  not a stub — it lists `maintenance.tickets` (filterable by type/status) and every agent's own
+  permanent log (filterable by agent), and can mark a ticket reviewed, ignore it, or restart the
+  run it came from directly from its UI — see `06-maintenance.md`. `systemStatus`
+  (`"ready"`/`"busy"`/`"error"`) is shared app-wide rather than Console-specific: a Console
+  submission and a Maintenance restart each lock the other's busy-sensitive controls, and a
+  transition into `"error"` from either surface triggers one central tickets reload in `App.jsx`.
 - **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
   (`autonomous` — Capabilities Brain); `agents`, `directory` (`autonomous` — a first slice of the
   Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling
@@ -135,10 +141,10 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
   log (`maintenance.router` for the Router's own decisions, `maintenance.analyst` for ones the
   Analyst agent flags during review — keyed by whose decision it was, not which code physically
   writes it, since the Analyst has no database access of its own), and once more, under the same
-  `_id`, into the shared `maintenance.tickets` active-tickets queue, which is what the request-
-  service route's restart mechanism reads from and marks `"resolved"` once a ticket is consumed by
-  a restart. Reviewed directly by a human today, with no automated triage beyond that restart
-  mechanism).
+  `_id`, into the shared `maintenance.tickets` active-tickets queue (status `"new"` →
+  `"reviewed"` → removed, via the Maintenance page's Mark Reviewed/Ignore/Restart actions — see
+  `06-maintenance.md`). Reviewed directly by a human today, through that page, with no automated
+  triage beyond the restart mechanism.
 - **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker` (an empty
   scaffold file, not to be confused with the real, separate `server/Services/Router/TempWorker.js`,
   or with the real, populated `server/Runtime/Agents.js` described above — both live directly under

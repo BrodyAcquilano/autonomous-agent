@@ -246,6 +246,70 @@ function useRuntime() {
     );
 
 
+  /*
+   * Maintenance data (active tickets, and every
+   * agent's own permanent log) is loaded once in
+   * App.jsx and kept here so it survives leaving
+   * and returning to /maintenance. Filters, view
+   * mode, and which entry's modal is open are
+   * page-local state instead — nothing about
+   * "which filter is selected" needs to survive
+   * navigating away from the page.
+   */
+  const [
+    maintenanceTickets,
+    setMaintenanceTickets,
+  ] =
+    useState(
+      [],
+    );
+
+
+  const [
+    maintenanceTicketsLoading,
+    setMaintenanceTicketsLoading,
+  ] =
+    useState(
+      true,
+    );
+
+
+  const [
+    maintenanceTicketsError,
+    setMaintenanceTicketsError,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    maintenanceLogs,
+    setMaintenanceLogs,
+  ] =
+    useState(
+      [],
+    );
+
+
+  const [
+    maintenanceLogsLoading,
+    setMaintenanceLogsLoading,
+  ] =
+    useState(
+      true,
+    );
+
+
+  const [
+    maintenanceLogsError,
+    setMaintenanceLogsError,
+  ] =
+    useState(
+      null,
+    );
+
+
   const [
     capabilitiesCatalog,
     setCapabilitiesCatalog,
@@ -425,6 +489,24 @@ function useRuntime() {
 
     directoryModalStack,
     setDirectoryModalStack,
+
+    maintenanceTickets,
+    setMaintenanceTickets,
+
+    maintenanceTicketsLoading,
+    setMaintenanceTicketsLoading,
+
+    maintenanceTicketsError,
+    setMaintenanceTicketsError,
+
+    maintenanceLogs,
+    setMaintenanceLogs,
+
+    maintenanceLogsLoading,
+    setMaintenanceLogsLoading,
+
+    maintenanceLogsError,
+    setMaintenanceLogsError,
 
     ...widgetLayout,
 

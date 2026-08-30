@@ -23,8 +23,9 @@ remains open:
 `03-agent-organization.md`), plus `analytics.router`/`analytics.worker` (per-run process trace and
 per-execution log) and, in `maintenance`, a per-originating-agent collection (`maintenance.router`,
 `maintenance.analyst`) mirrored under the same `_id` into a shared `maintenance.tickets`
-active-tickets queue that carries a resumable `state` object (task, control-panel settings, run id,
-stage, and the ids already resolved) — see `07-analytics.md`, `06-maintenance.md`. What remains
+active-tickets queue (status `"new"`/`"reviewed"`, removed on ignore or restart — reviewed through
+a real Maintenance page) that carries a resumable `state` object (task, control-panel settings, run
+id, stage, and the ids already resolved) — see `07-analytics.md`, `06-maintenance.md`. What remains
 undesigned:
 skills/skill-version schema, ontology-version records, and — notably — the directory schema above
 is descriptive data only; a schema for the call envelope / kernel-enforcement layer that would
@@ -64,13 +65,13 @@ those roles exist, or continues as a separate "quick chat" mode alongside full p
 ## 6. Human-approval interface mechanics
 
 Every governance document (Maintenance, Ontology Versioning, Organizational Governance)
-references "human approval" as a gate, but the actual review/approval UI and workflow (a
-Maintenance page, a general review queue, notification mechanics beyond "email is an alert
-channel") has not been designed. **Partially resolved at the API level:** a human who already has
-a ticket id can now trigger a restart directly (`POST /api/request-service/request` with
-`resumeTicketId` — see `06-maintenance.md`); what's still missing is any UI to browse
-`maintenance.tickets`, read a ticket, and click restart, so today this only works via a manual API
-call with a ticket id copied from the database.
+references "human approval" as a gate, but the actual review/approval UI and workflow has not been
+designed in general. **Resolved for Maintenance specifically:** a real Maintenance page
+(`src/Pages/Maintenance/`) now lists `maintenance.tickets` (filterable by type/status) and every
+agent's own permanent log (filterable by agent), and can mark a ticket reviewed, ignore it, or
+restart the run it came from directly — see `06-maintenance.md`. What remains open is the
+equivalent review/approval surface for Ontology Versioning and Organizational Governance, and
+notification mechanics beyond "email is an alert channel," neither of which exist yet.
 
 ## 7. MCP/tool access boundaries per management role
 

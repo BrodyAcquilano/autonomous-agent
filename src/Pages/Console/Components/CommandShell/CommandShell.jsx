@@ -84,6 +84,7 @@ function CommandShell({
   setMessages,
   setResponse,
 
+  systemStatus,
   setSystemStatus,
 
   reportError,
@@ -111,6 +112,18 @@ function CommandShell({
     useState(
       false,
     );
+
+
+  /*
+   * systemStatus is shared app-wide — a
+   * Maintenance-triggered restart can set it to
+   * "busy" too, not only a Console submission of
+   * its own, so the shell locks on either.
+   */
+  const isBusy =
+    isSubmitting ||
+    systemStatus ===
+      "busy";
 
 
   const fileInputRef =
@@ -297,7 +310,7 @@ function CommandShell({
     index,
   ) {
     if (
-      isSubmitting
+      isBusy
     ) {
       return;
     }
@@ -332,7 +345,7 @@ function CommandShell({
 
       if (
         !input ||
-        isSubmitting
+        isBusy
       ) {
         return;
       }
@@ -497,7 +510,7 @@ function CommandShell({
                   className="command-attachment-remove"
                   aria-label={`Remove ${file.name}`}
                   disabled={
-                    isSubmitting
+                    isBusy
                   }
                   onClick={() => {
                     removeAttachment(
@@ -542,10 +555,16 @@ function CommandShell({
           value={
             command
           }
+          disabled={
+            isBusy
+          }
           placeholder={
             isSubmitting
               ? "PROCESSING..."
-              : "ENTER COMMAND OR TASK..."
+              : systemStatus ===
+                "busy"
+                ? "SYSTEM BUSY..."
+                : "ENTER COMMAND OR TASK..."
           }
           onChange={(
             event,
@@ -563,7 +582,7 @@ function CommandShell({
           aria-label="Add input file"
           title="Add PDF or image"
           disabled={
-            isSubmitting
+            isBusy
           }
           onClick={() => {
             fileInputRef
@@ -579,12 +598,15 @@ function CommandShell({
           type="submit"
           className="command-run-button"
           disabled={
-            isSubmitting
+            isBusy
           }
         >
           {isSubmitting
             ? "WORKING"
-            : "EXECUTE"}
+            : systemStatus ===
+              "busy"
+              ? "BUSY"
+              : "EXECUTE"}
         </button>
       </div>
     </form>

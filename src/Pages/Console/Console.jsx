@@ -199,6 +199,9 @@ function Console({
             setResponse
           }
 
+          systemStatus={
+            systemStatus
+          }
           setSystemStatus={
             setSystemStatus
           }
