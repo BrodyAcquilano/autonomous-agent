@@ -12,8 +12,8 @@ meantime.
 
 **The application runtime was treated as paused, and that has since been deliberately broken for
 one slice of it: a real Router agent now exists and the Console page calls it directly** (see
-Steps 2–5 below and `01-execution-brain.md`/`03-agent-organization.md`). That was a conscious
-choice to prove the Execution Brain design end-to-end, not a general reopening of the frontend/
+Steps 2–5 below and `01-capabilities-brain.md`/`03-agent-organization.md`). That was a conscious
+choice to prove the Capabilities Brain design end-to-end, not a general reopening of the frontend/
 server — do not refactor the rest of the existing frontend/server (Coordinator/Planner/Worker/QC,
 Maintenance page, Analytics dashboards) to match target architecture beyond what Steps 2–6 below
 already describe as done. Changes driven purely by "this doesn't match the target architecture
@@ -32,14 +32,14 @@ A partially-prepared bottom-up alternative remains available:
 Router → Worker → (later) QC → Planner → Coordinator → management
 ```
 
-A Router can operate against a limited slice of the Execution Brain (`01-execution-brain.md`) —
+A Router can operate against a limited slice of the Capabilities Brain (`01-capabilities-brain.md`) —
 models, model-specific APIs, tools, capabilities — without any Organizational Brain
 (`03-agent-organization.md`) or management organization (`08-organizational-governance.md`)
 existing yet. A Worker can then consume the resulting route plus relevant skills
 (`04-skills.md`). That slice alone would prove a significant part of the structural-brain/
 database design on its own.
 
-**Consequence for MongoDB design:** the Execution Brain is the shared foundation useful under
+**Consequence for MongoDB design:** the Capabilities Brain is the shared foundation useful under
 either strategy and should be designed and seeded first regardless of which path is chosen. The
 Organizational Brain and the management-organization collections are specifically required by
 the top-down path — avoid designing the database so it only works if the entire management
@@ -54,9 +54,9 @@ priorities change.
 
 1. **Establish the canonical architecture documentation** — this directory. *(Current phase.)*
 2. Connect Claude Code to MongoDB through the official MongoDB MCP tooling.
-3. Design the MongoDB ontology and collections (Execution Brain, Organizational Brain, skills,
+3. Design the MongoDB ontology and collections (Capabilities Brain, Organizational Brain, skills,
    ontology-version records — the concrete schemas intentionally deferred by
-   `01-execution-brain.md`, `03-agent-organization.md`, `04-skills.md`, and
+   `01-capabilities-brain.md`, `03-agent-organization.md`, `04-skills.md`, and
    `05-ontology-versioning.md`).
 4. Establish **minimal** version-awareness, backup, and structural indexing (stable IDs, a
    `version` field, active/deprecated status). The full automated governance lifecycle
@@ -86,7 +86,7 @@ priorities change.
 |---|---|
 | 1. Architecture documentation | Ongoing — living document set, updated as design choices land |
 | 2. Connect to MongoDB | Done |
-| 3. Design MongoDB ontology/collections | Substantially done for the Execution Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`, `maintenance.tickets`). Skill and ontology-version schemas remain undesigned. |
+| 3. Design MongoDB ontology/collections | Substantially done for the Capabilities Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`; `maintenance.router`/`maintenance.analytics`, one collection per originating agent). Skill and ontology-version schemas remain undesigned. |
 | 4. Minimal version-awareness/indexing | Done for every collection that exists — `version`/`status` fields and stable-id indexes throughout |
 | 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 2 agent profiles (`router`, `analytics`), 12 directory documents |
 | 6. Build the management organization | Started narrowly, not as originally sequenced — see note below |
@@ -102,18 +102,21 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
 ## Current repo inventory relevant to this roadmap
 
 - **Working today:** React/Vite frontend, Console/Output pages, viewport/window infrastructure,
-  the Models page (browses the Execution Brain end-to-end via a branching model → API → tool →
+  the Models page (browses the Capabilities Brain end-to-end via a branching model → API → tool →
   capability info modal), Express backend, Azure OpenAI Responses + Images API integration, a
   single shared `MongoClient` connected across three logical databases (`autonomous`, `analytics`,
   `maintenance`), and a real multi-stage Router agent (`server/Services/Router/RouterAgent.js`)
   that the Console page calls directly instead of building an Azure request itself.
 - **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
-  (`autonomous` — Execution Brain); `agents`, `directory` (`autonomous` — a first slice of the
+  (`autonomous` — Capabilities Brain); `agents`, `directory` (`autonomous` — a first slice of the
   Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling
   structure, not yet enforced by any runtime kernel check); `router` (`analytics` — one document
-  per Router run, with a full per-stage trace, written by the server itself); `tickets`
-  (`maintenance` — filed by the Router and the Analytics agent, reviewed directly by a human
-  today, with no automated triage).
+  per Router run, with a full per-stage trace, written by the server itself); `router` and
+  `analytics` (`maintenance` — one collection per *originating* agent, not per agent that
+  physically writes: the Router's own decisions land in `maintenance.router`, and tickets the
+  Analytics agent flags during review land in `maintenance.analytics` even though the Router's
+  code performs that write too, since Analytics has no database access of its own. Reviewed
+  directly by a human today, with no automated triage).
 - **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker`,
   `server/Runtime/State/*`, `server/Runtime/Memory/*`, `server/Services/Files/FileService.js`,
   `brain/commands/`, `brain/skills/`, `brain/tasks/`. `brain/models/` and `brain/apis/` are no

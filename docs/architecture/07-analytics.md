@@ -59,7 +59,7 @@ frontend dashboards or narrative reports of any kind.
 
 What's real: a dedicated `analytics` database (isolated from `autonomous` and `maintenance` on
 purpose — an Analytics or future Maintenance agent should never be able to interfere with each
-other or with execution-brain data) with a `router` collection. The **server itself** — not any
+other or with capabilities-brain data) with a `router` collection. The **server itself** — not any
 agent — deterministically appends one entry per completed Router stage (the stage's parsed
 decision, and which model/API/tools/capabilities were selected) to that run's document as the
 Router progresses; the Analytics agent never writes to it. A real Analytics agent

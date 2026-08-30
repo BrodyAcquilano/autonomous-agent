@@ -298,28 +298,28 @@ async function fileTicketFromDecision(
   decision,
   context,
 ) {
-  return createMaintenanceTicket({
-    type:
-      decision.ticketType,
+  return createMaintenanceTicket(
+    "router",
+    {
+      type:
+        decision.ticketType,
 
-    message:
-      decision.message,
+      message:
+        decision.message,
 
-    details:
-      decision.details,
+      details:
+        decision.details,
 
-    stage:
-      context.stage,
+      stage:
+        context.stage,
 
-    task:
-      context.task,
+      task:
+        context.task,
 
-    context:
-      context.routeSoFar,
-
-    source:
-      "router",
-  });
+      context:
+        context.routeSoFar,
+    },
+  );
 }
 
 
@@ -327,28 +327,28 @@ async function fileProtocolErrorTicket(
   error,
   context,
 ) {
-  return createMaintenanceTicket({
-    type:
-      "error",
+  return createMaintenanceTicket(
+    "router",
+    {
+      type:
+        "error",
 
-    message:
-      "Router produced a response the server could not use.",
+      message:
+        "Router produced a response the server could not use.",
 
-    details:
-      error.message,
+      details:
+        error.message,
 
-    stage:
-      context.stage,
+      stage:
+        context.stage,
 
-    task:
-      context.task,
+      task:
+        context.task,
 
-    context:
-      context.routeSoFar,
-
-    source:
-      "router",
-  });
+      context:
+        context.routeSoFar,
+    },
+  );
 }
 
 
@@ -393,7 +393,17 @@ async function reviewStageAndMaybeStop({
   if (
     verdict.fileTicket
   ) {
+    /*
+     * This ticket exists because of the
+     * Analytics agent's own judgment, not the
+     * Router's — it goes into that agent's own
+     * maintenance collection even though the
+     * server is what physically performs the
+     * write (Analytics has no database access
+     * of its own).
+     */
     await createMaintenanceTicket(
+      "analytics",
       {
         type:
           verdict.ticketType ||
@@ -414,9 +424,6 @@ async function reviewStageAndMaybeStop({
 
         context:
           routeSoFar,
-
-        source:
-          "analytics-agent",
       },
     );
   }
@@ -548,27 +555,27 @@ async function runRouter({
     !models.length
   ) {
     const ticket =
-      await createMaintenanceTicket({
-        type:
-          "request",
+      await createMaintenanceTicket(
+        "router",
+        {
+          type:
+            "request",
 
-        message:
-          "No models are configured.",
+          message:
+            "No models are configured.",
 
-        details:
-          "The models collection is empty, so the Router cannot select a model for any task.",
+          details:
+            "The models collection is empty, so the Router cannot select a model for any task.",
 
-        stage:
-          1,
+          stage:
+            1,
 
-        task,
+          task,
 
-        context:
-          {},
-
-        source:
-          "router",
-      });
+          context:
+            {},
+        },
+      );
 
 
     return {

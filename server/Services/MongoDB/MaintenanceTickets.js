@@ -2,19 +2,32 @@ import { getMaintenanceDB } from "./MongoDB.js";
 
 
 /*
- * Lives in the maintenance database's
- * `tickets` collection — kept separate from
- * autonomous/analytics so a future Maintenance
- * agent (and the eventual Maintenance page)
- * has its own isolated store with its own
- * permissions.
+ * The maintenance database holds one
+ * collection PER AGENT, named after whichever
+ * agent's own judgment produced the ticket —
+ * e.g. maintenance.router, maintenance.analytics
+ * — rather than one shared `tickets` collection.
+ * This is keyed by WHOSE DECISION it was, not by
+ * which code physically performs the write: the
+ * Analytics agent has no database access of its
+ * own, so the Router calls this on its behalf
+ * whenever Analytics flags something, but that
+ * ticket still lands in maintenance.analytics.
+ * A future Maintenance or Worker agent filing
+ * its own tickets would get its own collection
+ * the same way.
  */
-function getCollection() {
-  return getMaintenanceDB().collection("tickets");
+function getCollection(
+  agentName,
+) {
+  return getMaintenanceDB().collection(
+    agentName,
+  );
 }
 
 
 async function createMaintenanceTicket(
+  agentName,
   ticket,
 ) {
   const document = {
@@ -29,7 +42,9 @@ async function createMaintenanceTicket(
 
 
   const result =
-    await getCollection().insertOne(
+    await getCollection(
+      agentName,
+    ).insertOne(
       document,
     );
 

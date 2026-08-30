@@ -63,7 +63,7 @@ function useRuntime() {
 
 
   /*
-   * Execution Brain catalogs (models, apis,
+   * Capabilities Brain catalogs (models, apis,
    * tools, capabilities) are small and global,
    * so Runtime owns them here instead of the
    * Models page — that way navigating away

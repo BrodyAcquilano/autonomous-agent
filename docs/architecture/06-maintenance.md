@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Maintenance Agent keeps the **Execution Brain's** infrastructure knowledge current and
+The Maintenance Agent keeps the **Capabilities Brain's** infrastructure knowledge current and
 healthy: models, APIs, providers, deployments, capabilities, and their relationship documents.
 It does not manage organizational design (that is HR — see `08-organizational-governance.md`)
 and does not manage skills content (`04-skills.md`), beyond flagging when a skill references
@@ -51,7 +51,7 @@ Brody to configure and approve. This mirrors the human-authority principle in `0
 ## Scope
 
 - Models, APIs, providers, deployments, capabilities
-- Relationship documents in the Execution Brain
+- Relationship documents in the Capabilities Brain
 - Detecting deprecated/broken routes and researching alternatives (including acting as an
   infrastructure researcher when called by another agent — e.g. Quality Control, per
   `02-project-workflow.md` and `03-agent-organization.md` — after a route repeatedly fails)
@@ -75,15 +75,21 @@ authoritative place decisions are actually recorded.
 **No Maintenance agent exists yet — this document's Maintenance Agent, default policy, and
 backup/rollback workflow all remain target architecture.** What does exist is the ticket itself:
 a dedicated `maintenance` database (separate from `autonomous` and `analytics`, per the isolation
-principle in `07-analytics.md`) with a `tickets` collection. A ticket has `type` (`error` — the
-request can't be fulfilled as asked — or `request` — a genuine configuration gap), `message`,
-`details`, `stage`, `task`, `context`, `source` (`router` or `analytics-agent`, recording who
-filed it), and `status` (currently always `"open"` — nothing ever transitions it).
+principle in `07-analytics.md`), holding **one collection per agent, named after whichever agent's
+own judgment produced the ticket** — `maintenance.router` for the Router's own decisions,
+`maintenance.analytics` for ones the Analytics agent flags during its stage review — rather than
+one shared `tickets` collection, so each agent's ticket history stays its own log rather than a
+single interleaved stream. This is keyed by *whose decision it was*, not by which code physically
+writes it: the Analytics agent has no database access of its own, so the Router calls the write on
+its behalf, but the ticket still lands in `maintenance.analytics`. A ticket has `type` (`error` —
+the request can't be fulfilled as asked — or `request` — a genuine configuration gap), `message`,
+`details`, `stage`, `task`, `context`, and `status` (currently always `"open"` — nothing ever
+transitions it). A future Maintenance or Worker agent filing its own tickets would get its own
+same-named collection.
 
-Because there is no Maintenance agent to route tickets to, the Router and Analytics agent both
-file directly into this collection, **bypassing any agent entirely** — today a ticket's only other
-visible trace is the server's own log output and, on the frontend, the Console's message panel
-(via `reportError`), which is itself expected to change once a dedicated Maintenance page exists
-(see `09-implementation-roadmap.md`). There is no triage, no automatic resolution, and no
-backup/rollback mechanism of any kind — every ticket sits in `maintenance.tickets` until a human
-reads it directly.
+Because there is no Maintenance agent to route tickets to, filing one **bypasses any agent
+entirely** — today a ticket's only other visible trace is the server's own log output and, on the
+frontend, the Console's message panel (via `reportError`), which is itself expected to change once
+a dedicated Maintenance page exists (see `09-implementation-roadmap.md`). There is no triage, no
+automatic resolution, and no backup/rollback mechanism of any kind — every ticket sits in its
+agent's collection until a human reads it directly.

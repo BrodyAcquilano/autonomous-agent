@@ -86,7 +86,7 @@ function App() {
 
 
   /*
-   * Models/APIs are Execution Brain
+   * Models/APIs are Capabilities Brain
    * catalog data — loaded once here so
    * the Models page (and its info modal
    * state, also owned by Runtime) survives

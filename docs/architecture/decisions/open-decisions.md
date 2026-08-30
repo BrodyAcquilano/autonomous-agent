@@ -17,11 +17,13 @@ remains open:
 
 ## 1. Concrete MongoDB collection schemas
 
-**Further resolved.** Beyond the Execution Brain slice (`models`, `apis`, `tools`, `capabilities`,
-`platforms` — see `01-execution-brain.md`), a first Organizational Brain schema now also exists:
+**Further resolved.** Beyond the Capabilities Brain slice (`models`, `apis`, `tools`, `capabilities`,
+`platforms` — see `01-capabilities-brain.md`), a first Organizational Brain schema now also exists:
 `agents` (profile-card prompts) and `directory` (agent/contact/request-type documents — see
-`03-agent-organization.md`), plus `analytics.router` (per-run process trace) and
-`maintenance.tickets` (see `07-analytics.md`, `06-maintenance.md`). What remains undesigned:
+`03-agent-organization.md`), plus `analytics.router` (per-run process trace) and a
+per-originating-agent collection in `maintenance` (currently `maintenance.router` and
+`maintenance.analytics` — see
+`07-analytics.md`, `06-maintenance.md`). What remains undesigned:
 skills/skill-version schema, ontology-version records, and — notably — the directory schema above
 is descriptive data only; a schema for the call envelope / kernel-enforcement layer that would
 actually validate an edge before a call happens has not been designed.
@@ -42,7 +44,7 @@ cost budget defaults) have been chosen.
 
 ## 4. Initial seed set
 
-**Partially resolved.** The Execution Brain is seeded with a deliberately tiny set: 3 models
+**Partially resolved.** The Capabilities Brain is seeded with a deliberately tiny set: 3 models
 (`gpt-5.6-terra`, `gpt-5.3-codex`, `gpt-image-2`), 1 platform, 3 model-scoped API documents, 3
 tools and 3 capabilities (all currently under `gpt-5.6-terra`'s Responses API route) — enough to
 exercise every node of the funnel at least once. Which agent roles and request types get seeded

@@ -105,7 +105,7 @@ function getDB() {
  * databases on purpose — the Analytics agent
  * and a future Maintenance agent should never
  * be able to interfere with each other or with
- * the autonomous execution-brain data, and each
+ * the autonomous capabilities-brain data, and each
  * can eventually get its own scoped credentials.
  *
  * Connecting is non-fatal if the env var isn't

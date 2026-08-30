@@ -7,7 +7,7 @@ import { getAnalyticsDB } from "./MongoDB.js";
  * Lives in the analytics database's `router`
  * collection — the Router's own append-only
  * process log, kept separate from the
- * autonomous execution-brain data so an
+ * autonomous capabilities-brain data so an
  * Analytics agent (or a future Maintenance
  * agent) can read/reason about it without any
  * access to (or risk of interfering with)

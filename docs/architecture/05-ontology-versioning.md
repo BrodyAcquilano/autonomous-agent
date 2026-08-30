@@ -16,7 +16,7 @@ whichever version is currently active: load a schema, query relationships, valid
 activate a new version.
 
 This principle applies across every structural system described elsewhere in this documentation
-set: the Execution Brain (`01-execution-brain.md`), the Organizational Brain
+set: the Capabilities Brain (`01-capabilities-brain.md`), the Organizational Brain
 (`03-agent-organization.md`), and the skill decision-graph shape (`04-skills.md`). None of those
 documents should be read as describing a fixed, unchangeable schema — they describe the *current*
 target design, which itself can evolve through the process below.
@@ -91,5 +91,5 @@ measure/rollback, ontology-version records) does not exist — that remains targ
 What has landed is exactly the reduced "initial scope" described above: every collection now built
 (`models`, `apis`, `tools`, `capabilities`, `agents`, `directory`, and the analytics/maintenance
 collections) carries a plain `version` integer and a `status` field, and stable ids throughout —
-see `01-execution-brain.md` and `03-agent-organization.md`. There is still no snapshotting, no
+see `01-capabilities-brain.md` and `03-agent-organization.md`. There is still no snapshotting, no
 candidate/active version pointer, and no rollback mechanism of any kind.

@@ -1,8 +1,8 @@
-# Execution Brain
+# Capabilities Brain
 
 ## Purpose
 
-The Execution Brain is the structural knowledge base that answers: **how can a given piece of
+The Capabilities Brain is the structural knowledge base that answers: **how can a given piece of
 work actually be executed?** It stores stable facts about models, APIs, tools, and capabilities,
 and the valid relationships between them. It is deliberately separate from the Organizational
 Brain (`03-agent-organization.md`), which answers a different question — who may call whom.
@@ -109,7 +109,7 @@ Worker configures the tool directly from the tool's own documentation rather tha
 
 ## Ad-hoc routing vs. predetermined agents
 
-The Execution Brain's funnel exists to let the Router assemble a **custom, temporary configuration
+The Capabilities Brain's funnel exists to let the Router assemble a **custom, temporary configuration
 for one task** out of raw building blocks (Model, API, Tool, Capability) — closer to briefing a
 temp worker for a single job than to assigning a pre-built specialist. This is deliberate: the
 Router does not pick from a fixed roster of pre-designed agents, each hand-built with its own
@@ -124,7 +124,7 @@ through an authorized directory of who-may-call-whom — real, persistent member
 organization. The Router described in this document is not one of them; it is the mechanism by
 which the organization figures out how to brief a one-off worker for a single execution step. The
 two systems are complementary, not competing: a standing agent (e.g. the Worker role in
-`02-project-workflow.md`) is often *the thing that receives* a route the Execution Brain resolved,
+`02-project-workflow.md`) is often *the thing that receives* a route the Capabilities Brain resolved,
 but the route itself is assembled fresh per task rather than being one of that agent's
 pre-declared skills.
 
@@ -201,7 +201,7 @@ Every execution should be traceable back to the exact document(s) that informed 
   fuller Planner/Coordinator/Worker/QC pipeline described in `02-project-workflow.md`, and for now
   performs both routing and execution itself. See `03-agent-organization.md` for how the Router's
   own identity and calls are recorded, and `09-implementation-roadmap.md` for overall status.
-- **Target architecture:** the Execution Brain is persisted in MongoDB (per the resolved decision
+- **Target architecture:** the Capabilities Brain is persisted in MongoDB (per the resolved decision
   in `05-ontology-versioning.md`'s scope and the overall project direction). The existing
   filesystem `brain/` content is prototype/reference material, superseded by the live MongoDB
   collections and no longer read by any route. Phase 3 (`09-implementation-roadmap.md`) is now

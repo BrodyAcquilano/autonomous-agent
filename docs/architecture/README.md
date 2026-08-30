@@ -26,7 +26,7 @@ source of truth for architecture.
 The application today (React/Vite frontend, Express backend) is a useful scaffold, not a full
 implementation of the architecture described here — but it is no longer a single-shot Azure
 OpenAI Responses proxy either. A real, working Router agent now resolves and executes tasks
-(`01-execution-brain.md`, `03-agent-organization.md`), backed by a small Analytics agent
+(`01-capabilities-brain.md`, `03-agent-organization.md`), backed by a small Analytics agent
 (`07-analytics.md`) and maintenance ticketing (`06-maintenance.md`). Most of the rest of what
 follows — Coordinator/Planner/Worker-QC, Maintenance/HR/CEO agents, dashboards — still describes
 **target architecture** that has not been built yet. Each document calls out current-repo-state
@@ -37,12 +37,12 @@ is intentionally still undecided.
 ## Reading order
 
 1. `00-overview.md` — system goal, layering, core principles, glossary
-2. `01-execution-brain.md` — models/APIs/tools/capabilities and how routing works
+2. `01-capabilities-brain.md` — models/APIs/tools/capabilities and how routing works
 3. `02-project-workflow.md` — Coordinator → Planner → Router → Worker → QC
 4. `03-agent-organization.md` — the delegated agent-calling directory and runtime kernel
 5. `04-skills.md` — procedural knowledge (Agent Skills standard + MongoDB decision graphs)
 6. `05-ontology-versioning.md` — how schema/ontology change is governed over time
-7. `06-maintenance.md` — keeping execution-brain infrastructure current
+7. `06-maintenance.md` — keeping capabilities-brain infrastructure current
 8. `07-analytics.md` — telemetry and reporting
 9. `08-organizational-governance.md` — HR, the Job Board, and the CEO agent
 10. `09-implementation-roadmap.md` — the build sequence and current status

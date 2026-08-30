@@ -3,8 +3,8 @@
 ## Purpose
 
 This document describes the **Organizational Brain**: who may call whom, for what reason, and
-under what limits. It is deliberately separate from the Execution Brain
-(`01-execution-brain.md`) — this system answers "who may call whom for what, right now?", not
+under what limits. It is deliberately separate from the Capabilities Brain
+(`01-capabilities-brain.md`) — this system answers "who may call whom for what, right now?", not
 "how can this task be executed?"
 
 ## Resolved decision: delegated calling is the target architecture
@@ -116,13 +116,13 @@ edge, as the system proves each capability out — this applies to the project-e
 → broader delegated collaboration) is expected and acceptable; see
 `09-implementation-roadmap.md`.
 
-## Relationship to the Execution Brain
+## Relationship to the Capabilities Brain
 
-The Execution Brain and the Organizational Brain both use sparse relationship tensors and the
+The Capabilities Brain and the Organizational Brain both use sparse relationship tensors and the
 same structural-filter-before-semantic-search principle, but they are **not the same system**
 and must not be merged:
 
-| | Execution Brain | Organizational Brain |
+| | Capabilities Brain | Organizational Brain |
 |---|---|---|
 | Tensor | `Model × API × Tool` | `Agent × Agent × RequestType` |
 | Answers | How can this be executed? | Who may call whom for what? |

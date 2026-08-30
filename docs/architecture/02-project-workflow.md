@@ -14,8 +14,8 @@ per the roadmap in `09-implementation-roadmap.md`.
   should exist) and feature specification (how success will be judged).
 - **Planner** — operates at the single-feature/task level. Converts one feature into a rolling
   implementation plan and forwards exactly one next task at a time.
-- **Router** — translates one task into an execution route using the Execution Brain
-  (`01-execution-brain.md`): required capabilities → model → API → tools → relationship
+- **Router** — translates one task into an execution route using the Capabilities Brain
+  (`01-capabilities-brain.md`): required capabilities → model → API → tools → relationship
   documents → skill references.
 - **Worker** — executes exactly one task using the approved route, using skills
   (`04-skills.md`) where applicable, and stages its output rather than writing directly to the
@@ -82,12 +82,12 @@ Most of this workflow still does not exist. `server/Runtime/Supervisor`,
 there is no Coordinator, Planner, or separate QC step anywhere in the runtime.
 
 The Router itself, however, is real (`server/Services/Router/RouterAgent.js`, see
-`01-execution-brain.md` and `03-agent-organization.md`) — the Console page now sends a task to it
+`01-capabilities-brain.md` and `03-agent-organization.md`) — the Console page now sends a task to it
 directly, and it resolves an exact Model/API/Tool/Capability route through a real multi-stage AI
 process rather than a fixed call. It currently also performs the Worker's job itself, executing
 the assembled request rather than handing it to a separate Worker role. This is the bottom-up
 fallback path described in `09-implementation-roadmap.md` — a minimal Router slice built directly
-against the Execution Brain before any management organization (Coordinator/Planner/CEO/HR)
+against the Capabilities Brain before any management organization (Coordinator/Planner/CEO/HR)
 exists — though in practice it was built alongside a narrow Analytics agent (`07-analytics.md`)
 rather than in strict isolation from the management layer. Do not build a Coordinator, Planner, or
 separate Worker/QC split ahead of what `09-implementation-roadmap.md` currently calls for.

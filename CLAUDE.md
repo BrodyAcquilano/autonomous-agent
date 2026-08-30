@@ -16,7 +16,7 @@ There is no test suite/framework configured in this repository (no test files, n
 ## Target architecture
 
 `docs/architecture/` is the canonical specification for the target autonomous-agent architecture
-(Execution Brain, Agent Organization, project workflow, skills, ontology versioning,
+(Capabilities Brain, Agent Organization, project workflow, skills, ontology versioning,
 maintenance, analytics, organizational governance, and the build roadmap). Read it before making
 any design decision that goes beyond the current scaffold described below. The application
 runtime described in this file is a working scaffold, not an implementation of that target

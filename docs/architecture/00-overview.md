@@ -18,7 +18,7 @@ The design separates concerns into distinct layers. Each has its own canonical d
 
 | Layer | Document | Answers |
 |---|---|---|
-| Execution Brain | `01-execution-brain.md` | What can be executed, and how? |
+| Capabilities Brain | `01-capabilities-brain.md` | What can be executed, and how? |
 | Project Workflow | `02-project-workflow.md` | How does one project request become finished work? |
 | Agent Organization | `03-agent-organization.md` | Who may call whom, for what, under what limits? |
 | Skills | `04-skills.md` | How has the system learned to do specific work? |
@@ -29,7 +29,7 @@ The design separates concerns into distinct layers. Each has its own canonical d
 
 Two of these are explicitly **separate structural systems that must not be collapsed into one**:
 
-- **Execution Brain** — `Model × API × Tool / Capability` relationships. Answers "how can this
+- **Capabilities Brain** — `Model × API × Tool / Capability` relationships. Answers "how can this
   task be executed?"
 - **Organizational Brain** (part of Agent Organization) — `Caller Agent × Callee Agent × Request
   Type` relationships. Answers "who may call whom for what, right now?"
@@ -55,7 +55,7 @@ future design or implementation work in this area:
    amount of context needed to make the next decision — metadata before full instructions,
    full instructions before deep reference material — rather than loading an entire knowledge
    base up front. This is a deliberate token- and reliability-control strategy, not just an
-   optimization; it recurs in `01-execution-brain.md` (structural narrowing before semantic
+   optimization; it recurs in `01-capabilities-brain.md` (structural narrowing before semantic
    search), `03-agent-organization.md` (local phone books instead of the full directory), and
    `04-skills.md` (metadata → SKILL.md → resources).
 4. **Server/runtime kernel as enforcement, agents as logical routers.** Agents decide *what
@@ -64,8 +64,8 @@ future design or implementation work in this area:
    `03-agent-organization.md`.
 5. **Runtime tasks are input, not schema.** Project/task text is open-ended natural language and
    is never required to exist as an indexed structural dimension. The Router translates a task
-   into stable capability requirements before entering the Execution Brain. See
-   `01-execution-brain.md`.
+   into stable capability requirements before entering the Capabilities Brain. See
+   `01-capabilities-brain.md`.
 6. **Ontology is versioned data.** Entity types, relationship types, and directory schemas are
    not permanently hard-coded; they evolve through an explicit, auditable, reversible governance
    process. See `05-ontology-versioning.md`.
@@ -88,7 +88,7 @@ layers above:
 
 - A React/Vite frontend and Express backend exist and work today. The Console page no longer
   makes a single-shot proxy call — it now goes through a real, working Router agent
-  (`01-execution-brain.md`, `03-agent-organization.md`) that resolves Model → API → Tool →
+  (`01-capabilities-brain.md`, `03-agent-organization.md`) that resolves Model → API → Tool →
   Capability and executes the result itself. A narrow Analytics agent also exists, reviewing each
   Router stage (`07-analytics.md`). There is still no Planner, Coordinator, Worker/QC split,
   Maintenance agent, HR, or CEO agent anywhere in the runtime — see `02-project-workflow.md`,
@@ -100,7 +100,7 @@ layers above:
 - The filesystem `brain/` directory (`brain/models/*.md`, `brain/apis/**/*.md`) is no longer read
   by any route — it is retained only as historical reference pending deletion. MongoDB (the
   `autonomous`, `analytics`, and `maintenance` databases) is now the persistent brain in practice,
-  not just in target design (see `01-execution-brain.md`, `03-agent-organization.md`,
+  not just in target design (see `01-capabilities-brain.md`, `03-agent-organization.md`,
   `06-maintenance.md`, `07-analytics.md`).
 - The "paused runtime" framing has been superseded in practice for the pieces just described —
   Console/Runtime.jsx were deliberately modified to call the real Router. The broader
@@ -110,7 +110,7 @@ layers above:
 
 ## Glossary
 
-- **Execution Brain** — the structural knowledge base of models, APIs, tools, and capabilities,
+- **Capabilities Brain** — the structural knowledge base of models, APIs, tools, and capabilities,
   and the valid relationships between them.
 - **Organizational Brain / Directory** — the structural knowledge base of which agents may call
   which other agents, for which request types, under which conditions.
