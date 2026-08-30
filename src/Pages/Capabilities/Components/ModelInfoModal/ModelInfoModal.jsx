@@ -328,15 +328,7 @@ function ModelInfoModal({
         aria-label={`${title} documentation`}
       >
         <header className="model-modal-header">
-          <div className="model-modal-heading">
-            <span className="model-modal-eyebrow">
-              {eyebrow}
-            </span>
-
-            <h1>
-              {title}
-            </h1>
-
+          <div className="model-modal-header-side model-modal-header-left">
             {view.type ===
             "model" ? (
               <span className="model-modal-position">
@@ -358,16 +350,29 @@ function ModelInfoModal({
           </div>
 
 
-          <button
-            type="button"
-            className="model-modal-close"
-            aria-label="Close model information"
-            onClick={
-              onClose
-            }
-          >
-            ×
-          </button>
+          <div className="model-modal-heading">
+            <span className="model-modal-eyebrow">
+              {eyebrow}
+            </span>
+
+            <h1>
+              {title}
+            </h1>
+          </div>
+
+
+          <div className="model-modal-header-side model-modal-header-right">
+            <button
+              type="button"
+              className="model-modal-close"
+              aria-label="Close model information"
+              onClick={
+                onClose
+              }
+            >
+              ×
+            </button>
+          </div>
         </header>
 
 

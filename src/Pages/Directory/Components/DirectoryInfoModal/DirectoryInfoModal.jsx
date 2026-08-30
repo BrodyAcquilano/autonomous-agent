@@ -378,15 +378,7 @@ function DirectoryInfoModal({
         aria-label={`${title} directory entry`}
       >
         <header className="directory-modal-header">
-          <div className="directory-modal-heading">
-            <span className="directory-modal-eyebrow">
-              {eyebrow}
-            </span>
-
-            <h1>
-              {title}
-            </h1>
-
+          <div className="directory-modal-header-side directory-modal-header-left">
             {view.type ===
             "agent" ? (
               <span className="directory-modal-position">
@@ -408,16 +400,29 @@ function DirectoryInfoModal({
           </div>
 
 
-          <button
-            type="button"
-            className="directory-modal-close"
-            aria-label="Close directory entry"
-            onClick={
-              onClose
-            }
-          >
-            ×
-          </button>
+          <div className="directory-modal-heading">
+            <span className="directory-modal-eyebrow">
+              {eyebrow}
+            </span>
+
+            <h1>
+              {title}
+            </h1>
+          </div>
+
+
+          <div className="directory-modal-header-side directory-modal-header-right">
+            <button
+              type="button"
+              className="directory-modal-close"
+              aria-label="Close directory entry"
+              onClick={
+                onClose
+              }
+            >
+              ×
+            </button>
+          </div>
         </header>
 
 

@@ -171,7 +171,7 @@
 }
 
 
-.navigation-tab.resources {
+.navigation-tab.agents {
   border-color:
     rgba(
       76,
@@ -198,7 +198,7 @@
 }
 
 
-.navigation-tab.resources.active {
+.navigation-tab.agents.active {
   background:
     rgba(
       31,
@@ -217,7 +217,7 @@
 }
 
 
-.navigation-tab.memory {
+.navigation-tab.maintenance {
   border-color:
     rgba(
       74,
@@ -244,7 +244,7 @@
 }
 
 
-.navigation-tab.memory.active {
+.navigation-tab.maintenance.active {
   background:
     rgba(
       37,
@@ -259,6 +259,52 @@
       232,
       140,
       0.86
+    );
+}
+
+
+.navigation-tab.directory {
+  border-color:
+    rgba(
+      224,
+      214,
+      74,
+      0.46
+    );
+
+  background:
+    rgba(
+      122,
+      112,
+      20,
+      0.22
+    );
+
+  color:
+    rgba(
+      240,
+      232,
+      150,
+      0.84
+    );
+}
+
+
+.navigation-tab.directory.active {
+  background:
+    rgba(
+      148,
+      136,
+      24,
+      0.44
+    );
+
+  border-color:
+    rgba(
+      240,
+      227,
+      90,
+      0.9
     );
 }
 

@@ -16,6 +16,14 @@ const TABS = [
     path: "/output",
   },
   {
+    label: "Analytics",
+    path: "/analytics",
+  },
+  {
+    label: "Maintenance",
+    path: "/maintenance",
+  },
+  {
     label: "Agents",
     path: "/agents",
   },
@@ -26,14 +34,6 @@ const TABS = [
   {
     label: "Capabilities",
     path: "/capabilities",
-  },
-  {
-    label: "Maintenance",
-    path: "/maintenance",
-  },
-  {
-    label: "Analytics",
-    path: "/analytics",
   },
 ];
 
