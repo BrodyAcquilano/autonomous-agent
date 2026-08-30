@@ -210,11 +210,18 @@ function MaintenanceLogModal({
             />
 
             <FieldRow
-              label="RESTART COUNT"
+              label="INPUT TOKENS"
               value={
-                log.state
-                  ?.restartCount ??
-                0
+                log.usage
+                  ?.input_tokens
+              }
+            />
+
+            <FieldRow
+              label="OUTPUT TOKENS"
+              value={
+                log.usage
+                  ?.output_tokens
               }
             />
           </div>
@@ -245,7 +252,7 @@ function MaintenanceLogModal({
           {log.state && (
             <div className="maintenance-log-modal-section">
               <div className="maintenance-log-modal-section-title">
-                RESUMABLE STATE (AT THE TIME)
+                STATE (AT THE TIME)
               </div>
 
               <pre className="maintenance-log-modal-state">

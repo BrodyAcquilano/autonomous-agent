@@ -26,11 +26,12 @@ source of truth for architecture.
 The application today (React/Vite frontend, Express backend) is a useful scaffold, not a full
 implementation of the architecture described here — but it is no longer a single-shot Azure
 OpenAI Responses proxy either. A real, working Router agent now resolves and executes tasks
-(`01-capabilities-brain.md`, `03-agent-organization.md`), backed by a small Analyst agent
-(`07-analytics.md`) and maintenance ticketing (`06-maintenance.md`). Most of the rest of what
-follows — Coordinator/Planner/Worker-QC, Maintenance/HR/CEO agents, dashboards — still describes
-**target architecture** that has not been built yet. Each document calls out current-repo-state
-vs. target-architecture explicitly where the distinction matters. See
+(`01-capabilities-brain.md`, `03-agent-organization.md`), backed by a small Analyst agent and a
+first, narrow Maintenance agent — the only agent authorized to file a ticket a human reviews,
+consulted live whenever the Router hits an error mid-run (`07-analytics.md`, `06-maintenance.md`).
+Most of the rest of what follows — Coordinator/Planner/Worker-QC, HR/CEO agents, dashboards —
+still describes **target architecture** that has not been built yet. Each document calls out
+current-repo-state vs. target-architecture explicitly where the distinction matters. See
 `09-implementation-roadmap.md` for the sequencing plan and `decisions/open-decisions.md` for what
 is intentionally still undecided.
 

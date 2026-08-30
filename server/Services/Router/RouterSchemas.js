@@ -4,7 +4,7 @@
  *
  * Every stage shares one shape:
  *
- *   { result: <stage decision> | <maintenance ticket> }
+ *   { result: <stage decision> | <error> }
  *
  * Id-referencing fields (modelId, apiId,
  * toolIds items, capabilityId) are built with
@@ -22,18 +22,26 @@
  * not apply to a given branch, discriminated
  * by an explicit enum field rather than nested
  * unions, to keep schema validation reliable.
+ *
+ * The Router itself knows nothing about tickets
+ * — it only ever reports `type: "error"` when it
+ * cannot make this stage's decision on its own.
+ * What happens next (a retry with help, or the
+ * task ending in a ticket) is decided by the
+ * Maintenance agent and orchestrated by the
+ * server, never by the Router.
  */
 
-const MAINTENANCE_TICKET_SCHEMA = {
+const ERROR_SCHEMA = {
   type: "object",
 
   properties: {
     type: {
       type: "string",
-      const: "maintenance_ticket",
+      const: "error",
     },
 
-    ticketType: {
+    errorType: {
       type: "string",
       enum: [
         "error",
@@ -41,20 +49,20 @@ const MAINTENANCE_TICKET_SCHEMA = {
       ],
     },
 
-    message: {
+    errorMessage: {
       type: "string",
     },
 
-    details: {
+    errorDetails: {
       type: "string",
     },
   },
 
   required: [
     "type",
-    "ticketType",
-    "message",
-    "details",
+    "errorType",
+    "errorMessage",
+    "errorDetails",
   ],
 
   additionalProperties: false,
@@ -71,7 +79,7 @@ function wrapResult(
       result: {
         anyOf: [
           decisionSchema,
-          MAINTENANCE_TICKET_SCHEMA,
+          ERROR_SCHEMA,
         ],
       },
     },

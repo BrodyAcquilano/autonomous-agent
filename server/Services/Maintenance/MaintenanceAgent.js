@@ -23,6 +23,7 @@ import {
 } from "../MongoDB/Capabilities.js";
 
 import {
+  createMaintenanceLog,
   getAllUnprocessedLogs,
   markLogProcessed,
 } from "../MongoDB/MaintenanceLogs.js";
@@ -137,7 +138,7 @@ async function callMaintenanceAgent({ taskLabel, incidentText, brainSections, in
   try {
     return JSON.parse(outputText).result;
   } catch (error) {
-    throw new Error(`Maintenance agent returned unparseable output: ${error.message}`);
+    throw new Error(`Maintenance agent returned unparseable output: ${error.message}`, { cause: error });
   }
 }
 
@@ -278,6 +279,212 @@ async function investigateFocus(focus, instructions, brainSections) {
 
 
 /*
+ * The third way Maintenance is ever invoked: a
+ * Router run in progress just decided it cannot
+ * make a stage's decision on its own and reported
+ * an error. This is the server (never the Router
+ * itself — the Router only ever reports its own
+ * error and has no idea Maintenance exists) asking
+ * Maintenance for a live, time-sensitive second
+ * opinion, using only the exact reference material
+ * the Router itself had loaded for that stage —
+ * not the full Capabilities Brain sweep-style scan
+ * — since a live user request is waiting on this
+ * answer.
+ *
+ * Every call permanently records the Router's own
+ * error as a log in maintenance.router, the same
+ * way Router/Analyst incidents were always logged
+ * — Maintenance taking the call doesn't change
+ * whose failure this is a record of. `priorLog`
+ * (the previous call's own `{ id, error }`) is
+ * only ever passed back in on the ONE follow-up
+ * call that happens after a suggested fix was
+ * tried and failed again — in that case no second
+ * router log is written (the original one already
+ * covers it), but the fact that Maintenance's OWN
+ * suggested fix also failed becomes its own
+ * separate record: a second log in
+ * maintenance.maintenance, and a second ticket
+ * (`loggedBy: "maintenance"`) alongside the first.
+ * That is deliberate — a fix that didn't work is a
+ * distinct failure from the Router's original one,
+ * and both need their own ticket for a human to
+ * see as two separate things to fix, not one.
+ *
+ * `actionType: "self_fixed"` or `"none"` both mean
+ * "there is a way forward" — the server treats
+ * that as a fix and retries the Router at the same
+ * stage with `instructions` as extra guidance.
+ * Every other actionType means the task cannot
+ * proceed right now, and Maintenance itself files
+ * the ticket(s) (the Router never does) before the
+ * server ends the run. `mustAbandon` is set by the
+ * server only on the one allowed retry's own
+ * failure — a bounded safety net, not something
+ * left to chance — and forces the abandon outcome
+ * regardless of what Maintenance answers, so a run
+ * can never loop indefinitely between the Router
+ * and Maintenance.
+ */
+async function helpRouterRecoverFromError({
+  task,
+  controlPanelSettings,
+  runId,
+  stage,
+  routeSoFar,
+  sections,
+  errorType,
+  errorMessage,
+  errorDetails,
+  mustAbandon = false,
+  priorLog = null,
+}) {
+  const agent = getMaintenanceAgentProfile();
+
+  if (!agent) {
+    throw new Error(
+      'Maintenance agent is not configured. Add an agent named "maintenance" to the agents collection.',
+    );
+  }
+
+  let routerLogId = priorLog?.id || null;
+  const originalError = priorLog?.error || { type: errorType, message: errorMessage, details: errorDetails };
+
+  if (!routerLogId) {
+    const routerLog = await createMaintenanceLog("router", {
+      type: errorType,
+      message: errorMessage,
+      details: errorDetails,
+      stage,
+      task,
+      context: routeSoFar,
+      state: {
+        runId,
+        task,
+        controlPanelSettings: controlPanelSettings || {},
+      },
+    });
+
+    routerLogId = routerLog._id.toString();
+  }
+
+  const incidentText = [
+    `The Router agent's own decision was that it could not proceed at stage "${stage}" and it reported an error.`,
+    `errorType: ${errorType}`,
+    `errorMessage: ${errorMessage}`,
+    `errorDetails: ${errorDetails}`,
+    mustAbandon
+      ? "NOTE: a fix you already gave for this exact stage was tried and the stage failed again with the same kind of problem. Do not suggest another retry — conclude this cannot be resolved right now (actionType other than \"self_fixed\"/\"none\") so a ticket can be filed."
+      : "If you can identify a fix the Router should try (a different selection, a corrected understanding of what's available), say so as actionType \"self_fixed\" or \"none\" with clear instructions — the Router will be given exactly what you write in `instructions` and asked to try this stage again. Otherwise, choose the actionType that best describes what's actually missing or wrong.",
+  ].join("\n");
+
+  const decision = await callMaintenanceAgent({
+    taskLabel: `Live consult: the Router needs help recovering from an error at stage "${stage}" of an in-progress task.`,
+    incidentText,
+    brainSections: sections,
+    instructions: agent.contentMarkdown,
+  });
+
+  const canRetry =
+    !mustAbandon &&
+    (decision.actionType === "self_fixed" || decision.actionType === "none");
+
+  if (canRetry) {
+    return {
+      outcome: "retry",
+      fixInstructions: decision.instructions || decision.reasoning,
+      decision,
+      log: { id: routerLogId, error: originalError },
+    };
+  }
+
+  /*
+   * Ending the task always needs a human-visible
+   * ticket, regardless of `shouldFileTicket` — a
+   * silent abandonment with nothing to show for it
+   * would leave the person who made the request
+   * with no explanation at all. This first ticket
+   * is always about the Router's own original
+   * error, whether or not a fix was ever attempted.
+   */
+  const routerTicket = await createMaintenanceTicket("maintenance", {
+    loggedBy: "router",
+    sourceLogId: routerLogId,
+    type: originalError.type,
+    message: originalError.message,
+    details: originalError.details,
+    recommendedAction: {
+      actionType: decision.actionType,
+      summary: decision.summary,
+      instructions: decision.instructions,
+    },
+    task,
+    context: routeSoFar,
+    state: {
+      runId,
+      task,
+      controlPanelSettings: controlPanelSettings || {},
+    },
+  });
+
+  await markLogProcessed("router", routerLogId, routerTicket._id.toString());
+
+  const tickets = [routerTicket];
+
+  /*
+   * priorLog is only ever set on the follow-up
+   * call after a suggested fix was tried and
+   * failed — so reaching here with it present
+   * means Maintenance's own recommendation didn't
+   * work either. That is a second, distinct
+   * failure with its own record.
+   */
+  if (priorLog) {
+    const maintenanceLog = await createMaintenanceLog("maintenance", {
+      type: decision.ticketType || "error",
+      message: "A fix Maintenance suggested for the Router did not resolve the issue.",
+      details: decision.reasoning,
+      stage,
+      task,
+      context: routeSoFar,
+      state: {
+        runId,
+        task,
+        controlPanelSettings: controlPanelSettings || {},
+      },
+    });
+
+    const maintenanceTicket = await createMaintenanceTicket("maintenance", {
+      loggedBy: "maintenance",
+      sourceLogId: maintenanceLog._id,
+      type: decision.ticketType || "error",
+      message: "A fix Maintenance suggested for the Router did not resolve the issue.",
+      details: decision.reasoning,
+      recommendedAction: {
+        actionType: decision.actionType,
+        summary: decision.summary,
+        instructions: decision.instructions,
+      },
+      task,
+      context: routeSoFar,
+      state: {
+        runId,
+        task,
+        controlPanelSettings: controlPanelSettings || {},
+      },
+    });
+
+    await markLogProcessed("maintenance", maintenanceLog._id.toString(), maintenanceTicket._id.toString());
+
+    tickets.push(maintenanceTicket);
+  }
+
+  return { outcome: "abandon", tickets, decision };
+}
+
+
+/*
  * Main entry point. A `focus` question always
  * runs first and alone (it is the priority);
  * with no focus, this sweeps whatever unprocessed
@@ -339,4 +546,4 @@ async function runMaintenanceSweep({ focus } = {}) {
 }
 
 
-export { runMaintenanceSweep };
+export { runMaintenanceSweep, helpRouterRecoverFromError };

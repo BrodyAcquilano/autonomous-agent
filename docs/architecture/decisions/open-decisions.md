@@ -19,17 +19,22 @@ remains open:
 
 **Further resolved.** Beyond the Capabilities Brain slice (`models`, `apis`, `tools`, `capabilities`,
 `platforms` — see `01-capabilities-brain.md`), a first Organizational Brain schema now also exists:
-`agents` (profile-card prompts) and `directory` (agent/contact/request-type documents — see
-`03-agent-organization.md`), plus `analytics.router`/`analytics.worker` (per-run process trace and
-per-execution log) and, in `maintenance`, a per-originating-agent collection (`maintenance.router`,
-`maintenance.analyst`) mirrored under the same `_id` into a shared `maintenance.tickets`
-active-tickets queue (status `"new"`/`"reviewed"`, removed on ignore or restart — reviewed through
-a real Maintenance page) that carries a resumable `state` object (task, control-panel settings, run
-id, stage, and the ids already resolved) — see `07-analytics.md`, `06-maintenance.md`. What remains
-undesigned:
-skills/skill-version schema, ontology-version records, and — notably — the directory schema above
-is descriptive data only; a schema for the call envelope / kernel-enforcement layer that would
-actually validate an edge before a call happens has not been designed.
+`agents` (profile-card prompts, now four: `router`, `analyst`, `maintenance`, `worker`) and
+`directory` (agent/contact/request-type documents — see `03-agent-organization.md`), plus
+`analytics.router`/`analytics.worker` (per-run process trace with per-stage token usage, and
+per-execution log). In `maintenance`, the schema now distinguishes two kinds of document rather
+than one: a per-originating-agent **log** (`maintenance.router`, `maintenance.analyst`) that is
+just a permanent record of a reported problem, and a **ticket** — only ever written by the
+Maintenance agent's own decision, into `maintenance.maintenance` and mirrored under the same `_id`
+into a shared `maintenance.tickets` active-tickets queue (status `"new"`/`"reviewed"`, removed on
+ignore or restart — reviewed through a real Maintenance page). A ticket's `state` now carries only
+`runId`, `task`, and `controlPanelSettings` — a restart is a literal fresh run from Stage 1, not a
+resume of previously-resolved ids — and a `loggedBy` field naming whichever agent's log it was
+escalated from, since Maintenance is always the one submitting it. See `07-analytics.md`,
+`06-maintenance.md`. What remains undesigned: skills/skill-version schema, ontology-version
+records, and — notably — the directory schema above is descriptive data only; a schema for the
+call envelope / kernel-enforcement layer that would actually validate an edge before a call
+happens has not been designed.
 
 ## 2. Migration timing/mechanics for the filesystem `brain/` prototype
 
@@ -50,8 +55,11 @@ cost budget defaults) have been chosen.
 **Partially resolved.** The Capabilities Brain is seeded with a deliberately tiny set: 3 models
 (`gpt-5.6-terra`, `gpt-5.3-codex`, `gpt-image-2`), 1 platform, 3 model-scoped API documents, 3
 tools and 3 capabilities (all currently under `gpt-5.6-terra`'s Responses API route) — enough to
-exercise every node of the funnel at least once. Which agent roles and request types get seeded
-first for the Organizational Brain (once that system is built) is still open.
+exercise every node of the funnel at least once. The Organizational Brain's first seed set turned
+out to be `router`, `analyst`, `maintenance`, and `worker` — not a deliberate answer to "which
+roles get seeded first," but a consequence of the Router needing a safety monitor (Analyst) and a
+sole ticket-filing authority (Maintenance) to be usable at all (see item 9 below). Which
+*additional* roles get seeded next, and in what order, is still open.
 
 ## 5. Reconciling the current Console flow with the future Router/Worker path
 
@@ -67,19 +75,26 @@ those roles exist, or continues as a separate "quick chat" mode alongside full p
 Every governance document (Maintenance, Ontology Versioning, Organizational Governance)
 references "human approval" as a gate, but the actual review/approval UI and workflow has not been
 designed in general. **Resolved for Maintenance specifically:** a real Maintenance page
-(`src/Pages/Maintenance/`) now lists `maintenance.tickets` (filterable by type/status) and every
-agent's own permanent log (filterable by agent), and can mark a ticket reviewed, ignore it, or
-restart the run it came from directly — see `06-maintenance.md`. What remains open is the
-equivalent review/approval surface for Ontology Versioning and Organizational Governance, and
-notification mechanics beyond "email is an alert channel," neither of which exist yet.
+(`src/Pages/Maintenance/`) now lists `maintenance.tickets` (filterable by type/status/`loggedBy`)
+and every agent's own permanent log (filterable by agent), can mark a ticket reviewed, ignore it,
+or restart the task it came from, and can now also submit a focused request directly to the
+Maintenance agent from a control in its own filter panel — see `06-maintenance.md`. What remains
+open is the equivalent review/approval surface for Ontology Versioning and Organizational
+Governance, and notification mechanics beyond "email is an alert channel," neither of which exist
+yet.
 
 ## 7. MCP/tool access boundaries per management role
 
-**Partially resolved for the two roles that exist.** The `directory` collection's `request_types`
-documents now concretely record this for `router` (read/write on `autonomous`, plus calls to the
-`analyst` agent and the maintenance portal) and `analyst` (read-only on `analytics`, plus
-calls to the maintenance portal) — see `03-agent-organization.md`. What CEO/HR/Maintenance may
-access once they exist, and which external research tools any role may invoke, remains open.
+**Partially resolved for the three roles that exist.** The `directory` collection's
+`request_types` documents now concretely record this for `router` (read/write on `autonomous`,
+plus calls to the `analyst` agent for stage review, the `maintenance` agent for a live
+error-recovery consult, and `mongodb-maintenance` to log its own error), `analyst` (read-only on
+`analytics`, plus `mongodb-maintenance` to log a concern), and `maintenance` itself (read-only on
+`autonomous` for Capabilities Brain research, read/write on `mongodb-maintenance` for the
+incident-log queue and its own tickets, and — the only agent with this contact — the
+human-reviewed maintenance portal) — see `03-agent-organization.md`. What CEO/HR may access once
+they exist, and which external research tools any role may invoke beyond `web_search` (already
+given to the Router, Analyst, and Maintenance), remains open.
 
 ## 8. Backup/archive retention periods
 
@@ -92,10 +107,13 @@ days) has been chosen.
 **Resolved in practice, informally.** Neither pure strategy was followed. A working Router agent
 was built (the bottom-up path), but a narrow Analyst agent was built alongside it rather than
 after it, because the Router needed a safety monitor to be usable at all — not because the
-top-down management-organization sequencing was deliberately resumed. No Maintenance, HR, or CEO
-agent exists. Treat this as evidence that the two strategies aren't strictly exclusive in
-practice, not as a decision that the top-down sequencing in `09-implementation-roadmap.md` has
-been abandoned.
+top-down management-organization sequencing was deliberately resumed. A first, narrow Maintenance
+agent followed the same logic: once the Router and Analyst could each report a problem, something
+had to be the sole authority that decides what to do about it and files an actual ticket, so
+Maintenance was built next, ahead of HR or the CEO, purely because ticket-filing was already a gap
+blocking normal use of the Router. No HR or CEO agent exists. Treat this as evidence that the two
+strategies aren't strictly exclusive in practice, not as a decision that the top-down sequencing
+in `09-implementation-roadmap.md` has been abandoned.
 
 ## 10. Analyst invocation model: inline per-stage vs. independent loop/threshold-triggered
 

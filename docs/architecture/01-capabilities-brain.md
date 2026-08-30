@@ -203,8 +203,9 @@ Every execution should be traceable back to the exact document(s) that informed 
   execution to a real, separate Temp Worker (`server/Services/Router/TempWorker.js`) rather than
   executing anything itself. The route is named for the general act of requesting a service from
   the company rather than after the Router specifically, since which agents actually handle a
-  request is free to be reconfigured later. It also accepts an optional `resumeTicketId` to restart
-  a run from a previously filed maintenance ticket — see `06-maintenance.md`. Any files the user
+  request is free to be reconfigured later. It also accepts an optional `ticketId` to restart a
+  task from a previously filed maintenance ticket as a literal, full run from Stage 1 (not a
+  resume-in-place) — see `06-maintenance.md`. Any files the user
   attaches to the request (images/PDFs) never reach the Router's own reasoning calls — the Router
   only ever sees a cheap manifest of their names and types (so it can factor "a PDF is attached"
   into model/tool selection without paying vision/document-input cost on every one of its own

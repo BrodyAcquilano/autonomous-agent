@@ -92,9 +92,12 @@ layers above:
   Capability, then hands the resolved route to a separate Temp Worker that actually executes it
   (a much thinner stand-in for the target Worker role below — no reasoning, no permanent
   configuration). A narrow Analyst agent also exists, reviewing each Router stage
-  (`07-analytics.md`). There is still no Planner, Coordinator, QC step, Maintenance agent, HR, or
-  CEO agent anywhere in the runtime — see `02-project-workflow.md`, `06-maintenance.md`, and
-  `08-organizational-governance.md` for what each of those still lacks.
+  (`07-analytics.md`), and a first, narrow Maintenance agent now exists too — the only agent
+  authorized to file a ticket a human reviews, called either live (when the Router reports an
+  error mid-run and needs a second opinion before the task ends), on a focused human request from
+  its own portal control, or as a general sweep (`06-maintenance.md`). There is still no Planner,
+  Coordinator, QC step, HR, or CEO agent anywhere in the runtime — see `02-project-workflow.md`
+  and `08-organizational-governance.md` for what those still lack.
 - `server/Runtime/` (`Supervisor`, `Worker`, `State/RunMachine`, `State/createRunState`,
   `Memory/*`) and `server/Services/Files/FileService.js` are still empty (0-byte) files left over
   from an earlier bottom-up plan. They do not currently do anything and should not be assumed to

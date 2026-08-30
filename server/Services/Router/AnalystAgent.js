@@ -25,6 +25,21 @@ import {
 const ANALYST_MODEL =
   "gpt-5.6-terra";
 
+/*
+ * Needed so the Analyst can look up current
+ * Azure OpenAI/Foundry pricing when it wants to
+ * reason precisely about a stage's actual dollar
+ * cost, rather than judging token counts alone —
+ * see its own profile for the deployment/region
+ * context it's given to search with.
+ */
+const ANALYST_TOOLS = [
+  {
+    type:
+      "web_search",
+  },
+];
+
 
 function fallbackVerdict(
   reasoning,
@@ -140,6 +155,9 @@ async function reviewRouterStage({
 
           max_output_tokens:
             4000,
+
+          tools:
+            ANALYST_TOOLS,
 
           text:
             getStageTextFormat(

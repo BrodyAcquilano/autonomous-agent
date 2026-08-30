@@ -374,11 +374,15 @@ function Maintenance({
    * reportError() on a blocked/failed result
    * carries systemStatus through busy -> error
    * and posts the message to the Console message
-   * panel. A failed restart does NOT immediately
-   * produce a new ticket anymore — it produces a
-   * new incident log for the Maintenance agent to
-   * triage later, which is why this reloads logs
-   * (not tickets) afterward.
+   * panel. A failed restart, this time, produces
+   * a real ticket immediately — the Router hands
+   * its error to the Maintenance agent for a live
+   * consult before the run ends, and if nothing
+   * can be fixed in time, Maintenance itself files
+   * the ticket right then. No manual reloadTickets()
+   * call is needed here — reportError() sets
+   * systemStatus to "error", and App.jsx already
+   * reloads the tickets list whenever that happens.
    */
   async function handleRestart(
     ticket,
@@ -422,21 +426,35 @@ function Maintenance({
         result.status ===
         "blocked"
       ) {
-        const newLog =
-          result.log;
+        const newTickets =
+          result.tickets ||
+          [];
 
 
         reportError(
-          `${newLog
-            ?.type
-            ?.toUpperCase() ||
-            "MAINTENANCE"} LOG: ${
-            newLog?.message ||
-            "The Router could not complete this task."
-          }\n${
-            newLog?.details ||
-            ""
-          }`.trim(),
+          newTickets
+            .map(
+              (
+                item,
+              ) =>
+                `${item
+                  ?.type
+                  ?.toUpperCase() ||
+                  "MAINTENANCE"} TICKET (${
+                  item?.loggedBy ||
+                  "unknown"
+                }): ${
+                  item?.message ||
+                  "The Router could not complete this task."
+                }\n${
+                  item?.details ||
+                  ""
+                }`.trim(),
+            )
+            .join(
+              "\n\n",
+            ) ||
+            "The Router could not complete this task.",
         );
 
 
@@ -446,7 +464,10 @@ function Maintenance({
               "error",
 
             text:
-              "Restart failed again — a new incident was logged for Maintenance to review.",
+              newTickets.length >
+              1
+                ? "Restart failed again — Maintenance's own fix didn't work either, so two tickets were filed."
+                : "Restart failed again — Maintenance filed a new ticket.",
           },
         );
       } else {

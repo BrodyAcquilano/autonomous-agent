@@ -72,102 +72,146 @@ authoritative place decisions are actually recorded.
 
 ## Current repo state vs. target architecture
 
-**No Maintenance agent exists yet — this document's Maintenance Agent, default policy, and
-backup/rollback workflow all remain target architecture.** What does exist is the ticket itself,
-and — new since the Router/Worker split matured — a working restart mechanism built on top of it.
+**A first, narrow Maintenance agent now exists and is wired into the runtime** — the mature role,
+default policy, and backup/rollback workflow described above remain the target; what exists today
+is a real bootstrap of it (per the "Initial (v1) scope" section above), with one important
+authority already in place: **only the Maintenance agent may ever file a ticket.** The Router and
+the Analyst never do — they only ever *report* a problem, and it is always Maintenance's own
+decision, taken after investigating, whether that becomes a ticket for a human and what it
+recommends. This split exists specifically so each agent's own prompt can stay narrowly focused on
+its own job (routing, or reviewing) without also carrying error-handling/escalation policy that
+belongs to a specialist.
 
-Every ticket is written **twice**, deliberately, to the `maintenance` database (separate from
-`autonomous` and `analytics`, per the isolation principle in `07-analytics.md`):
+### Logs vs. tickets
 
-1. Into **one collection per agent, named after whichever agent's own judgment produced the
-   ticket** — `maintenance.router` for the Router's own decisions, `maintenance.analyst` for ones
-   the Analyst agent flags during its stage review. This is keyed by *whose decision it was*, not
-   by which code physically writes it: the Analyst agent has no database access of its own, so the
-   Router calls the write on its behalf, but the ticket still lands in `maintenance.analyst`. This
-   collection is a permanent, append-only log — its documents never change after being written.
-2. Into one shared `maintenance.tickets` collection — the **active-tickets queue** — using the
-   *same* `_id` as the per-agent copy, so the two can always be cross-referenced. This is what the
-   Maintenance page (see below) lists from, and what the restart mechanism below reads by ticket id
-   alone, without needing to already know which per-agent collection produced it.
+Two distinct kinds of document live in the `maintenance` database (separate from `autonomous` and
+`analytics`, per the isolation principle in `07-analytics.md`), and the relationship between them
+is deliberately one-directional:
 
-A ticket has `type` (`error` — the request can't be fulfilled as asked — or `request` — a genuine
-configuration gap), `message`, `details`, `stage`, `task`, `context`, a `state` object (see below),
-and `status`. Per-agent log copies keep whatever `status` they were created with forever, by
-design, since they are a permanent record and are never mutated after being written. The
-`maintenance.tickets` copy, by contrast, is a live queue: it starts as `"new"`, a human can move it
-to `"reviewed"` (acknowledged, but no decision made yet — it stays in the queue), and it is removed
-from the queue entirely — not just flagged — by whichever of the two terminal actions actually
-resolves it: **ignoring** it (a human decided no action is needed; the per-agent log entry is
-untouched) or a **restart** consuming it (see below). There is no third, general-purpose "just
-delete this ticket" action distinct from those two — removal is always the specific, named
-consequence of one of them. A future Maintenance or Worker agent filing its own tickets would get
-its own same-named per-agent collection, mirrored into the same shared `maintenance.tickets` queue.
+- **A log** is a permanent record of one agent's own problem, written into that agent's own
+  collection (`maintenance.router`, `maintenance.analyst`) with `status: "unprocessed"` and
+  `ticketId: null`. It exists whether or not anything is ever done about it.
+- **A ticket** is Maintenance's own decision that a log (or a live situation) is worth a human's
+  attention, together with Maintenance's actual recommendation. Every ticket is written **twice**:
+  once into `maintenance.maintenance` (Maintenance's own permanent record of every ticket it has
+  ever filed) and once more, under the same `_id`, into the shared `maintenance.tickets`
+  **active-tickets queue** that the Maintenance page lists from. Filing a ticket from a log also
+  marks that log `status: "processed"` and stamps its `ticketId`, linking the two.
 
-**Restart/resume.** `state` holds exactly what a restart needs to pick the run back up: the
-original `task` and `controlPanelSettings`, the Router run's `runId` (so analytics keeps
-appending to the same run document instead of starting a new one), the `stage` the run was at
-when it was blocked (`1`–`5`, or `"executing"` for a Temp Worker execution failure), and whichever
-route ids were already resolved at that point (`modelId`, `apiId`, `toolIds`,
-`toolConfigurations`, and — for an execution-stage failure — the fully assembled
-`finalRequestFields`). Deliberately, `state` stores **ids and primitive values only, never full
-documents** — restarting a run always re-fetches the corresponding Model/API/Tool/Capability
-documents fresh by id (`getModelById`/`getApiById`/`getToolById`/`getCapabilityById`) rather than
-trusting anything that might have gone stale between when the ticket was filed and when a human
-acts on it. A route/API/tool that was deleted or changed in a way that breaks the resume (e.g. the
-referenced id no longer exists) surfaces as a fresh maintenance ticket rather than silently
-proceeding on bad data.
+That link is what makes deleting either one behave asymmetrically, by design: **deleting a log
+deletes its linked ticket with it** (both the active-queue copy and the permanent
+`maintenance.maintenance` copy), because a ticket whose originating log is gone has nothing left
+to point back to — but **deleting a ticket (via Ignore, or a restart consuming it) never touches
+the log it came from.** A ticket's `loggedBy` field always names whichever agent's log it was
+escalated from (`router`, `analyst`, or `maintenance` itself for something it found on its own),
+independent of the fact that Maintenance is always the one submitting it — this is what the
+Maintenance page actually filters by, since "who did the paperwork" is always the same agent and
+isn't useful to filter on.
 
-A restart is just a normal call to the same request-service route
-(`POST /api/request-service/request`, `server/Routes/InternalOperations/RequestService.js`) with a
-`resumeTicketId` instead of fresh task text. `runRouter()`
-(`server/Services/Router/RouterAgent.js`) loads the ticket's `state`, immediately **deletes** the
-`maintenance.tickets` copy (a second failure during the resumed run files its own new ticket rather
-than reusing this one — the per-agent log entry is untouched either way), and then re-enters its
-own stage sequence — every stage whose id was already resolved is skipped and rehydrated from
-fresh data instead of re-run, and the Router's own AI reasoning only runs again from whichever
-stage was actually in progress onward. An execution-stage ticket (the Temp Worker itself failed,
-not the Router) skips every Router stage entirely and goes straight back to the Worker with the
-previously assembled request replayed unchanged against the freshly re-fetched model/API — see
-`03-agent-organization.md` for how this fits into the Router/Worker split.
+### The three ways Maintenance is invoked
+
+1. **A live error-recovery consult** — a Router run in progress reported an error (see below) and
+   the server needs an answer before deciding whether to retry the run or end it. Time-sensitive,
+   and scoped to only the reference material the Router itself had loaded for that one stage, not
+   a full Capabilities Brain scan.
+2. **A focused human request** — free text submitted from the Maintenance portal's own command
+   shell (`POST /api/request-maintenance/request`, `{ focus }`), e.g. "is gpt-5.6-terra still the
+   latest version?".
+3. **A general sweep** — with no focus text and nothing in the async incident-log queue, one
+   broad, undirected audit pass over the whole Capabilities Brain. A disabled-by-default cron
+   scaffold (`server/Runtime/MaintenanceCron.js`, gated on `MAINTENANCE_CRON_ENABLED`) exists to
+   put this on a timer later; it is off by default because a locally-run dev server restarting
+   constantly is not a good environment for a recurring background job yet.
+
+The async incident-log queue itself (mode 3's other input, when it isn't empty) currently only
+ever contains Analyst-sourced logs — a Router error is never queued for a later sweep, because it
+is always handled immediately by mode 1 instead (see below).
+
+### Live error recovery: how a Router run actually ends now
+
+The Router's own output at any stage is either a normal decision, or `{ type: "error", errorType,
+errorMessage, errorDetails }` when it genuinely cannot decide (see `03-agent-organization.md` for
+why the Router itself knows nothing about tickets, logs, or Maintenance by name). Reporting an
+error does not end the run by itself — the server (`runRouter()` in
+`server/Services/Router/RouterAgent.js`) always hands exactly what the Router saw to Maintenance
+for a live consult before anything is decided:
+
+1. **The Router's error is always logged first**, into `maintenance.router`, regardless of what
+   happens next — this is the one thing that still happens unconditionally, matching the original
+   "every problem gets a permanent record" principle even though tickets are no longer filed
+   directly.
+2. Maintenance investigates using only the reference documents the Router had already loaded for
+   that stage (e.g. just the model catalog for a Stage 1 error; the chosen model plus its API
+   candidates for a Stage 2 error), and decides one of two things:
+   - **There is a way forward** (`actionType: "self_fixed"` or `"none"`) — the server retries that
+     exact same stage once, with Maintenance's own `instructions` included as extra context (a
+     `MAINTENANCE FIX FOR THIS STAGE` input section, distinct from the whole-task
+     `MAINTENANCE GUIDANCE` a ticket restart supplies — see below).
+   - **Nothing can be done right now** — Maintenance files a ticket (`loggedBy: "router"`, linked
+     to the log from step 1) and the run ends there.
+3. **The one retry is bounded, not optional.** If it fails again, Maintenance is consulted once
+   more, but is told plainly this is the second failure and must conclude the task cannot proceed
+   — the server enforces this regardless of what comes back, so a run can never loop indefinitely
+   between the Router and Maintenance. This second failure is treated as **two separate problems,
+   not one**: the original ticket (`loggedBy: "router"`) is filed as usual, *and* a second log is
+   written to `maintenance.maintenance` describing that Maintenance's own suggested fix also
+   didn't work, which becomes its own second ticket (`loggedBy: "maintenance"`). The intent is
+   that a human reviewing these sees two distinct things to fix — the Router's original problem,
+   and a separate failure in Maintenance's own recommendation — not one conflated entry. A worker
+   (Temp Worker) execution failure and a couple of Router-side protocol errors (invalid JSON, a
+   capability chosen for the wrong tool) go through the same consult mechanism, just without the
+   retry step, since there is nothing meaningful to retry automatically in those cases.
+
+The wire response for an ended run is `{ status: "blocked", runId, tickets: [...] }` — an array,
+since abandonment can produce one or two tickets — consumed identically by the Console's command
+shell and the Maintenance page's restart handler.
+
+### Restart is a literal fresh run, not a resume
+
+Restarting a ticket no longer skips ahead to wherever the run left off. `state` on a ticket now
+holds only `runId`, `task`, and `controlPanelSettings` — enough to run the task again from
+scratch — because a restart is a full re-run of the Router from Stage 1, not a rehydration of
+previously-resolved ids. What is fed back in is Maintenance's own recommendation
+(`recommendedAction: { actionType, summary, instructions }`, carried on the ticket), turned into a
+`MAINTENANCE GUIDANCE` input section on every stage of the fresh run — a colleague's advice on what
+to try differently, not a hard constraint the Router must follow. A restart is a normal call to
+the same request-service route (`POST /api/request-service/request`,
+`server/Routes/InternalOperations/RequestService.js`) with a `ticketId` instead of fresh task
+text; the ticket is deleted from the active queue immediately upon being read, and a second
+failure produces its own new ticket through the same error-recovery flow described above rather
+than reusing it.
 
 **System status is shared across pages, not just a Console concept.** The frontend's `systemStatus`
 (`"ready"`/`"busy"`/`"error"`) lives in `Runtime.jsx` and is set to `"busy"` by *either* a Console
 submission or a Maintenance restart, and both surfaces respect it: the Console's command shell
 locks its input/buttons while busy regardless of who made it busy, and the Maintenance page's
-ticket rows and Restart button lock the same way — a ticket can't be opened to trigger a second
-restart while one is already running, from either origin. `App.jsx` also reacts centrally to the
-transition *into* `"error"` (from a Console response error, a Router-blocked ticket, or a
-Maintenance restart failing again) by reloading the tickets list once, rather than duplicating that
-reload call at every place that can produce an error.
+ticket rows and Restart button lock the same way. `App.jsx` also reacts centrally to the transition
+*into* `"error"` by reloading the tickets list once, rather than duplicating that reload call at
+every place that can produce an error.
 
-Because there is still no Maintenance agent to route tickets to, filing one **bypasses any agent
-entirely** — but there is now a real, working human review surface for it: the Maintenance page
-(`src/Pages/Maintenance/`).
+### The Maintenance page
 
-**The Maintenance page.** Two views over the same underlying data, toggled from a left-hand filter
-panel that also holds the type/status filters (tickets view) or a single-agent filter (logs view):
+Two views over the same underlying data, toggled from a left-hand filter panel:
 
 - **Tickets** — every document currently in `maintenance.tickets`, filterable by `type`
-  (`error`/`request`) and `status` (`new`/`reviewed`), rendered as a color-coded terminal-style row
-  list (red for `error`, amber for `request`). Selecting a row opens a modal showing the full
-  ticket — message, details, task, stage, and the raw `state` object — with three actions: **Mark
-  Reviewed** (`PATCH /api/maintenance/tickets/:id`, stays in the queue with `status: "reviewed"`),
-  **Ignore** (`DELETE /api/maintenance/tickets/:id`, removed from the queue, per-agent log
-  untouched), and **Restart Process** (calls the normal request-service route with this ticket's id
-  as `resumeTicketId`, per the restart mechanics above).
-- **Logs** — every agent's own permanent history, filtered to one agent at a time (or all of them).
-  Loaded via one generic route, `GET /api/maintenance/logs/:agentName`, called once per agent
-  currently in the `agents` collection — an agent whose collection has never been written to (e.g.
-  `worker`, which never files its own tickets) simply comes back empty rather than erroring, so no
-  special-casing is needed as new agents are added. A log entry can be deleted outright
-  (`DELETE /api/maintenance/logs/:agentName/:id`) since, unlike a ticket, there is no queue
-  semantics to preserve — it is just history.
+  (`error`/`request`), `status` (`new`/`reviewed`), and now also **`loggedBy`** (which agent's
+  problem this was originally), rendered as a color-coded terminal-style row list. Selecting a row
+  opens a modal showing message, details, task, stage, Maintenance's `recommendedAction`, and the
+  restart `state`, with three actions: **Mark Reviewed** (`PATCH /api/maintenance/tickets/:id`),
+  **Ignore** (`DELETE /api/maintenance/tickets/:id`, the log it came from is untouched), and
+  **Restart Process** (calls the request-service route with this ticket's id, per above).
+- **Logs** — every agent's own permanent history, filtered to one agent at a time (or all of
+  them), loaded via `GET /api/maintenance/logs/:agentName`. Deleting a log
+  (`DELETE /api/maintenance/logs/:agentName/:id`) cascades to delete its linked ticket everywhere,
+  per the one-directional relationship described above; the response reports the cascaded ticket
+  id so the frontend can prune it from local state without a full reload.
 
-The page also shows its own `systemStatus` readout in its header (`StatusIndicator` — the same
-green/amber/red light-and-label concept as the Console's `LightPanel`, but a separate, simpler,
-non-draggable component, since it just needs a fixed spot in a page header rather than a floating
-widget on a pannable viewport).
+The bottom half of the filter panel — previously empty — now also holds a **Request Maintenance**
+control: a free-text box and submit button that calls invocation mode 2 above directly from the
+portal, so requesting a normal task (Console) and requesting Maintenance's investigation (this
+page) are two clearly separate surfaces rather than one shared control. The page shows its own
+`systemStatus` readout in its header (`StatusIndicator`, the same concept as the Console's
+`LightPanel` but fixed and non-draggable).
 
-There is still no triage, no automatic resolution beyond the restart mechanism above, and no
-backup/rollback mechanism of any kind — every ticket is reviewed and acted on by a human, one at a
-time, through this page.
+There is still no triage or backup/rollback mechanism beyond what's described above — every ticket
+is reviewed and acted on by a human, one at a time, through this page.

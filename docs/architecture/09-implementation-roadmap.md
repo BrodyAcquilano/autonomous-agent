@@ -86,18 +86,20 @@ priorities change.
 |---|---|
 | 1. Architecture documentation | Ongoing — living document set, updated as design choices land |
 | 2. Connect to MongoDB | Done |
-| 3. Design MongoDB ontology/collections | Substantially done for the Capabilities Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`; `maintenance.router`/`maintenance.analyst`, one collection per originating agent). Skill and ontology-version schemas remain undesigned. |
+| 3. Design MongoDB ontology/collections | Substantially done for the Capabilities Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`/`analytics.worker`; `maintenance.router`/`maintenance.analyst`/`maintenance.maintenance`, mirrored into `maintenance.tickets`). Skill and ontology-version schemas remain undesigned. |
 | 4. Minimal version-awareness/indexing | Done for every collection that exists — `version`/`status` fields and stable-id indexes throughout |
-| 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 3 agent profiles (`router`, `analyst`, `worker`), 19 directory documents |
+| 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 4 agent profiles (`router`, `analyst`, `maintenance`, `worker`), directory documents mirroring the four-agent contact graph |
 | 6. Build the management organization | Started narrowly, not as originally sequenced — see note below |
 | 7–11 | Not started |
 
 **Note on Step 6:** what actually got built is a working Analyst agent that reviews the Router's
-own process stage-by-stage and can flag a maintenance ticket or halt a run — a real but narrow
-slice of the Analytics role in `07-analytics.md`, not the full cross-system reporting/HR/CEO
-management organization this step describes. No Maintenance, HR, or CEO agent exists. This
-happened because the Router needed a safety monitor to be usable at all, not because the top-down
-sequencing below was resumed — see the note in `decisions/open-decisions.md` item 9.
+own process stage-by-stage and can log a concern for later review or halt a run, plus a first,
+narrow Maintenance agent that is the only agent authorized to file an actual ticket a human
+reviews — a real but narrow slice of the Analytics and Maintenance roles in `07-analytics.md` and
+`06-maintenance.md`, not the full cross-system reporting/HR/CEO management organization this step
+describes. No HR or CEO agent exists. This happened because the Router needed a safety monitor to
+be usable at all, not because the top-down sequencing below was resumed — see the note in
+`decisions/open-decisions.md` item 9.
 
 ## Current repo inventory relevant to this roadmap
 
@@ -110,9 +112,12 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
   (`server/Routes/InternalOperations/RequestService.js`, named for requesting a service from the
   company in general rather than after the Router specifically) instead of building an Azure
   request itself, and a separate Temp Worker (`server/Services/Router/TempWorker.js`) that the
-  Router hands its resolved route to for actual execution. The same route also restarts a blocked
-  run from a previously filed maintenance ticket (`resumeTicketId`) — see the maintenance bullet
-  below and `06-maintenance.md`. The Router, Analyst, and Worker's `agents` profile documents are
+  Router hands its resolved route to for actual execution. The same route also restarts a task
+  from a previously filed maintenance ticket (`ticketId`) as a full, literal fresh run from Stage
+  1 — see the maintenance bullet below and `06-maintenance.md`. A separate route,
+  `POST /api/request-maintenance/request` (`server/Routes/InternalOperations/RequestMaintenance.js`),
+  asks the Maintenance agent to investigate something directly rather than asking the company to
+  execute a task. The Router, Analyst, Maintenance, and Worker's `agents` profile documents are
   fetched from MongoDB exactly once, at server startup (`initAgents()` in
   `server/Runtime/Agents.js`), and kept live in memory for the process's lifetime rather than
   re-fetched on every request. User file attachments (images/PDFs) never reach the Router's own
@@ -124,40 +129,46 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
   Organizational Brain tensor — Agent → Contact → Request Types — live from the `directory`
   collection, mirroring the Capabilities Brain's browsing pattern at one fewer layer (see
   `03-agent-organization.md`). The Maintenance page (`src/Pages/Maintenance/`) is also real now,
-  not a stub — it lists `maintenance.tickets` (filterable by type/status) and every agent's own
-  permanent log (filterable by agent), and can mark a ticket reviewed, ignore it, or restart the
-  run it came from directly from its UI — see `06-maintenance.md`. `systemStatus`
-  (`"ready"`/`"busy"`/`"error"`) is shared app-wide rather than Console-specific: a Console
-  submission and a Maintenance restart each lock the other's busy-sensitive controls, and a
-  transition into `"error"` from either surface triggers one central tickets reload in `App.jsx`.
+  not a stub — it lists `maintenance.tickets` (filterable by type/status/`loggedBy`) and every
+  agent's own permanent log (filterable by agent), can mark a ticket reviewed, ignore it, or
+  restart the task it came from, and now also has a "Request Maintenance" free-text control in its
+  filter panel to invoke the Maintenance agent directly — see `06-maintenance.md`. The Analytics
+  page (`src/Pages/Analytics/`) is real too now, not a stub — a read-only view over every agent's
+  `analytics.*` entries, generic across the Router's and Worker's differently-shaped documents,
+  with a delete action that cascades into any maintenance record referencing the deleted run.
+  `systemStatus` (`"ready"`/`"busy"`/`"error"`) is shared app-wide rather than Console-specific: a
+  Console submission and a Maintenance restart each lock the other's busy-sensitive controls, and
+  a transition into `"error"` from either surface triggers one central tickets reload in `App.jsx`.
 - **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
   (`autonomous` — Capabilities Brain); `agents`, `directory` (`autonomous` — a first slice of the
   Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling
   structure, not yet enforced by any runtime kernel check); `router` and `worker` (`analytics` —
-  one document per Router run with a full per-stage trace, and one document per Worker execution
-  with token usage/model/API used, both written by the server itself, kept separate so routing
-  overhead and execution cost can be measured independently); `router`, `analyst`, and `tickets`
-  (`maintenance` — every ticket is written twice: once into a permanent, per-*originating*-agent
-  log (`maintenance.router` for the Router's own decisions, `maintenance.analyst` for ones the
-  Analyst agent flags during review — keyed by whose decision it was, not which code physically
-  writes it, since the Analyst has no database access of its own), and once more, under the same
-  `_id`, into the shared `maintenance.tickets` active-tickets queue (status `"new"` →
-  `"reviewed"` → removed, via the Maintenance page's Mark Reviewed/Ignore/Restart actions — see
-  `06-maintenance.md`). Reviewed directly by a human today, through that page, with no automated
-  triage beyond the restart mechanism.
+  one document per Router run with a full per-stage trace including token usage, and one document
+  per Worker execution with token usage/model/API used, both written by the server itself, kept
+  separate so routing overhead and execution cost can be measured independently); `router`,
+  `analyst`, `maintenance`, and `tickets` (`maintenance` — `router` and `analyst` hold each
+  agent's own permanent, append-only log of a problem it reported, never a ticket; only the
+  Maintenance agent's own decision, after investigating a log, produces an actual ticket, written
+  once into `maintenance.maintenance` and once more, under the same `_id`, into the shared
+  `maintenance.tickets` active-tickets queue — status `"new"` → `"reviewed"` → removed, via the
+  Maintenance page's Mark Reviewed/Ignore/Restart actions. Deleting a log cascades to delete its
+  linked ticket; deleting a ticket never touches its log — see `06-maintenance.md`). Reviewed
+  directly by a human today, through the Maintenance page, with no automated triage beyond the
+  restart mechanism and the Router's own live error-recovery consult with Maintenance.
 - **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker` (an empty
   scaffold file, not to be confused with the real, separate `server/Services/Router/TempWorker.js`,
   or with the real, populated `server/Runtime/Agents.js` described above — both live directly under
   `server/Runtime/`, but only `Agents.js` does anything today), `server/Runtime/State/*`,
-  `server/Runtime/Memory/*`, `server/Services/Files/FileService.js`,
-  `brain/commands/`, `brain/skills/`, `brain/tasks/`. `brain/models/` and `brain/apis/` are no
-  longer merely unused — they are actively superseded by the MongoDB collections above and no
-  route reads them anymore.
+  `server/Runtime/Memory/*`, `server/Services/Files/FileService.js`, `server/Runtime/MaintenanceCron.js`
+  (a real, working cron scaffold for running Maintenance sweeps on a timer, but disabled by
+  default via `MAINTENANCE_CRON_ENABLED` — off, not unimplemented), `brain/commands/`,
+  `brain/skills/`, `brain/tasks/`. `brain/models/` and `brain/apis/` are no longer merely unused —
+  they are actively superseded by the MongoDB collections above and no route reads them anymore.
 - **Not present at all:** a runtime kernel that validates a directory edge/request type before a
-  call happens (today's `directory` documents structure but doesn't gate anything), any
-  Maintenance/HR/CEO agent, any Project Coordinator/Planner/Worker-as-a-separate-role/QC role,
-  any frontend dashboard or report built from analytics data, and any numeric call-depth/budget/
-  cycle limits.
+  call happens (today's `directory` documents structure but doesn't gate anything), any HR/CEO
+  agent, any Project Coordinator/Planner/Worker-as-a-separate-role/QC role, any frontend chart/
+  widget dashboard or narrative report built from analytics data (the Analytics page is real but
+  read-only-logs only, per above), and any numeric call-depth/budget/cycle limits.
 
 ## Superseded historical material
 

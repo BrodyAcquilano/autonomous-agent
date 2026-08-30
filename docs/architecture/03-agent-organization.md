@@ -141,16 +141,18 @@ A first slice of this design now exists in MongoDB, in the `autonomous` database
   is a description of what the Worker is and does, never loaded as a prompt, because the Worker
   never makes a reasoning call of its own (see `02-project-workflow.md`).
 
-  These three profile documents are fetched from MongoDB exactly once, at server startup
+  These four profile documents are fetched from MongoDB exactly once, at server startup
   (`initAgents()` in `server/Runtime/Agents.js`), and kept live in memory for the process's
-  lifetime rather than re-fetched on every single request — `RouterAgent.js` and `AnalystAgent.js`
-  read from this in-memory registry instead of calling `getAgentByName()` themselves. This is a
-  genuinely permanent (for the life of the running server) agent instance in the sense that matters
-  today: there is no per-run conversation memory to keep alive yet, only the identity each one
-  reasons from, but this is the module where that would live once it exists. The Temp Worker has no
-  comparable state to keep — it takes a fully-resolved route as plain arguments and executes it
-  fresh every call — so its profile is cached here purely for consistency and future
-  introspection, not because anything reads it operationally.
+  lifetime rather than re-fetched on every single request — `RouterAgent.js`, `AnalystAgent.js`,
+  and `MaintenanceAgent.js` read from this in-memory registry instead of calling
+  `getAgentByName()` themselves. This is a genuinely permanent (for the life of the running
+  server) agent instance in the sense that matters today: there is no per-run conversation memory
+  to keep alive yet, only the identity each one reasons from, but this is the module where that
+  would live once it exists. The Temp Worker has no comparable state to keep — it takes a
+  fully-resolved route as plain arguments and executes it fresh every call — so its profile is
+  cached here purely for consistency and future introspection, not because anything reads it
+  operationally. A missing Maintenance profile is non-fatal at startup, same as the Analyst — its
+  own service throws with a clear error only if it is actually invoked without one configured.
 - **`directory`** stores the structural graph itself, as three kinds of documents distinguished by
   a `type` field rather than three separate collections (so an agent's entire directory footprint
   can be found, audited, or removed as one small set of documents):
@@ -169,19 +171,37 @@ A first slice of this design now exists in MongoDB, in the `autonomous` database
     fine-grained "exactly what can they do" (request types), so either can change without touching
     the other.
 
-Today this covers three agents: `router` (contacts: the `autonomous` database read/write, the
-`analyst` agent, the `worker` agent, and the human-reviewed maintenance portal), `analyst`
-(contacts: the `analytics` database read-only, and the maintenance portal), and `worker` (contacts:
-the user/frontend — returning completed task output — and the `analytics` database, writing its
-own execution log independent of the Router's).
+Today this covers four agents: `router` (contacts: the `autonomous` database read/write, the
+`analyst` agent for stage review, the `worker` agent for execution, and — new since the
+Maintenance agent landed — the `maintenance` *agent* for a live error-recovery consult, plus
+`mongodb-maintenance` to permanently log its own error the moment it's reported); `analyst`
+(contacts: the `analytics` database read-only, and `mongodb-maintenance` to log a concern it
+flags during review); `maintenance` (contacts: the `autonomous` database read-only, for
+Capabilities Brain research; `mongodb-maintenance` to read the async incident-log queue and
+record its own tickets; and the human-reviewed maintenance portal, the only agent with that
+contact at all); and `worker` (contacts: the user/frontend — returning completed task output —
+and the `analytics` database, writing its own execution log independent of the Router's).
+
+**Neither the Router nor the Analyst contacts the maintenance portal anymore.** Only Maintenance
+ever files a ticket a human reviews — the Router and the Analyst only ever report a problem
+(an error, or a logged concern), and it is entirely Maintenance's own decision, taken after
+investigating, whether that becomes a ticket and what it recommends (see `06-maintenance.md`).
+This is also a concrete instance of a naming distinction that matters throughout this directory:
+an edge like `router -> maintenance` is attributed to whichever agent's *decision* produced the
+call, never to whichever code happens to physically execute it — the Router never actually
+contacts the Maintenance agent itself (the server does, on the Router's behalf, the moment the
+Router's own decision is to report an error), the same way `router -> analyst` has always meant
+"the Router's own stage decision is what triggers a review," not "the Router literally invokes
+the Analyst."
 
 ## What this does *not* yet do
 
 The directory above is currently **descriptive data, not an enforced gate**. Nothing in
 `server/Services/Router/RouterAgent.js` actually looks up the directory before querying MongoDB,
-calling the Analyst agent, handing a route to the Worker, or filing a maintenance ticket — those
-calls happen directly in code (the Router → Worker "call" is a plain in-process function call
-today, not a real agent-to-agent call through any kernel). There is no call envelope, no
+calling the Analyst agent, handing a route to the Worker, or consulting the Maintenance agent on
+an error — those calls happen directly in code (the Router → Worker "call," and the Router error →
+Maintenance consult, are both plain in-process function calls today, not real agent-to-agent calls
+through any kernel). There is no call envelope, no
 budget/depth/cycle enforcement, and no runtime kernel that validates an edge before a call is
 allowed to proceed. The directory exists so the structure is written down and machine-readable
 from day one (per the "anticipate this infrastructure from the beginning" principle above), not

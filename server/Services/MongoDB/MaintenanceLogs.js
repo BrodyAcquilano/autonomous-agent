@@ -241,15 +241,29 @@ async function markLogProcessed(
  * (both the active-queue copy and the permanent
  * maintenance.maintenance copy) — the reverse is
  * never true; deleting a ticket never touches the
- * log. For a router/analyst incident log, the
- * ticket to remove (if any) is whatever its own
- * `ticketId` field points to. For a "maintenance"
- * log, there is no separate `ticketId` field —
- * the document IS the ticket's own permanent
- * copy, sharing its `_id` with the active-queue
- * copy, so that same id is what gets removed.
- * Returns the removed ticket's id, if any, so the
- * frontend can prune it from local ticket state.
+ * log. Returns the removed ticket's id, if any, so
+ * the frontend can prune it from local state.
+ *
+ * `maintenance.maintenance` holds two different
+ * shapes of document now, and the two need
+ * different handling:
+ *
+ * - A ticket's own permanent copy (written by
+ *   createMaintenanceTicket) has no `ticketId`
+ *   field of its own — its own `_id` directly IS
+ *   the ticket's active-queue copy id.
+ * - A genuine incident log Maintenance filed about
+ *   ITS OWN failed fix attempt (written by
+ *   createMaintenanceLog, same as a router/analyst
+ *   log) has a real `ticketId` field pointing to a
+ *   SEPARATE ticket document, exactly like a
+ *   router/analyst log does.
+ *
+ * The presence of a `ticketId` key on the fetched
+ * document is what tells these two apart — a
+ * ticket's permanent copy never has that field at
+ * all, while every log entry always does (even if
+ * still null, before it has been escalated).
  */
 async function deleteLogEntry(
   agentName,
@@ -278,15 +292,12 @@ async function deleteLogEntry(
     );
 
   const logDocument =
-    agentName ===
-    "maintenance"
-      ? null
-      : await collection.findOne(
-          {
-            _id:
-              objectId,
-          },
-        );
+    await collection.findOne(
+      {
+        _id:
+          objectId,
+      },
+    );
 
 
   await collection.deleteOne(
@@ -297,14 +308,28 @@ async function deleteLogEntry(
   );
 
 
-  const ticketId =
+  let ticketId =
+    null;
+
+  if (
+    logDocument &&
+    Object.prototype
+      .hasOwnProperty.call(
+        logDocument,
+        "ticketId",
+      )
+  ) {
+    ticketId =
+      logDocument.ticketId
+        ?.toString() ||
+      null;
+  } else if (
     agentName ===
     "maintenance"
-      ? logId
-      : logDocument
-          ?.ticketId
-          ?.toString() ||
-        null;
+  ) {
+    ticketId =
+      logId;
+  }
 
 
   if (

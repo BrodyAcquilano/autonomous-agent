@@ -33,6 +33,10 @@ import {
 } from "../MongoDB/MaintenanceTickets.js";
 
 import {
+  helpRouterRecoverFromError,
+} from "../Maintenance/MaintenanceAgent.js";
+
+import {
   appendRouterRunTrace,
   createRouterRun,
   updateRouterRun,
@@ -164,6 +168,7 @@ function buildStageInput({
   controlPanelSettings,
   attachments,
   maintenanceGuidance,
+  stageFixGuidance,
 }) {
   const content = [
     {
@@ -179,14 +184,25 @@ function buildStageInput({
    * the task failed last time and what to try
    * differently, given to the Router as extra
    * context on every stage of the fresh run.
-   * There is no other resumable state carried
-   * forward: a restart is a genuinely new run
-   * from Stage 1, not a continuation.
    */
   if (maintenanceGuidance) {
     content.push({
       type: "input_text",
       text: `=== MAINTENANCE GUIDANCE (this task failed before a human requested a restart; read this before proceeding) ===\n${maintenanceGuidance}`,
+    });
+  }
+
+  /*
+   * Only present when this exact stage, within
+   * this same run, just reported an error and the
+   * server asked the Maintenance agent to help —
+   * Maintenance's own suggested fix, fed back so
+   * this stage can be retried once, immediately.
+   */
+  if (stageFixGuidance) {
+    content.push({
+      type: "input_text",
+      text: `=== MAINTENANCE FIX FOR THIS STAGE (you just reported an error at this exact stage; apply this before trying again) ===\n${stageFixGuidance}`,
     });
   }
 
@@ -334,6 +350,7 @@ async function reviewStageAndMaybeStop({
       stage,
       task,
       context: routeSoFar,
+      usage: usage || null,
       state: {
         runId,
         task,
@@ -372,14 +389,13 @@ async function runRouter({
   /*
    * A restart re-enters through this same
    * function with a maintenance ticket id
-   * instead of fresh task text. Unlike the old
-   * resume-in-place design, a restart is now a
+   * instead of fresh task text. A restart is a
    * literal, full run from Stage 1 — the ticket
    * only supplies the original task/settings and
    * Maintenance's own guidance on what to try
    * differently. The ticket is consumed
-   * immediately; a second failure logs its own
-   * new incident rather than reusing it.
+   * immediately; a second failure produces its
+   * own new ticket rather than reusing it.
    */
   let maintenanceGuidance = null;
 
@@ -407,27 +423,6 @@ async function runRouter({
    */
   const instructions = getRouterAgentProfile().contentMarkdown;
 
-  const models = await getAllModels();
-
-  if (!models.length) {
-    const log = await createMaintenanceLog("router", {
-      type: "request",
-      message: "No models are configured.",
-      details:
-        "The models collection is empty, so the Router cannot select a model for any task.",
-      stage: 1,
-      task,
-      context: {},
-      state: {
-        runId: null,
-        task,
-        controlPanelSettings: controlPanelSettings || {},
-      },
-    });
-
-    return { status: "blocked", log };
-  }
-
   const run = await createRouterRun({
     task,
     controlPanelSettings: controlPanelSettings || {},
@@ -435,56 +430,98 @@ async function runRouter({
 
   const runId = run._id.toString();
 
-  let stagesCompleted = 0;
 
+  /*
+   * The single recovery path for EVERY way a
+   * stage can fail to produce a usable decision:
+   * the Router's own `type: "error"` result, or
+   * the server itself being unable to use what it
+   * got back (malformed JSON, an invalid schema
+   * result). Either way this is never the
+   * Router's call to make what happens next — the
+   * server hands exactly what the Router saw to
+   * the Maintenance agent and asks for a live,
+   * time-sensitive second opinion.
+   *
+   * `attemptStage` performs exactly one AI call
+   * attempt (given the previous attempt's fix
+   * text, if any) and returns { decision, usage },
+   * or throws. This loops at most twice: an
+   * original attempt, and — only if Maintenance
+   * hands back a fix — one retry with that fix
+   * applied. If that retry ALSO fails, Maintenance
+   * is asked once more but told plainly that its
+   * last fix did not work and a ticket must be
+   * filed now; `mustAbandon` forces the abandon
+   * outcome server-side even if it answers
+   * otherwise, so a run can never loop forever
+   * between the Router and Maintenance.
+   */
+  async function runStageWithRecovery({ stage, routeSoFar, sections, attemptStage }) {
+    let extraGuidance = null;
+    let priorLog = null;
 
-  async function logged(stage, decision, routeSoFar) {
-    const log = await createMaintenanceLog("router", {
-      type: decision.ticketType,
-      message: decision.message,
-      details: decision.details,
-      stage,
-      task,
-      context: routeSoFar,
-      state: {
-        runId,
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      let decision;
+      let usage = null;
+
+      try {
+        ({ decision, usage } = await attemptStage(extraGuidance));
+      } catch (error) {
+        decision = {
+          type: "error",
+          errorType: "error",
+          errorMessage: "Router produced a response the server could not use.",
+          errorDetails: error.message,
+        };
+      }
+
+      if (decision.type !== "error") {
+        return { decision, usage };
+      }
+
+      const consult = await helpRouterRecoverFromError({
         task,
-        controlPanelSettings: controlPanelSettings || {},
-      },
-    });
-
-    await updateRouterRun(runId, {
-      stage,
-      status: "blocked",
-      logId: log._id,
-    });
-
-    return { status: "blocked", runId, log };
-  }
-
-
-  async function protocolError(stage, error, routeSoFar) {
-    const log = await createMaintenanceLog("router", {
-      type: "error",
-      message: "Router produced a response the server could not use.",
-      details: error.message,
-      stage,
-      task,
-      context: routeSoFar,
-      state: {
+        controlPanelSettings,
         runId,
-        task,
-        controlPanelSettings: controlPanelSettings || {},
-      },
-    });
+        stage,
+        routeSoFar,
+        sections,
+        errorType: decision.errorType,
+        errorMessage: decision.errorMessage,
+        errorDetails: decision.errorDetails,
+        mustAbandon: attempt === 1,
+        priorLog,
+      });
 
-    await updateRouterRun(runId, {
-      stage,
-      status: "blocked",
-      logId: log._id,
-    });
+      await appendRouterRunTrace(runId, {
+        stage,
+        maintenanceConsult: {
+          errorType: decision.errorType,
+          errorMessage: decision.errorMessage,
+          outcome: consult.outcome,
+        },
+      });
 
-    return { status: "blocked", runId, log };
+      if (consult.outcome === "retry" && attempt === 0) {
+        extraGuidance = consult.fixInstructions;
+        priorLog = consult.log;
+        continue;
+      }
+
+      await updateRouterRun(runId, {
+        stage,
+        status: "blocked",
+        ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
+      });
+
+      return {
+        abandoned: true,
+        result: { status: "blocked", runId, tickets: consult.tickets },
+      };
+    }
+
+    return undefined;
   }
 
 
@@ -492,36 +529,54 @@ async function runRouter({
      STAGE 1: MODEL SELECTION
   ------------------------------ */
 
-  const stage1Input = buildStageInput({
-    stageLabel: "1 — Model Selection",
-    task,
+  const models = await getAllModels();
+
+  const stage1Outcome = await runStageWithRecovery({
+    stage: 1,
+    routeSoFar: {},
     sections: [{ label: "AVAILABLE MODELS", body: formatDocsForPrompt(models) }],
-    controlPanelSettings,
-    attachments,
-    maintenanceGuidance,
+    attemptStage: async (extraGuidance) => {
+      if (!models.length) {
+        return {
+          decision: {
+            type: "error",
+            errorType: "request",
+            errorMessage: "No models are configured.",
+            errorDetails:
+              "The models collection is empty, so the Router cannot select a model for any task.",
+          },
+          usage: null,
+        };
+      }
+
+      const stage1Input = buildStageInput({
+        stageLabel: "1 — Model Selection",
+        task,
+        sections: [{ label: "AVAILABLE MODELS", body: formatDocsForPrompt(models) }],
+        controlPanelSettings,
+        attachments,
+        maintenanceGuidance,
+        stageFixGuidance: extraGuidance,
+      });
+
+      const { parsed, usage } = await callRouterStage({
+        instructions,
+        input: stage1Input,
+        schema: buildStage1Schema(models.map((item) => item._id.toString())),
+        schemaName: "stage1_model_decision",
+      });
+
+      await appendRouterRunTrace(runId, { stage: 1, decision: parsed, usage });
+
+      return { decision: parsed, usage };
+    },
   });
 
-  let stage1Decision;
-  let stage1Usage;
-
-  try {
-    ({ parsed: stage1Decision, usage: stage1Usage } = await callRouterStage({
-      instructions,
-      input: stage1Input,
-      schema: buildStage1Schema(models.map((item) => item._id.toString())),
-      schemaName: "stage1_model_decision",
-    }));
-  } catch (error) {
-    return protocolError(1, error, {});
+  if (stage1Outcome.abandoned) {
+    return stage1Outcome.result;
   }
 
-  await appendRouterRunTrace(runId, { stage: 1, decision: stage1Decision });
-
-  if (stage1Decision.type === "maintenance_ticket") {
-    return logged(1, stage1Decision, {});
-  }
-
-  stagesCompleted += 1;
+  const { decision: stage1Decision, usage: stage1Usage } = stage1Outcome;
 
   const stage1Stop = await reviewStageAndMaybeStop({
     runId,
@@ -530,7 +585,7 @@ async function runRouter({
     stage: 1,
     decision: stage1Decision,
     usage: stage1Usage,
-    stagesCompleted,
+    stagesCompleted: 1,
     routeSoFar: {},
   });
 
@@ -553,21 +608,9 @@ async function runRouter({
 
   const apis = await getAllApis({ model: model._id.toString() });
 
-  if (!apis.length) {
-    return logged(
-      2,
-      {
-        ticketType: "request",
-        message: `Model "${model.name}" has no configured API route.`,
-        details: `The apis collection has no documents scoped to model ${model.name} (${model._id.toString()}), so no API is available to call this model through.`,
-      },
-      { modelId: model._id.toString() },
-    );
-  }
-
-  const stage2Input = buildStageInput({
-    stageLabel: "2 — API Selection",
-    task,
+  const stage2Outcome = await runStageWithRecovery({
+    stage: 2,
+    routeSoFar: { modelId: model._id.toString() },
     sections: [
       {
         label: "SELECTED MODEL",
@@ -575,32 +618,53 @@ async function runRouter({
       },
       { label: "AVAILABLE APIS FOR THIS MODEL", body: formatDocsForPrompt(apis) },
     ],
-    controlPanelSettings,
-    attachments,
-    maintenanceGuidance,
+    attemptStage: async (extraGuidance) => {
+      if (!apis.length) {
+        return {
+          decision: {
+            type: "error",
+            errorType: "request",
+            errorMessage: `Model "${model.name}" has no configured API route.`,
+            errorDetails: `The apis collection has no documents scoped to model ${model.name} (${model._id.toString()}), so no API is available to call this model through.`,
+          },
+          usage: null,
+        };
+      }
+
+      const stage2Input = buildStageInput({
+        stageLabel: "2 — API Selection",
+        task,
+        sections: [
+          {
+            label: "SELECTED MODEL",
+            body: `_id: ${model._id.toString()}\nname: ${model.name}\ndisplayName: ${model.displayName}`,
+          },
+          { label: "AVAILABLE APIS FOR THIS MODEL", body: formatDocsForPrompt(apis) },
+        ],
+        controlPanelSettings,
+        attachments,
+        maintenanceGuidance,
+        stageFixGuidance: extraGuidance,
+      });
+
+      const { parsed, usage } = await callRouterStage({
+        instructions,
+        input: stage2Input,
+        schema: buildStage2Schema(apis.map((item) => item._id.toString())),
+        schemaName: "stage2_api_decision",
+      });
+
+      await appendRouterRunTrace(runId, { stage: 2, decision: parsed, usage });
+
+      return { decision: parsed, usage };
+    },
   });
 
-  let stage2Decision;
-  let stage2Usage;
-
-  try {
-    ({ parsed: stage2Decision, usage: stage2Usage } = await callRouterStage({
-      instructions,
-      input: stage2Input,
-      schema: buildStage2Schema(apis.map((item) => item._id.toString())),
-      schemaName: "stage2_api_decision",
-    }));
-  } catch (error) {
-    return protocolError(2, error, { modelId: model._id.toString() });
+  if (stage2Outcome.abandoned) {
+    return stage2Outcome.result;
   }
 
-  await appendRouterRunTrace(runId, { stage: 2, decision: stage2Decision });
-
-  if (stage2Decision.type === "maintenance_ticket") {
-    return logged(2, stage2Decision, { modelId: model._id.toString() });
-  }
-
-  stagesCompleted += 1;
+  const { decision: stage2Decision, usage: stage2Usage } = stage2Outcome;
 
   const stage2Stop = await reviewStageAndMaybeStop({
     runId,
@@ -609,7 +673,7 @@ async function runRouter({
     stage: 2,
     decision: stage2Decision,
     usage: stage2Usage,
-    stagesCompleted,
+    stagesCompleted: 2,
     routeSoFar: { modelId: model._id.toString() },
   });
 
@@ -635,9 +699,9 @@ async function runRouter({
   let selectedTools = [];
 
   if (tools.length > 0) {
-    const stage3Input = buildStageInput({
-      stageLabel: "3 — Tool Selection",
-      task,
+    const stage3Outcome = await runStageWithRecovery({
+      stage: 3,
+      routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
       sections: [
         { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
         {
@@ -646,38 +710,42 @@ async function runRouter({
         },
         { label: "AVAILABLE TOOLS FOR THIS MODEL + API", body: formatDocsForPrompt(tools) },
       ],
-      controlPanelSettings,
-      attachments,
-      maintenanceGuidance,
+      attemptStage: async (extraGuidance) => {
+        const stage3Input = buildStageInput({
+          stageLabel: "3 — Tool Selection",
+          task,
+          sections: [
+            { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
+            {
+              label: "SELECTED API",
+              body: `_id: ${api._id.toString()}\nname: ${api.name}\n\n${api.contentMarkdown}`,
+            },
+            { label: "AVAILABLE TOOLS FOR THIS MODEL + API", body: formatDocsForPrompt(tools) },
+          ],
+          controlPanelSettings,
+          attachments,
+          maintenanceGuidance,
+          stageFixGuidance: extraGuidance,
+        });
+
+        const { parsed, usage } = await callRouterStage({
+          instructions,
+          input: stage3Input,
+          schema: buildStage3Schema(tools.map((item) => item._id.toString())),
+          schemaName: "stage3_tool_decision",
+        });
+
+        await appendRouterRunTrace(runId, { stage: 3, decision: parsed, usage });
+
+        return { decision: parsed, usage };
+      },
     });
 
-    let stage3Decision;
-    let stage3Usage;
-
-    try {
-      ({ parsed: stage3Decision, usage: stage3Usage } = await callRouterStage({
-        instructions,
-        input: stage3Input,
-        schema: buildStage3Schema(tools.map((item) => item._id.toString())),
-        schemaName: "stage3_tool_decision",
-      }));
-    } catch (error) {
-      return protocolError(3, error, {
-        modelId: model._id.toString(),
-        apiId: api._id.toString(),
-      });
+    if (stage3Outcome.abandoned) {
+      return stage3Outcome.result;
     }
 
-    await appendRouterRunTrace(runId, { stage: 3, decision: stage3Decision });
-
-    if (stage3Decision.type === "maintenance_ticket") {
-      return logged(3, stage3Decision, {
-        modelId: model._id.toString(),
-        apiId: api._id.toString(),
-      });
-    }
-
-    stagesCompleted += 1;
+    const { decision: stage3Decision, usage: stage3Usage } = stage3Outcome;
 
     const stage3Stop = await reviewStageAndMaybeStop({
       runId,
@@ -686,7 +754,7 @@ async function runRouter({
       stage: 3,
       decision: stage3Decision,
       usage: stage3Usage,
-      stagesCompleted,
+      stagesCompleted: 3,
       routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
     });
 
@@ -731,56 +799,54 @@ async function runRouter({
       .flat()
       .map((capability) => capability._id.toString());
 
-    const stage4Input = buildStageInput({
-      stageLabel: "4 — Capability Configuration",
-      task,
-      sections: [
-        { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
-        { label: "SELECTED API", body: `_id: ${api._id.toString()}\nname: ${api.name}` },
-        {
-          label: "SELECTED TOOLS",
-          body: selectedTools
-            .map((tool) => `${tool.name} (_id: ${tool._id.toString()})`)
-            .join(", "),
-        },
-        ...toolSections,
-      ],
-      controlPanelSettings,
-      attachments,
-      maintenanceGuidance,
+    const stage4Sections = [
+      { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
+      { label: "SELECTED API", body: `_id: ${api._id.toString()}\nname: ${api.name}` },
+      {
+        label: "SELECTED TOOLS",
+        body: selectedTools
+          .map((tool) => `${tool.name} (_id: ${tool._id.toString()})`)
+          .join(", "),
+      },
+      ...toolSections,
+    ];
+
+    const stage4Outcome = await runStageWithRecovery({
+      stage: 4,
+      routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
+      sections: stage4Sections,
+      attemptStage: async (extraGuidance) => {
+        const stage4Input = buildStageInput({
+          stageLabel: "4 — Capability Configuration",
+          task,
+          sections: stage4Sections,
+          controlPanelSettings,
+          attachments,
+          maintenanceGuidance,
+          stageFixGuidance: extraGuidance,
+        });
+
+        const { parsed, usage } = await callRouterStage({
+          instructions,
+          input: stage4Input,
+          schema: buildStage4Schema(
+            selectedTools.map((tool) => tool._id.toString()),
+            validCapabilityIds,
+          ),
+          schemaName: "stage4_tool_configurations",
+        });
+
+        await appendRouterRunTrace(runId, { stage: 4, decision: parsed, usage });
+
+        return { decision: parsed, usage };
+      },
     });
 
-    let stage4Decision;
-    let stage4Usage;
-
-    try {
-      ({ parsed: stage4Decision, usage: stage4Usage } = await callRouterStage({
-        instructions,
-        input: stage4Input,
-        schema: buildStage4Schema(
-          selectedTools.map((tool) => tool._id.toString()),
-          validCapabilityIds,
-        ),
-        schemaName: "stage4_tool_configurations",
-      }));
-    } catch (error) {
-      return protocolError(4, error, {
-        modelId: model._id.toString(),
-        apiId: api._id.toString(),
-        toolIds: selectedTools.map((tool) => tool._id.toString()),
-      });
+    if (stage4Outcome.abandoned) {
+      return stage4Outcome.result;
     }
 
-    await appendRouterRunTrace(runId, { stage: 4, decision: stage4Decision });
-
-    if (stage4Decision.type === "maintenance_ticket") {
-      return logged(4, stage4Decision, {
-        modelId: model._id.toString(),
-        apiId: api._id.toString(),
-      });
-    }
-
-    stagesCompleted += 1;
+    const { decision: stage4Decision, usage: stage4Usage } = stage4Outcome;
 
     const stage4Stop = await reviewStageAndMaybeStop({
       runId,
@@ -789,7 +855,7 @@ async function runRouter({
       stage: 4,
       decision: stage4Decision,
       usage: stage4Usage,
-      stagesCompleted,
+      stagesCompleted: 4,
       routeSoFar: {
         modelId: model._id.toString(),
         apiId: api._id.toString(),
@@ -812,13 +878,26 @@ async function runRouter({
         );
 
         if (!capability) {
-          return protocolError(
-            4,
-            new Error(
-              `Router chose capability ${config.capabilityId} for tool ${config.toolId}, but that capability does not belong to that tool.`,
-            ),
-            { modelId: model._id.toString(), apiId: api._id.toString() },
-          );
+          const consult = await helpRouterRecoverFromError({
+            task,
+            controlPanelSettings,
+            runId,
+            stage: 4,
+            routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
+            sections: stage4Sections,
+            errorType: "error",
+            errorMessage: "Router chose a capability that does not belong to the tool it named.",
+            errorDetails: `capabilityId ${config.capabilityId} for toolId ${config.toolId}`,
+            mustAbandon: true,
+          });
+
+          await updateRouterRun(runId, {
+            stage: 4,
+            status: "blocked",
+            ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
+          });
+
+          return { status: "blocked", runId, tickets: consult.tickets };
         }
 
         toolConfigurations.push({
@@ -836,13 +915,26 @@ async function runRouter({
       try {
         requestFragment = JSON.parse(config.requestTemplateJson);
       } catch (error) {
-        return protocolError(
-          4,
-          new Error(
-            `Router proposed a new capability for tool ${config.toolId} with invalid requestTemplateJson: ${error.message}`,
-          ),
-          { modelId: model._id.toString(), apiId: api._id.toString() },
-        );
+        const consult = await helpRouterRecoverFromError({
+          task,
+          controlPanelSettings,
+          runId,
+          stage: 4,
+          routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
+          sections: stage4Sections,
+          errorType: "error",
+          errorMessage: "Router proposed a new capability with invalid requestTemplateJson.",
+          errorDetails: `toolId ${config.toolId}: ${error.message}`,
+          mustAbandon: true,
+        });
+
+        await updateRouterRun(runId, {
+          stage: 4,
+          status: "blocked",
+          ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
+        });
+
+        return { status: "blocked", runId, tickets: consult.tickets };
       }
 
       const newCapability = await insertCapability({
@@ -890,42 +982,39 @@ async function runRouter({
     },
   ];
 
-  const stage5Input = buildStageInput({
-    stageLabel: "5 — Final Request Assembly",
-    task,
+  const stage5Outcome = await runStageWithRecovery({
+    stage: 5,
+    routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
     sections: stage5Sections,
-    controlPanelSettings,
-    attachments,
-    maintenanceGuidance,
+    attemptStage: async (extraGuidance) => {
+      const stage5Input = buildStageInput({
+        stageLabel: "5 — Final Request Assembly",
+        task,
+        sections: stage5Sections,
+        controlPanelSettings,
+        attachments,
+        maintenanceGuidance,
+        stageFixGuidance: extraGuidance,
+      });
+
+      const { parsed, usage } = await callRouterStage({
+        instructions,
+        input: stage5Input,
+        schema: buildStage5Schema(),
+        schemaName: "stage5_final_request",
+      });
+
+      await appendRouterRunTrace(runId, { stage: 5, decision: parsed, usage });
+
+      return { decision: parsed, usage };
+    },
   });
 
-  let stage5Decision;
-  let stage5Usage;
-
-  try {
-    ({ parsed: stage5Decision, usage: stage5Usage } = await callRouterStage({
-      instructions,
-      input: stage5Input,
-      schema: buildStage5Schema(),
-      schemaName: "stage5_final_request",
-    }));
-  } catch (error) {
-    return protocolError(5, error, {
-      modelId: model._id.toString(),
-      apiId: api._id.toString(),
-    });
+  if (stage5Outcome.abandoned) {
+    return stage5Outcome.result;
   }
 
-  await appendRouterRunTrace(runId, { stage: 5, decision: stage5Decision });
-
-  if (stage5Decision.type === "maintenance_ticket") {
-    return logged(5, stage5Decision, {
-      modelId: model._id.toString(),
-      apiId: api._id.toString(),
-    });
-  }
-
-  stagesCompleted += 1;
+  const { decision: stage5Decision, usage: stage5Usage } = stage5Outcome;
 
   const stage5Stop = await reviewStageAndMaybeStop({
     runId,
@@ -934,7 +1023,7 @@ async function runRouter({
     stage: 5,
     decision: stage5Decision,
     usage: stage5Usage,
-    stagesCompleted,
+    stagesCompleted: 5,
     routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
   });
 
@@ -947,11 +1036,26 @@ async function runRouter({
   try {
     finalRequestRaw = JSON.parse(stage5Decision.requestJson);
   } catch (error) {
-    return protocolError(
-      5,
-      new Error(`Router produced invalid JSON in requestJson: ${error.message}`),
-      { modelId: model._id.toString(), apiId: api._id.toString() },
-    );
+    const consult = await helpRouterRecoverFromError({
+      task,
+      controlPanelSettings,
+      runId,
+      stage: 5,
+      routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString() },
+      sections: stage5Sections,
+      errorType: "error",
+      errorMessage: "Router produced invalid JSON in requestJson.",
+      errorDetails: error.message,
+      mustAbandon: true,
+    });
+
+    await updateRouterRun(runId, {
+      stage: 5,
+      status: "blocked",
+      ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
+    });
+
+    return { status: "blocked", runId, tickets: consult.tickets };
   }
 
   const isImagesFamily = api.apiFamily === "images";
@@ -991,7 +1095,7 @@ async function runRouter({
    * agent-to-agent call through any kernel —
    * see 03-agent-organization.md.
    */
-  const workerResult = await executeRoute({
+  let workerResult = await executeRoute({
     runId,
     task,
     model,
@@ -1001,11 +1105,80 @@ async function runRouter({
   });
 
   if (workerResult.status === "failed") {
-    return protocolError(
-      "executing",
-      new Error(`Worker execution failed: ${workerResult.errorMessage}`),
-      { modelId: model._id.toString(), apiId: api._id.toString(), finalRequestFields },
-    );
+    const executionSections = [
+      { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
+      { label: "SELECTED API", body: `_id: ${api._id.toString()}\nname: ${api.name}` },
+      { label: "ASSEMBLED REQUEST THAT FAILED", body: JSON.stringify(finalRequestFields, null, 2) },
+    ];
+
+    const routeSoFar = { modelId: model._id.toString(), apiId: api._id.toString(), finalRequestFields };
+
+    let consult = await helpRouterRecoverFromError({
+      task,
+      controlPanelSettings,
+      runId,
+      stage: "executing",
+      routeSoFar,
+      sections: executionSections,
+      errorType: "error",
+      errorMessage: "Worker execution failed.",
+      errorDetails: workerResult.errorMessage,
+      mustAbandon: false,
+    });
+
+    await appendRouterRunTrace(runId, {
+      stage: "executing",
+      maintenanceConsult: {
+        errorMessage: workerResult.errorMessage,
+        outcome: consult.outcome,
+      },
+    });
+
+    /*
+     * A "fix" this late can only be applied by
+     * trying execution again — there is no
+     * request-shape repair the server can do
+     * automatically from free-text guidance, so a
+     * retry here means one more attempt of the
+     * exact same assembled request (useful for a
+     * transient failure), not a re-assembly.
+     */
+    if (consult.outcome === "retry") {
+      workerResult = await executeRoute({
+        runId,
+        task,
+        model,
+        apiFamily: isImagesFamily ? "images" : "responses",
+        finalRequestFields,
+        attachments,
+      });
+
+      if (workerResult.status === "failed") {
+        consult = await helpRouterRecoverFromError({
+          task,
+          controlPanelSettings,
+          runId,
+          stage: "executing",
+          routeSoFar,
+          sections: executionSections,
+          errorType: "error",
+          errorMessage: "Worker execution failed again after a retry.",
+          errorDetails: workerResult.errorMessage,
+          mustAbandon: true,
+          priorLog: consult.log,
+        });
+      }
+    }
+
+    if (workerResult.status === "failed") {
+      await updateRouterRun(runId, {
+        stage: "executing",
+        status: "blocked",
+        ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
+      });
+
+      return { status: "blocked", runId, tickets: consult.tickets };
+    }
   }
 
   await updateRouterRun(runId, { stage: "completed", status: "completed" });
