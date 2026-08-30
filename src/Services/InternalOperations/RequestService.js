@@ -6,14 +6,14 @@ const requestServiceApi = {
     task,
     controlPanelSettings,
     attachments = [],
-    resumeTicketId,
+    ticketId,
   ) {
     const payload = {
       task,
 
       controlPanelSettings,
 
-      resumeTicketId,
+      ticketId,
     };
 
 

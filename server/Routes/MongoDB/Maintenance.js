@@ -248,15 +248,18 @@ router.delete(
       } = req.params;
 
 
-      await deleteLogEntry(
-        agentName,
-        id,
-      );
+      const cascade =
+        await deleteLogEntry(
+          agentName,
+          id,
+        );
 
 
       return res.json({
         status:
           "deleted",
+
+        cascade,
       });
     } catch (
       error

@@ -43,6 +43,9 @@ const ANALYST_AGENT_NAME =
 const WORKER_AGENT_NAME =
   "worker";
 
+const MAINTENANCE_AGENT_NAME =
+  "maintenance";
+
 
 let cache =
   null;
@@ -53,6 +56,7 @@ async function initAgents() {
     router,
     analyst,
     worker,
+    maintenance,
   ] =
     await Promise.all(
       [
@@ -64,6 +68,9 @@ async function initAgents() {
         ),
         getAgentByName(
           WORKER_AGENT_NAME,
+        ),
+        getAgentByName(
+          MAINTENANCE_AGENT_NAME,
         ),
       ],
     );
@@ -83,6 +90,7 @@ async function initAgents() {
       router,
       analyst,
       worker,
+      maintenance,
     };
 
 
@@ -127,9 +135,24 @@ function getWorkerAgentProfile() {
 }
 
 
+/*
+ * Not fatal at startup, same reasoning as the
+ * Analyst — the Maintenance agent is being
+ * bootstrapped in stages (see docs/architecture/
+ * 06-maintenance.md), so its own service fails
+ * with a clear error only when it is actually
+ * invoked without a configured profile, rather
+ * than blocking the whole server from starting.
+ */
+function getMaintenanceAgentProfile() {
+  return requireCache().maintenance;
+}
+
+
 export {
   initAgents,
   getRouterAgentProfile,
   getAnalystAgentProfile,
   getWorkerAgentProfile,
+  getMaintenanceAgentProfile,
 };

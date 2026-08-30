@@ -74,20 +74,19 @@ router.post(
       const {
         task,
         controlPanelSettings,
-        resumeTicketId,
+        ticketId,
       } = request;
 
 
       /*
-       * A resume request restarts an in-flight
-       * run from a previously filed maintenance
-       * ticket, so the task text comes from the
-       * ticket's saved state rather than the
-       * request body. A brand-new request still
-       * requires task text up front.
+       * A restart re-runs the task fresh from
+       * Stage 1, using the task text saved on a
+       * previously filed maintenance ticket
+       * rather than the request body. A brand-new
+       * request still requires task text up front.
        */
       if (
-        !resumeTicketId &&
+        !ticketId &&
         (
           typeof task !==
             "string" ||
@@ -116,7 +115,7 @@ router.post(
 
             attachments,
 
-            resumeTicketId,
+            ticketId,
           },
         );
 

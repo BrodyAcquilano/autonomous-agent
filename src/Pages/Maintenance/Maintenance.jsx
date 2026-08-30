@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import requestServiceApi from "../../Services/InternalOperations/RequestService";
+import requestMaintenanceApi from "../../Services/InternalOperations/RequestMaintenance";
 import maintenanceApi from "../../Services/MongoDB/Maintenance";
 
 import FilterPanel from "./Components/FilterPanel/FilterPanel";
@@ -48,6 +49,7 @@ function Maintenance({
   logsLoading,
   logsError,
   reloadLogs,
+  reloadTickets,
 
   systemStatus,
   setSystemStatus,
@@ -79,11 +81,35 @@ function Maintenance({
     );
 
   const [
+    loggedByFilter,
+    setLoggedByFilter,
+  ] =
+    useState(
+      ALL_AGENTS_FILTER,
+    );
+
+  const [
     logsAgentFilter,
     setLogsAgentFilter,
   ] =
     useState(
       ALL_AGENTS_FILTER,
+    );
+
+  const [
+    maintenanceFocusText,
+    setMaintenanceFocusText,
+  ] =
+    useState(
+      "",
+    );
+
+  const [
+    maintenanceRequestPending,
+    setMaintenanceRequestPending,
+  ] =
+    useState(
+      false,
     );
 
   const [
@@ -137,12 +163,19 @@ function Maintenance({
               ALL_STATUSES_FILTER ||
               ticket.status ===
                 statusFilter
+            ) &&
+            (
+              loggedByFilter ===
+              ALL_AGENTS_FILTER ||
+              ticket.loggedBy ===
+                loggedByFilter
             ),
         ),
       [
         tickets,
         typeFilter,
         statusFilter,
+        loggedByFilter,
       ],
     );
 
@@ -324,10 +357,12 @@ function Maintenance({
 
   /*
    * The server always removes this ticket from
-   * the active queue as soon as it consumes it
-   * to resume the run — regardless of whether
-   * that resumed run then succeeds or fails
-   * again — so the frontend drops it from local
+   * the active queue as soon as it consumes it —
+   * a restart is now a literal, full run from
+   * Stage 1 (not a resume-in-place), using the
+   * ticket's saved task/settings plus
+   * Maintenance's own recommendation as extra
+   * context — so the frontend drops it from local
    * state and closes the modal immediately, the
    * moment the request-service call resolves at
    * all, rather than waiting to see which way it
@@ -339,11 +374,11 @@ function Maintenance({
    * reportError() on a blocked/failed result
    * carries systemStatus through busy -> error
    * and posts the message to the Console message
-   * panel — the only addition here is reloading
-   * the tickets list afterward when a new ticket
-   * was filed, since that ticket doesn't exist
-   * yet at the moment of the optimistic removal
-   * above.
+   * panel. A failed restart does NOT immediately
+   * produce a new ticket anymore — it produces a
+   * new incident log for the Maintenance agent to
+   * triage later, which is why this reloads logs
+   * (not tickets) afterward.
    */
   async function handleRestart(
     ticket,
@@ -387,19 +422,19 @@ function Maintenance({
         result.status ===
         "blocked"
       ) {
-        const newTicket =
-          result.ticket;
+        const newLog =
+          result.log;
 
 
         reportError(
-          `${newTicket
+          `${newLog
             ?.type
             ?.toUpperCase() ||
-            "MAINTENANCE"} TICKET: ${
-            newTicket?.message ||
+            "MAINTENANCE"} LOG: ${
+            newLog?.message ||
             "The Router could not complete this task."
           }\n${
-            newTicket?.details ||
+            newLog?.details ||
             ""
           }`.trim(),
         );
@@ -411,18 +446,9 @@ function Maintenance({
               "error",
 
             text:
-              "Restart failed again — a new ticket was filed.",
+              "Restart failed again — a new incident was logged for Maintenance to review.",
           },
         );
-
-        /*
-         * No manual reloadTickets() call here —
-         * reportError() above sets systemStatus
-         * to "error", and App.jsx already reacts
-         * to that transition by reloading the
-         * tickets list on its own, the same way
-         * it would for a Console-triggered error.
-         */
       } else {
         setResponse(
           result.response,
@@ -486,10 +512,36 @@ function Maintenance({
     );
 
     try {
-      await maintenanceApi.deleteLogEntry(
-        log.agentName,
-        log._id,
-      );
+      const result =
+        await maintenanceApi.deleteLogEntry(
+          log.agentName,
+          log._id,
+        );
+
+
+      const cascadedTicketId =
+        result
+          ?.cascade
+          ?.ticketId ||
+        null;
+
+
+      if (
+        cascadedTicketId
+      ) {
+        setTickets(
+          (
+            current,
+          ) =>
+            current.filter(
+              (
+                ticket,
+              ) =>
+                ticket._id !==
+                cascadedTicketId,
+            ),
+        );
+      }
 
       await reloadLogs();
 
@@ -503,7 +555,9 @@ function Maintenance({
             "info",
 
           text:
-            "Log entry deleted.",
+            cascadedTicketId
+              ? "Log entry deleted, along with the ticket filed from it."
+              : "Log entry deleted.",
         },
       );
     } catch (
@@ -524,6 +578,104 @@ function Maintenance({
       );
     } finally {
       setActionPending(
+        false,
+      );
+    }
+  }
+
+
+  /*
+   * A structurally separate request from a
+   * normal Console task — this asks the
+   * Maintenance agent to go investigate
+   * something (or, with empty text, to sweep
+   * whatever incidents are currently queued)
+   * rather than asking the company to execute a
+   * task. systemStatus is shared with the rest
+   * of the app the same way a Console request or
+   * a ticket restart uses it, since a sweep can
+   * write new tickets/logs while it runs.
+   */
+  async function handleSubmitMaintenanceRequest() {
+    setMaintenanceRequestPending(
+      true,
+    );
+
+    setSystemStatus(
+      "busy",
+    );
+
+    try {
+      const result =
+        await requestMaintenanceApi.request(
+          maintenanceFocusText.trim() ||
+            undefined,
+        );
+
+
+      setMaintenanceFocusText(
+        "",
+      );
+
+      setSystemStatus(
+        "ready",
+      );
+
+      setStatusMessage(
+        {
+          tone:
+            "success",
+
+          text:
+            `Maintenance sweep complete (${result.mode}) — ${result.ticketsFiled} ${
+              result.ticketsFiled ===
+              1
+                ? "ticket"
+                : "tickets"
+            } filed, ${result.logsProcessed} ${
+              result.logsProcessed ===
+              1
+                ? "log"
+                : "logs"
+            } reviewed.`,
+        },
+      );
+
+      await Promise.all(
+        [
+          reloadTickets(),
+          reloadLogs(),
+        ],
+      );
+    } catch (
+      error
+    ) {
+      const errorMessage =
+        error.response
+          ?.data
+          ?.message ||
+        error.response
+          ?.data
+          ?.error ||
+        error.message ||
+        "Maintenance request failed.";
+
+
+      reportError(
+        errorMessage,
+      );
+
+      setStatusMessage(
+        {
+          tone:
+            "error",
+
+          text:
+            errorMessage,
+        },
+      );
+    } finally {
+      setMaintenanceRequestPending(
         false,
       );
     }
@@ -621,6 +773,12 @@ function Maintenance({
           agents={
             agents
           }
+          loggedByFilter={
+            loggedByFilter
+          }
+          setLoggedByFilter={
+            setLoggedByFilter
+          }
           logsAgentFilter={
             logsAgentFilter
           }
@@ -632,6 +790,21 @@ function Maintenance({
           }
           logCount={
             filteredLogs.length
+          }
+          maintenanceFocusText={
+            maintenanceFocusText
+          }
+          setMaintenanceFocusText={
+            setMaintenanceFocusText
+          }
+          maintenanceRequestPending={
+            maintenanceRequestPending
+          }
+          onSubmitMaintenanceRequest={
+            handleSubmitMaintenanceRequest
+          }
+          systemStatus={
+            systemStatus
           }
         />
 

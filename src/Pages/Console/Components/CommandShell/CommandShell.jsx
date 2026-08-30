@@ -415,19 +415,19 @@ function CommandShell({
           result.status ===
           "blocked"
         ) {
-          const ticket =
-            result.ticket;
+          const log =
+            result.log;
 
 
           reportError(
-            `${ticket
+            `${log
               ?.type
               ?.toUpperCase() ||
-              "MAINTENANCE"} TICKET: ${
-              ticket?.message ||
+              "MAINTENANCE"} LOG: ${
+              log?.message ||
               "The Router could not complete this task."
             }\n${
-              ticket?.details ||
+              log?.details ||
               ""
             }`.trim(),
           );

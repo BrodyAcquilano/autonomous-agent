@@ -28,6 +28,15 @@ import toolsRoutes from "./Routes/MongoDB/Tools.js";
  */
 import requestServiceRoutes from "./Routes/InternalOperations/RequestService.js";
 
+/*
+ * A separate entry point from request-service —
+ * this one asks the Maintenance agent to
+ * investigate the Capabilities Brain and file
+ * tickets, rather than asking the company to
+ * execute a task.
+ */
+import requestMaintenanceRoutes from "./Routes/InternalOperations/RequestMaintenance.js";
+
 import {
   connectAnalyticsDB,
   connectDB,
@@ -37,6 +46,10 @@ import {
 import {
   initAgents,
 } from "./Runtime/Agents.js";
+
+import {
+  startMaintenanceCron,
+} from "./Runtime/MaintenanceCron.js";
 
 
 const app =
@@ -113,6 +126,12 @@ app.use(
 
 
 app.use(
+  "/api/request-maintenance",
+  requestMaintenanceRoutes,
+);
+
+
+app.use(
   "/api/azure/openai-responses",
   openAIResponsesRoutes,
 );
@@ -183,6 +202,9 @@ async function start() {
       `Maintenance database not connected: ${error.message}`,
     );
   }
+
+
+  startMaintenanceCron();
 
 
   app.listen(

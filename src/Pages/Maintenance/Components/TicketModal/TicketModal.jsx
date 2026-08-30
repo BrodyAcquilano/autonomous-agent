@@ -74,8 +74,10 @@ function FieldRow({
  * restarting both remove it — ignoring is a
  * direct human decision that no action is
  * needed, restarting calls the normal
- * request-service route with this ticket's id
- * so the run resumes from wherever it left off.
+ * request-service route with this ticket's id so
+ * the task runs again from scratch, fed
+ * Maintenance's own recommendation as extra
+ * context for the Router.
  */
 function TicketModal({
   ticket,
@@ -176,9 +178,9 @@ function TicketModal({
         <div className="maintenance-modal-document">
           <div className="maintenance-modal-fields">
             <FieldRow
-              label="AGENT"
+              label="LOGGED BY"
               value={
-                ticket.agentName
+                ticket.loggedBy
               }
             />
 
@@ -205,16 +207,35 @@ function TicketModal({
                   ?.runId
               }
             />
-
-            <FieldRow
-              label="RESTART COUNT"
-              value={
-                ticket.state
-                  ?.restartCount ??
-                0
-              }
-            />
           </div>
+
+
+          {ticket.recommendedAction && (
+            <div className="maintenance-modal-section">
+              <div className="maintenance-modal-section-title">
+                MAINTENANCE'S RECOMMENDATION
+                {" "}
+                (
+                {
+                  ticket
+                    .recommendedAction
+                    .actionType
+                }
+                )
+              </div>
+
+              <p>
+                {
+                  ticket
+                    .recommendedAction
+                    .instructions ||
+                  ticket
+                    .recommendedAction
+                    .summary
+                }
+              </p>
+            </div>
+          )}
 
 
           <div className="maintenance-modal-section">
@@ -242,7 +263,7 @@ function TicketModal({
           {ticket.state && (
             <div className="maintenance-modal-section">
               <div className="maintenance-modal-section-title">
-                RESUMABLE STATE
+                RESTART STATE
               </div>
 
               <pre className="maintenance-modal-state">

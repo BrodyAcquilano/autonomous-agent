@@ -293,3 +293,197 @@
   font-size: 9.5px;
   letter-spacing: 1px;
 }
+
+
+/* --------------------------------
+   REQUEST MAINTENANCE
+-------------------------------- */
+
+.maintenance-request-panel {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  margin-top: auto;
+
+  padding-top: 16px;
+
+  border-top:
+    1px solid
+    rgba(
+      117,
+      129,
+      152,
+      0.2
+    );
+}
+
+
+.maintenance-request-hint {
+  margin: 0;
+
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.56
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+
+.maintenance-request-textarea {
+  min-height: 90px;
+
+  padding: 8px;
+
+  resize: vertical;
+
+  border:
+    1px solid
+    rgba(
+      117,
+      145,
+      190,
+      0.32
+    );
+
+  border-radius: 6px;
+
+  background:
+    rgba(
+      16,
+      20,
+      28,
+      0.6
+    );
+
+  color:
+    rgba(
+      226,
+      231,
+      239,
+      0.9
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
+.maintenance-request-textarea:focus {
+  outline: none;
+
+  border-color:
+    rgba(
+      101,
+      214,
+      203,
+      0.7
+    );
+}
+
+
+.maintenance-request-textarea:disabled {
+  opacity: 0.5;
+}
+
+
+.maintenance-request-submit {
+  padding:
+    10px
+    8px;
+
+  border:
+    1px solid
+    rgba(
+      101,
+      214,
+      203,
+      0.5
+    );
+
+  border-radius: 6px;
+
+  background:
+    rgba(
+      101,
+      214,
+      203,
+      0.14
+    );
+
+  color: #fff;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+  letter-spacing: 1.2px;
+
+  cursor: pointer;
+}
+
+
+.maintenance-request-submit:hover:not(:disabled) {
+  border-color:
+    rgba(
+      101,
+      214,
+      203,
+      0.9
+    );
+
+  background:
+    rgba(
+      101,
+      214,
+      203,
+      0.24
+    );
+}
+
+
+.maintenance-request-submit:disabled {
+  border-color:
+    rgba(
+      117,
+      129,
+      152,
+      0.24
+    );
+
+  background:
+    rgba(
+      117,
+      129,
+      152,
+      0.08
+    );
+
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.5
+    );
+
+  cursor: not-allowed;
+}

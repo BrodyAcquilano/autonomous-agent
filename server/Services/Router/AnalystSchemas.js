@@ -2,11 +2,15 @@
  * Structured-output schema for the Analyst
  * agent's per-stage review. Always one flat
  * shape (no maintenance_ticket alternative
- * needed) — filing a ticket is an independent
+ * needed) — logging an issue is an independent
  * boolean, since the agent can flag a concern
  * without necessarily stopping the run, or
- * stop the run without necessarily needing a
- * ticket on file.
+ * stop the run without necessarily needing to
+ * log anything. The Analyst never files a
+ * ticket itself (only the Maintenance agent
+ * does, after reading this log back later) —
+ * it only ever logs an incident for Maintenance
+ * to triage.
  */
 const ANALYST_REVIEW_SCHEMA = {
   type: "object",
@@ -24,11 +28,11 @@ const ANALYST_REVIEW_SCHEMA = {
           ],
         },
 
-        fileTicket: {
+        logIssue: {
           type: "boolean",
         },
 
-        ticketType: {
+        logType: {
           type: "string",
           enum: [
             "error",
@@ -37,11 +41,11 @@ const ANALYST_REVIEW_SCHEMA = {
           ],
         },
 
-        ticketMessage: {
+        logMessage: {
           type: "string",
         },
 
-        ticketDetails: {
+        logDetails: {
           type: "string",
         },
 
@@ -52,10 +56,10 @@ const ANALYST_REVIEW_SCHEMA = {
 
       required: [
         "action",
-        "fileTicket",
-        "ticketType",
-        "ticketMessage",
-        "ticketDetails",
+        "logIssue",
+        "logType",
+        "logMessage",
+        "logDetails",
         "reasoning",
       ],
 

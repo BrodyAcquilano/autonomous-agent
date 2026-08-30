@@ -32,11 +32,16 @@ function formatTimestamp(
 
 /*
  * One list, two modes. Tickets and logs share
- * the same underlying document shape (type,
- * message, stage, task, createdAt, agentName)
- * since a log entry IS a ticket's permanent
- * copy — the only real difference is that
- * tickets also carry a `status` a human can
+ * most of the same shape (type, message, stage,
+ * task, createdAt), but a ticket's meaningful
+ * "who" is `loggedBy` (whichever agent's
+ * incident it was escalated from), since its
+ * `agentName` is always "maintenance" — the
+ * submitter, not the reporter. A log entry has
+ * no `loggedBy` of its own; its `agentName` is
+ * exactly the agent whose collection it lives
+ * in, so that's what a log row shows instead.
+ * Only tickets carry a `status` a human can
  * change, so only tickets render a status chip.
  */
 function EntryList({
@@ -131,7 +136,10 @@ function EntryList({
             </span>
 
             <span className="maintenance-entry-agent">
-              {item.agentName}
+              {mode ===
+              "tickets"
+                ? item.loggedBy
+                : item.agentName}
             </span>
 
             <span className="maintenance-entry-message">

@@ -33,16 +33,16 @@ function fallbackVerdict(
     action:
       "continue",
 
-    fileTicket:
+    logIssue:
       false,
 
-    ticketType:
+    logType:
       "",
 
-    ticketMessage:
+    logMessage:
       "",
 
-    ticketDetails:
+    logDetails:
       "",
 
     reasoning,
@@ -56,8 +56,10 @@ function fallbackVerdict(
  * server already wrote to the analytics
  * database — it never writes there itself.
  * Its only possible side effect is asking the
- * server (via its returned verdict) to file a
- * maintenance ticket and/or stop the run.
+ * server (via its returned verdict) to log an
+ * incident for the Maintenance agent to triage,
+ * and/or stop the run. It never files a
+ * maintenance ticket itself.
  *
  * Fails open: if the agent profile is missing
  * or its output can't be parsed, the Router

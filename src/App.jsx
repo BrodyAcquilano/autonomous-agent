@@ -965,6 +965,9 @@ function App() {
                 reloadLogs={
                   loadMaintenanceLogs
                 }
+                reloadTickets={
+                  loadMaintenanceTickets
+                }
                 systemStatus={
                   systemStatus
                 }

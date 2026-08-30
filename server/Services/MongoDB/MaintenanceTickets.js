@@ -4,37 +4,44 @@ import { getMaintenanceDB } from "./MongoDB.js";
 
 
 /*
- * Every ticket is written TWICE, on purpose,
- * to the same maintenance database:
+ * Only the Maintenance agent ever files a
+ * ticket now — every other agent (router,
+ * analyst) only ever writes an unprocessed
+ * incident LOG (see MaintenanceLogs.js), which
+ * Maintenance itself reads back, investigates,
+ * and decides whether to escalate. A ticket
+ * therefore always carries two different
+ * agent identities: `agentName` (always
+ * "maintenance" — who is submitting it) and
+ * `loggedBy` (whoever's incident log this
+ * ticket was derived from — router, analyst,
+ * or maintenance itself for something it found
+ * on its own sweep). The frontend filters
+ * tickets by `loggedBy`, since that is what a
+ * human actually cares about ("what did the
+ * router run into"), not who did the paperwork.
  *
- * 1. Into a collection PER AGENT, named after
- *    whichever agent's own judgment produced
- *    the ticket — e.g. maintenance.router,
- *    maintenance.analyst — this is that agent's
- *    own permanent log. Keyed by WHOSE DECISION
- *    it was, not by which code physically
- *    performs the write: the Analyst agent has
- *    no database access of its own, so the
- *    Router calls this on its behalf whenever
- *    the Analyst flags something, but that
- *    ticket still lands in maintenance.analyst.
- *    This copy is never mutated after creation —
- *    it is the permanent historical record.
- * 2. Into one shared maintenance.tickets
- *    collection — the "active tickets" queue the
- *    Maintenance page lists from. This copy DOES
- *    change over time: its `status` moves from
- *    "new" to "reviewed" when a human acknowledges
- *    it without acting yet, and the document is
- *    deleted from this collection entirely (the
- *    per-agent copy is untouched) once it is
- *    either dismissed ("ignored") or consumed by
- *    a restart — at that point it is no longer
- *    "active."
+ * Every ticket is still written TWICE, on
+ * purpose, to the same maintenance database:
+ *
+ * 1. Into `maintenance.maintenance` — the
+ *    Maintenance agent's own permanent log of
+ *    every ticket it has ever filed. Never
+ *    mutated after creation.
+ * 2. Into the shared `maintenance.tickets`
+ *    collection — the "active tickets" queue
+ *    the Maintenance page lists from. This copy
+ *    DOES change over time: its `status` moves
+ *    from "new" to "reviewed" when a human
+ *    acknowledges it without acting yet, and the
+ *    document is deleted from this collection
+ *    entirely (the permanent copy is untouched)
+ *    once it is either dismissed ("ignored") or
+ *    consumed by a restart.
  *
  * Both writes share the same _id so a ticket can
  * always be cross-referenced between its
- * per-agent log entry and its active-queue entry.
+ * permanent log entry and its active-queue entry.
  */
 function getAgentCollection(
   agentName,
@@ -211,6 +218,58 @@ async function deleteTicket(
 
 
 /*
+ * Unlike deleteTicket() above (which only ever
+ * removes the active-queue copy, for "ignore"
+ * and for a restart consuming it), this removes
+ * a ticket completely — both its active-queue
+ * copy and its permanent maintenance.maintenance
+ * copy. Used only when the incident LOG that
+ * produced this ticket is itself being deleted:
+ * a log referencing a ticket that no longer has
+ * any record of itself is a dangling reference,
+ * so deleting the log takes the ticket with it.
+ * The reverse is never true — deleting a ticket
+ * (ignoring it, or a restart consuming it) never
+ * touches the log that produced it.
+ */
+async function deleteTicketEverywhere(
+  ticketId,
+) {
+  if (
+    !ObjectId.isValid(
+      ticketId,
+    )
+  ) {
+    return;
+  }
+
+
+  const filter =
+    {
+      _id:
+        new ObjectId(
+          ticketId,
+        ),
+    };
+
+
+  await Promise.all(
+    [
+      getTicketsCollection().deleteOne(
+        filter,
+      ),
+
+      getAgentCollection(
+        "maintenance",
+      ).deleteOne(
+        filter,
+      ),
+    ],
+  );
+}
+
+
+/*
  * Every maintenance ticket/log carries the
  * analytics.router run's own _id as
  * `state.runId` — that is the whole point of
@@ -350,5 +409,6 @@ export {
   getAllActiveTickets,
   updateTicketStatus,
   deleteTicket,
+  deleteTicketEverywhere,
   deleteMaintenanceRecordsForRun,
 };
