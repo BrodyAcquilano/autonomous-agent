@@ -20,10 +20,12 @@ remains open:
 **Further resolved.** Beyond the Capabilities Brain slice (`models`, `apis`, `tools`, `capabilities`,
 `platforms` — see `01-capabilities-brain.md`), a first Organizational Brain schema now also exists:
 `agents` (profile-card prompts) and `directory` (agent/contact/request-type documents — see
-`03-agent-organization.md`), plus `analytics.router` (per-run process trace) and a
-per-originating-agent collection in `maintenance` (currently `maintenance.router` and
-`maintenance.analyst` — see
-`07-analytics.md`, `06-maintenance.md`). What remains undesigned:
+`03-agent-organization.md`), plus `analytics.router`/`analytics.worker` (per-run process trace and
+per-execution log) and, in `maintenance`, a per-originating-agent collection (`maintenance.router`,
+`maintenance.analyst`) mirrored under the same `_id` into a shared `maintenance.tickets`
+active-tickets queue that carries a resumable `state` object (task, control-panel settings, run id,
+stage, and the ids already resolved) — see `07-analytics.md`, `06-maintenance.md`. What remains
+undesigned:
 skills/skill-version schema, ontology-version records, and — notably — the directory schema above
 is descriptive data only; a schema for the call envelope / kernel-enforcement layer that would
 actually validate an edge before a call happens has not been designed.
@@ -52,17 +54,23 @@ first for the Organizational Brain (once that system is built) is still open.
 
 ## 5. Reconciling the current Console flow with the future Router/Worker path
 
-The current Console page makes a single direct call to a fixed router model. It has not been
-decided whether this becomes one entry point into the future Router/Worker/QC path, is replaced
-outright, or continues to exist as a separate "quick chat" mode alongside full project
-execution.
+**Partially resolved.** The Console page now calls a real Router, which hands off to a real,
+separate Temp Worker for execution (`02-project-workflow.md`, `03-agent-organization.md`) — so a
+Router/Worker split already exists in the runtime, not just in this documentation set. What
+remains open is whether *this* Router/Worker pair becomes the entry point the future
+Planner/Coordinator/QC roles sit on top of, is replaced outright by a more capable version once
+those roles exist, or continues as a separate "quick chat" mode alongside full project execution.
 
 ## 6. Human-approval interface mechanics
 
 Every governance document (Maintenance, Ontology Versioning, Organizational Governance)
 references "human approval" as a gate, but the actual review/approval UI and workflow (a
 Maintenance page, a general review queue, notification mechanics beyond "email is an alert
-channel") has not been designed.
+channel") has not been designed. **Partially resolved at the API level:** a human who already has
+a ticket id can now trigger a restart directly (`POST /api/request-service/request` with
+`resumeTicketId` — see `06-maintenance.md`); what's still missing is any UI to browse
+`maintenance.tickets`, read a ticket, and click restart, so today this only works via a manual API
+call with a ticket id copied from the database.
 
 ## 7. MCP/tool access boundaries per management role
 
@@ -87,3 +95,15 @@ top-down management-organization sequencing was deliberately resumed. No Mainten
 agent exists. Treat this as evidence that the two strategies aren't strictly exclusive in
 practice, not as a decision that the top-down sequencing in `09-implementation-roadmap.md` has
 been abandoned.
+
+## 10. Analyst invocation model: inline per-stage vs. independent loop/threshold-triggered
+
+The Analyst currently runs synchronously, inline, in the Router's own request path — called after
+every one of the Router's 5 stages, on the critical path of every single run (see `07-analytics.md`).
+This is suspected of being wrong long-term: candidates being considered instead are (a) the
+Analyst running on its own separate schedule/loop, reading already-written `analytics.router`/
+`analytics.worker` data after the fact rather than being called mid-run, possibly through its own
+control panel to report on prior runs' stats; or (b) the Router only pausing to call it when a
+specific signal fires (e.g. token usage crossing a threshold) rather than unconditionally after
+every stage. Not decided. Until it is, the Router and Temp Worker are the priority to get correct;
+the current inline wiring is what exists today, not a statement of the intended final design.

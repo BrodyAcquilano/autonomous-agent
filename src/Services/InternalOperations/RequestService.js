@@ -1,16 +1,19 @@
 import apiClient from "../axios";
 
 
-const routerApi = {
+const requestServiceApi = {
   async request(
     task,
     controlPanelSettings,
     attachments = [],
+    resumeTicketId,
   ) {
     const payload = {
       task,
 
       controlPanelSettings,
+
+      resumeTicketId,
     };
 
 
@@ -20,7 +23,7 @@ const routerApi = {
     ) {
       const response =
         await apiClient.post(
-          "/router/request",
+          "/request-service/request",
           payload,
         );
 
@@ -56,7 +59,7 @@ const routerApi = {
 
     const response =
       await apiClient.post(
-        "/router/request",
+        "/request-service/request",
         formData,
       );
 
@@ -66,4 +69,4 @@ const routerApi = {
 };
 
 
-export default routerApi;
+export default requestServiceApi;

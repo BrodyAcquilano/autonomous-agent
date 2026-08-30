@@ -133,11 +133,24 @@ and must not be merged:
 A first slice of this design now exists in MongoDB, in the `autonomous` database:
 
 - **`agents`** stores each agent's actual profile — closer to a calling card than a database
-  record: a stable `name` (e.g. `router`, `analytics`), a short `role` summary, and a
-  `contentMarkdown` field holding that agent's complete system prompt (identity, what it's called
-  with, its decision procedure, its output contract, and its escalation rules). The server loads
-  this document and sends its `contentMarkdown` as the model's `instructions` on every call — an
-  agent's entire behavior lives in this one document, not scattered across server code.
+  record: a stable `name` (e.g. `router`, `analyst`, `worker`), a short `role` summary, and a
+  `contentMarkdown` field. For Router and Analyst, that field is a complete system prompt (identity,
+  what it's called with, its decision procedure, its output contract, its escalation rules) that
+  the server sends as the model's `instructions` on every call — an agent's entire behavior lives
+  in this one document, not scattered across server code. The Worker's profile is the exception: it
+  is a description of what the Worker is and does, never loaded as a prompt, because the Worker
+  never makes a reasoning call of its own (see `02-project-workflow.md`).
+
+  These three profile documents are fetched from MongoDB exactly once, at server startup
+  (`initAgents()` in `server/Runtime/Agents.js`), and kept live in memory for the process's
+  lifetime rather than re-fetched on every single request — `RouterAgent.js` and `AnalystAgent.js`
+  read from this in-memory registry instead of calling `getAgentByName()` themselves. This is a
+  genuinely permanent (for the life of the running server) agent instance in the sense that matters
+  today: there is no per-run conversation memory to keep alive yet, only the identity each one
+  reasons from, but this is the module where that would live once it exists. The Temp Worker has no
+  comparable state to keep — it takes a fully-resolved route as plain arguments and executes it
+  fresh every call — so its profile is cached here purely for consistency and future
+  introspection, not because anything reads it operationally.
 - **`directory`** stores the structural graph itself, as three kinds of documents distinguished by
   a `type` field rather than three separate collections (so an agent's entire directory footprint
   can be found, audited, or removed as one small set of documents):
@@ -149,23 +162,30 @@ A first slice of this design now exists in MongoDB, in the `autonomous` database
     "human_portal"`), matching the principle above that a missing edge means "not authorized"
     regardless of what kind of thing sits on the other end.
   - `type: "request_types"` — one record per edge, listing the specific request types available on
-    it, each with `operation` (`read`/`write`/`read_write`/`agent_call`), and — when the callee is
-    a database — the exact `database`, `collection`, and `fieldsAffected` that request type
-    touches. This keeps the coarse "who talks to whom" (contacts) separate from the fine-grained
-    "exactly what can they do" (request types), so either can change without touching the other.
+    it, each with `operation` (`read`/`write`/`read_write`/`agent_call`/`output` — `output` covers
+    returning transient data to a human/frontend rather than persisting anything), and — when the
+    callee is a database — the exact `database`, `collection`, and `fieldsAffected` that request
+    type touches. This keeps the coarse "who talks to whom" (contacts) separate from the
+    fine-grained "exactly what can they do" (request types), so either can change without touching
+    the other.
 
-Today this covers two agents: `router` (contacts: the `autonomous` database read/write, the
-`analyst` agent, and the human-reviewed maintenance portal) and `analyst` (contacts: the
-`analytics` database read-only, and the maintenance portal).
+Today this covers three agents: `router` (contacts: the `autonomous` database read/write, the
+`analyst` agent, the `worker` agent, and the human-reviewed maintenance portal), `analyst`
+(contacts: the `analytics` database read-only, and the maintenance portal), and `worker` (contacts:
+the user/frontend — returning completed task output — and the `analytics` database, writing its
+own execution log independent of the Router's).
 
 ## What this does *not* yet do
 
 The directory above is currently **descriptive data, not an enforced gate**. Nothing in
 `server/Services/Router/RouterAgent.js` actually looks up the directory before querying MongoDB,
-calling the Analyst agent, or filing a maintenance ticket — those calls happen directly in code.
-There is no call envelope, no budget/depth/cycle enforcement, and no runtime kernel that validates
-an edge before a call is allowed to proceed. The directory exists so the structure is written down
-and machine-readable from day one (per the "anticipate this infrastructure from the beginning"
-principle above), not because it is wired into an enforcement layer yet — that remains target
-architecture. `server/Runtime/Supervisor` and `server/Runtime/Worker` are still empty scaffold
-files and should not be assumed to implement any part of this.
+calling the Analyst agent, handing a route to the Worker, or filing a maintenance ticket — those
+calls happen directly in code (the Router → Worker "call" is a plain in-process function call
+today, not a real agent-to-agent call through any kernel). There is no call envelope, no
+budget/depth/cycle enforcement, and no runtime kernel that validates an edge before a call is
+allowed to proceed. The directory exists so the structure is written down and machine-readable
+from day one (per the "anticipate this infrastructure from the beginning" principle above), not
+because it is wired into an enforcement layer yet — that remains target architecture.
+`server/Runtime/Supervisor` and `server/Runtime/Worker` (the empty scaffold file, distinct from
+the real `server/Services/Router/TempWorker.js`) are still empty and should not be assumed to
+implement any part of this.

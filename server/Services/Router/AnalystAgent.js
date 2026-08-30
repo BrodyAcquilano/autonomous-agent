@@ -3,8 +3,8 @@ import {
 } from "../Azure/OpenAIResponses.js";
 
 import {
-  getAgentByName,
-} from "../MongoDB/Agents.js";
+  getAnalystAgentProfile,
+} from "../../Runtime/Agents.js";
 
 import {
   getStageTextFormat,
@@ -13,10 +13,6 @@ import {
 import {
   ANALYST_REVIEW_SCHEMA,
 } from "./AnalystSchemas.js";
-
-
-const ANALYST_AGENT_NAME =
-  "analyst";
 
 
 /*
@@ -76,10 +72,13 @@ async function reviewRouterStage({
   tokenUsage,
   stagesCompleted,
 }) {
+  /*
+   * Loaded once at server startup
+   * (server/Runtime/Agents.js), not re-fetched
+   * from MongoDB on every stage review.
+   */
   const agent =
-    await getAgentByName(
-      ANALYST_AGENT_NAME,
-    );
+    getAnalystAgentProfile();
 
 
   if (

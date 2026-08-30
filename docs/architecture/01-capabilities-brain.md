@@ -191,16 +191,27 @@ Every execution should be traceable back to the exact document(s) that informed 
 
 - **Current repo state:** `server/Routes/Models`, `server/Routes/Apis`, `server/Routes/Tools`, and
   `server/Routes/Capabilities` now read live from the MongoDB collections described below and are
-  browsable end-to-end from the frontend's Models page (a branching model → API → tool →
+  browsable end-to-end from the frontend's Capabilities page (a branching model → API → tool →
   capability info modal). `brain/models/*.md` and `brain/apis/**/*.md` are no longer read by any
   route — retained only as historical reference pending deletion. Model→deployment mapping is
   still a hardcoded `switch` statement in `server/Services/Azure/OpenAIResponses.js`
   (`getAzureConfig`), unrelated to the new browsing routes. A working Router agent now exists and
-  reads these collections live (`server/Services/Router/RouterAgent.js`, mounted at
-  `/api/router/request`, called directly from the Console page) — it is not yet embedded in the
-  fuller Planner/Coordinator/Worker/QC pipeline described in `02-project-workflow.md`, and for now
-  performs both routing and execution itself. See `03-agent-organization.md` for how the Router's
-  own identity and calls are recorded, and `09-implementation-roadmap.md` for overall status.
+  reads these collections live (`server/Services/Router/RouterAgent.js`, exposed through
+  `POST /api/request-service/request` — `server/Routes/InternalOperations/RequestService.js`,
+  called directly from the Console page) — it is not yet embedded in the fuller
+  Planner/Coordinator/QC pipeline described in `02-project-workflow.md`, but it does hand off
+  execution to a real, separate Temp Worker (`server/Services/Router/TempWorker.js`) rather than
+  executing anything itself. The route is named for the general act of requesting a service from
+  the company rather than after the Router specifically, since which agents actually handle a
+  request is free to be reconfigured later. It also accepts an optional `resumeTicketId` to restart
+  a run from a previously filed maintenance ticket — see `06-maintenance.md`. Any files the user
+  attaches to the request (images/PDFs) never reach the Router's own reasoning calls — the Router
+  only ever sees a cheap manifest of their names and types (so it can factor "a PDF is attached"
+  into model/tool selection without paying vision/document-input cost on every one of its own
+  stage calls), while the actual bytes are forwarded straight to the Temp Worker, which is the only
+  place they are ever embedded into a real API request (`buildInput()` in
+  `server/Services/Files/Attachments.js`). See `03-agent-organization.md` for how the Router's and
+  Worker's identities and calls are recorded, and `09-implementation-roadmap.md` for overall status.
 - **Target architecture:** the Capabilities Brain is persisted in MongoDB (per the resolved decision
   in `05-ontology-versioning.md`'s scope and the overall project direction). The existing
   filesystem `brain/` content is prototype/reference material, superseded by the live MongoDB

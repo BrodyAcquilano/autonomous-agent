@@ -3,32 +3,34 @@ import {
 } from "../Azure/OpenAIResponses.js";
 
 import {
-  createImage,
-} from "../Azure/OpenAIImages.js";
-
-import {
-  getAgentByName,
-} from "../MongoDB/Agents.js";
+  getRouterAgentProfile,
+} from "../../Runtime/Agents.js";
 
 import {
   getAllModels,
+  getModelById,
 } from "../MongoDB/Models.js";
 
 import {
   getAllApis,
+  getApiById,
 } from "../MongoDB/Apis.js";
 
 import {
   getAllTools,
+  getToolById,
 } from "../MongoDB/Tools.js";
 
 import {
   getAllCapabilities,
+  getCapabilityById,
   insertCapability,
 } from "../MongoDB/Capabilities.js";
 
 import {
   createMaintenanceTicket,
+  getActiveTicket,
+  resolveActiveTicket,
 } from "../MongoDB/MaintenanceTickets.js";
 
 import {
@@ -38,8 +40,8 @@ import {
 } from "../MongoDB/AnalyticsRouterLog.js";
 
 import {
-  buildInput,
   createJsonFileAttachment,
+  getSafeFileName,
 } from "../Files/Attachments.js";
 
 import {
@@ -55,9 +57,9 @@ import {
   reviewRouterStage,
 } from "./AnalystAgent.js";
 
-
-const ROUTER_AGENT_NAME =
-  "router";
+import {
+  executeRoute,
+} from "./TempWorker.js";
 
 
 /*
@@ -147,11 +149,53 @@ function formatDocsForPrompt(
 }
 
 
+/*
+ * The user's own file attachments (images/PDFs)
+ * are never sent to the Router's own reasoning
+ * calls — they go straight to the Temp Worker,
+ * which is the only place that ever touches
+ * their actual bytes (see buildInput() in
+ * Files/Attachments.js, used by TempWorker.js).
+ * The Router only gets a cheap manifest of
+ * names/types so it can factor "there is a PDF
+ * attached" into model/tool selection without
+ * the cost of running vision/document input
+ * through every one of its own stage calls.
+ */
+function buildAttachmentManifest(
+  attachments,
+) {
+  if (
+    !attachments?.length
+  ) {
+    return "(no files attached to this request)";
+  }
+
+
+  return attachments
+    .map(
+      (
+        file,
+      ) =>
+        `${getSafeFileName(
+          file.originalname,
+        )} (${
+          file.mimetype ||
+          "unknown type"
+        })`,
+    )
+    .join(
+      "\n",
+    );
+}
+
+
 function buildStageInput({
   stageLabel,
   task,
   sections,
   controlPanelSettings,
+  attachments,
 }) {
   const content =
     [
@@ -161,6 +205,16 @@ function buildStageInput({
 
         text:
           `=== STAGE ===\n${stageLabel}\n\n=== TASK ===\n${task}`,
+      },
+
+      {
+        type:
+          "input_text",
+
+        text:
+          `=== ATTACHED FILES (names/types only — you never see their contents; they are sent directly to the Temp Worker for execution) ===\n${buildAttachmentManifest(
+            attachments,
+          )}`,
       },
     ];
 
@@ -294,6 +348,39 @@ async function callRouterStage({
    MAINTENANCE TICKET HELPERS
 -------------------------------- */
 
+/*
+ * The "state" a ticket carries is deliberately
+ * just ids and primitive fields, never full
+ * Mongo documents — a restart re-fetches every
+ * document fresh by these ids rather than
+ * trusting anything cached here, so a restart
+ * never works from data that went stale between
+ * when the ticket was filed and when a human
+ * acts on it.
+ */
+function buildResumeState(
+  context,
+) {
+  return {
+    runId:
+      context.runId ||
+      null,
+
+    task:
+      context.task,
+
+    controlPanelSettings:
+      context.controlPanelSettings ||
+      {},
+
+    stage:
+      context.stage,
+
+    ...context.routeSoFar,
+  };
+}
+
+
 async function fileTicketFromDecision(
   decision,
   context,
@@ -318,6 +405,11 @@ async function fileTicketFromDecision(
 
       context:
         context.routeSoFar,
+
+      state:
+        buildResumeState(
+          context,
+        ),
     },
   );
 }
@@ -347,6 +439,11 @@ async function fileProtocolErrorTicket(
 
       context:
         context.routeSoFar,
+
+      state:
+        buildResumeState(
+          context,
+        ),
     },
   );
 }
@@ -368,6 +465,7 @@ async function fileProtocolErrorTicket(
 async function reviewStageAndMaybeStop({
   runId,
   task,
+  controlPanelSettings,
   stage,
   decision,
   usage,
@@ -424,6 +522,17 @@ async function reviewStageAndMaybeStop({
 
         context:
           routeSoFar,
+
+        state:
+          buildResumeState(
+            {
+              runId,
+              task,
+              controlPanelSettings,
+              stage,
+              routeSoFar,
+            },
+          ),
       },
     );
   }
@@ -461,64 +570,6 @@ async function reviewStageAndMaybeStop({
 
 
 /* --------------------------------
-   RESPONSE SHAPE ADAPTER (IMAGES)
--------------------------------- */
-
-/*
- * Adapts the raw Images API shape
- * ({ created, data: [{ b64_json }] }) into
- * the shape the frontend's ResponseFiles
- * service already knows how to extract
- * ({ created, output_text, images: [...] }),
- * so the Output page needs no changes to
- * display an image-family route's result.
- */
-function adaptImagesResponse(
-  rawResponse,
-  outputFormat,
-) {
-  const mimeType =
-    outputFormat ===
-    "jpeg"
-      ? "image/jpeg"
-      : outputFormat ===
-        "webp"
-        ? "image/webp"
-        : "image/png";
-
-
-  const images =
-    (
-      rawResponse.data ||
-      []
-    ).map(
-      (
-        item,
-        index,
-      ) => ({
-        mimeType,
-
-        index,
-
-        base64:
-          item.b64_json,
-      }),
-    );
-
-
-  return {
-    created:
-      rawResponse.created,
-
-    output_text:
-      "",
-
-    images,
-  };
-}
-
-
-/* --------------------------------
    ROUTER RUN
 -------------------------------- */
 
@@ -527,24 +578,81 @@ async function runRouter({
   controlPanelSettings,
   attachments =
     [],
+  resumeTicketId,
 }) {
-  const agent =
-    await getAgentByName(
-      ROUTER_AGENT_NAME,
-    );
-
+  /*
+   * A restart re-enters through this same
+   * function with a maintenance ticket id
+   * instead of fresh task text. The ticket's
+   * saved `state` is the only thing trusted for
+   * "what stage were we at" and "what was
+   * already chosen" — the ticket is consumed
+   * (marked resolved) immediately, since a
+   * second failure during the resumed run files
+   * its own new ticket rather than reusing this
+   * one.
+   */
+  let resumeState =
+    null;
 
   if (
-    !agent
+    resumeTicketId
   ) {
-    throw new Error(
-      `Agent profile "${ROUTER_AGENT_NAME}" is not configured in the agents collection.`,
+    const ticket =
+      await getActiveTicket(
+        resumeTicketId,
+      );
+
+
+    if (
+      !ticket ||
+      !ticket.state
+    ) {
+      throw new Error(
+        `Maintenance ticket "${resumeTicketId}" was not found or has no resumable state.`,
+      );
+    }
+
+
+    resumeState =
+      ticket.state;
+
+    task =
+      resumeState.task;
+
+    controlPanelSettings =
+      resumeState.controlPanelSettings;
+
+
+    await resolveActiveTicket(
+      resumeTicketId,
     );
   }
 
 
+  /*
+   * "executing" (the Temp Worker handoff) is
+   * treated as stage 6 here purely so every
+   * stage guard below can use a single ">"
+   * comparison against this number.
+   */
+  const resumeStage =
+    !resumeState
+      ? 0
+      : resumeState.stage ===
+        "executing"
+        ? 6
+        : resumeState.stage;
+
+
+  /*
+   * The Router's profile is loaded once at
+   * server startup (server/Runtime/Agents.js),
+   * not re-fetched from MongoDB on every call —
+   * this just reads the already-live instance.
+   */
   const instructions =
-    agent.contentMarkdown;
+    getRouterAgentProfile().contentMarkdown;
 
 
   const models =
@@ -552,6 +660,8 @@ async function runRouter({
 
 
   if (
+    resumeStage <=
+      1 &&
     !models.length
   ) {
     const ticket =
@@ -574,6 +684,18 @@ async function runRouter({
 
           context:
             {},
+
+          state:
+            buildResumeState(
+              {
+                task,
+                controlPanelSettings,
+                stage:
+                  1,
+                routeSoFar:
+                  {},
+              },
+            ),
         },
       );
 
@@ -587,18 +709,38 @@ async function runRouter({
   }
 
 
-  const run =
-    await createRouterRun({
-      task,
+  let runId;
 
-      controlPanelSettings:
-        controlPanelSettings ||
-        {},
-    });
+  if (
+    resumeState?.runId
+  ) {
+    runId =
+      resumeState.runId;
+
+    await updateRouterRun(
+      runId,
+      {
+        stage:
+          resumeState.stage,
+
+        status:
+          "resumed",
+      },
+    );
+  } else {
+    const run =
+      await createRouterRun({
+        task,
+
+        controlPanelSettings:
+          controlPanelSettings ||
+          {},
+      });
 
 
-  const runId =
-    run._id.toString();
+    runId =
+      run._id.toString();
+  }
 
 
   let stagesCompleted =
@@ -616,6 +758,8 @@ async function runRouter({
         {
           stage,
           task,
+          controlPanelSettings,
+          runId,
           routeSoFar,
         },
       );
@@ -657,6 +801,8 @@ async function runRouter({
         {
           stage,
           task,
+          controlPanelSettings,
+          runId,
           routeSoFar,
         },
       );
@@ -691,140 +837,168 @@ async function runRouter({
      STAGE 1: MODEL SELECTION
   ------------------------------ */
 
-  const stage1Input =
-    buildStageInput({
-      stageLabel:
-        "1 — Model Selection",
-
-      task,
-
-      sections: [
-        {
-          label:
-            "AVAILABLE MODELS",
-
-          body:
-            formatDocsForPrompt(
-              models,
-            ),
-        },
-      ],
-
-      controlPanelSettings,
-    });
-
-
-  let stage1Decision;
-  let stage1Usage;
-
-  try {
-    (
-      {
-        parsed:
-          stage1Decision,
-
-        usage:
-          stage1Usage,
-      } =
-        await callRouterStage(
-          {
-            instructions,
-
-            input:
-              stage1Input,
-
-            schema:
-              buildStage1Schema(
-                models.map(
-                  (
-                    model,
-                  ) =>
-                    model._id.toString(),
-                ),
-              ),
-
-            schemaName:
-              "stage1_model_decision",
-          },
-        )
-    );
-  } catch (
-    error
-  ) {
-    return protocolError(
-      1,
-      error,
-      {},
-    );
-  }
-
-
-  await appendRouterRunTrace(
-    runId,
-    {
-      stage:
-        1,
-
-      decision:
-        stage1Decision,
-    },
-  );
-
+  let model;
 
   if (
-    stage1Decision.type ===
-    "maintenance_ticket"
+    resumeStage >
+    1
   ) {
-    return blocked(
-      1,
-      stage1Decision,
-      {},
-    );
-  }
+    model =
+      await getModelById(
+        resumeState.modelId,
+      );
 
 
-  stagesCompleted +=
-    1;
+    if (
+      !model
+    ) {
+      return protocolError(
+        1,
+        new Error(
+          `Resume ticket referenced model ${resumeState.modelId}, which no longer exists.`,
+        ),
+        {},
+      );
+    }
+  } else {
+    const stage1Input =
+      buildStageInput({
+        stageLabel:
+          "1 — Model Selection",
 
-
-  const stage1Stop =
-    await reviewStageAndMaybeStop(
-      {
-        runId,
         task,
 
+        sections: [
+          {
+            label:
+              "AVAILABLE MODELS",
+
+            body:
+              formatDocsForPrompt(
+                models,
+              ),
+          },
+        ],
+
+        controlPanelSettings,
+
+        attachments,
+      });
+
+
+    let stage1Decision;
+    let stage1Usage;
+
+    try {
+      (
+        {
+          parsed:
+            stage1Decision,
+
+          usage:
+            stage1Usage,
+        } =
+          await callRouterStage(
+            {
+              instructions,
+
+              input:
+                stage1Input,
+
+              schema:
+                buildStage1Schema(
+                  models.map(
+                    (
+                      item,
+                    ) =>
+                      item._id.toString(),
+                  ),
+                ),
+
+              schemaName:
+                "stage1_model_decision",
+            },
+          )
+      );
+    } catch (
+      error
+    ) {
+      return protocolError(
+        1,
+        error,
+        {},
+      );
+    }
+
+
+    await appendRouterRunTrace(
+      runId,
+      {
         stage:
           1,
 
         decision:
           stage1Decision,
-
-        usage:
-          stage1Usage,
-
-        stagesCompleted,
-
-        routeSoFar:
-          {},
       },
     );
 
 
-  if (
-    stage1Stop
-  ) {
-    return stage1Stop;
+    if (
+      stage1Decision.type ===
+      "maintenance_ticket"
+    ) {
+      return blocked(
+        1,
+        stage1Decision,
+        {},
+      );
+    }
+
+
+    stagesCompleted +=
+      1;
+
+
+    const stage1Stop =
+      await reviewStageAndMaybeStop(
+        {
+          runId,
+          task,
+          controlPanelSettings,
+
+          stage:
+            1,
+
+          decision:
+            stage1Decision,
+
+          usage:
+            stage1Usage,
+
+          stagesCompleted,
+
+          routeSoFar:
+            {},
+        },
+      );
+
+
+    if (
+      stage1Stop
+    ) {
+      return stage1Stop;
+    }
+
+
+    model =
+      models.find(
+        (
+          item,
+        ) =>
+          item._id.toString() ===
+          stage1Decision.modelId,
+      );
   }
-
-
-  const model =
-    models.find(
-      (
-        item,
-      ) =>
-        item._id.toString() ===
-        stage1Decision.modelId,
-    );
 
 
   await updateRouterRun(
@@ -846,186 +1020,217 @@ async function runRouter({
      STAGE 2: API SELECTION
   ------------------------------ */
 
-  const apis =
-    await getAllApis({
-      model:
-        model._id.toString(),
-    });
-
+  let api;
 
   if (
-    !apis.length
+    resumeStage >
+    2
   ) {
-    return blocked(
-      2,
-      {
-        ticketType:
-          "request",
-
-        message:
-          `Model "${model.name}" has no configured API route.`,
-
-        details:
-          `The apis collection has no documents scoped to model ${model.name} (${model._id.toString()}), so no API is available to call this model through.`,
-      },
-      {
-        modelId:
-          model._id.toString(),
-      },
-    );
-  }
+    api =
+      await getApiById(
+        resumeState.apiId,
+      );
 
 
-  const stage2Input =
-    buildStageInput({
-      stageLabel:
-        "2 — API Selection",
-
-      task,
-
-      sections: [
-        {
-          label:
-            "SELECTED MODEL",
-
-          body:
-            `_id: ${model._id.toString()}\nname: ${model.name}\ndisplayName: ${model.displayName}`,
-        },
-
-        {
-          label:
-            "AVAILABLE APIS FOR THIS MODEL",
-
-          body:
-            formatDocsForPrompt(
-              apis,
-            ),
-        },
-      ],
-
-      controlPanelSettings,
-    });
-
-
-  let stage2Decision;
-  let stage2Usage;
-
-  try {
-    (
-      {
-        parsed:
-          stage2Decision,
-
-        usage:
-          stage2Usage,
-      } =
-        await callRouterStage(
-          {
-            instructions,
-
-            input:
-              stage2Input,
-
-            schema:
-              buildStage2Schema(
-                apis.map(
-                  (
-                    item,
-                  ) =>
-                    item._id.toString(),
-                ),
-              ),
-
-            schemaName:
-              "stage2_api_decision",
-          },
-        )
-    );
-  } catch (
-    error
-  ) {
-    return protocolError(
-      2,
-      error,
-      {
-        modelId:
-          model._id.toString(),
-      },
-    );
-  }
-
-
-  await appendRouterRunTrace(
-    runId,
-    {
-      stage:
+    if (
+      !api
+    ) {
+      return protocolError(
         2,
-
-      decision:
-        stage2Decision,
-    },
-  );
-
-
-  if (
-    stage2Decision.type ===
-    "maintenance_ticket"
-  ) {
-    return blocked(
-      2,
-      stage2Decision,
-      {
-        modelId:
+        new Error(
+          `Resume ticket referenced API ${resumeState.apiId}, which no longer exists.`,
+        ),
+        {
+          modelId:
+            model._id.toString(),
+        },
+      );
+    }
+  } else {
+    const apis =
+      await getAllApis({
+        model:
           model._id.toString(),
-      },
-    );
-  }
+      });
 
 
-  stagesCompleted +=
-    1;
+    if (
+      !apis.length
+    ) {
+      return blocked(
+        2,
+        {
+          ticketType:
+            "request",
+
+          message:
+            `Model "${model.name}" has no configured API route.`,
+
+          details:
+            `The apis collection has no documents scoped to model ${model.name} (${model._id.toString()}), so no API is available to call this model through.`,
+        },
+        {
+          modelId:
+            model._id.toString(),
+        },
+      );
+    }
 
 
-  const stage2Stop =
-    await reviewStageAndMaybeStop(
-      {
-        runId,
+    const stage2Input =
+      buildStageInput({
+        stageLabel:
+          "2 — API Selection",
+
         task,
 
+        sections: [
+          {
+            label:
+              "SELECTED MODEL",
+
+            body:
+              `_id: ${model._id.toString()}\nname: ${model.name}\ndisplayName: ${model.displayName}`,
+          },
+
+          {
+            label:
+              "AVAILABLE APIS FOR THIS MODEL",
+
+            body:
+              formatDocsForPrompt(
+                apis,
+              ),
+          },
+        ],
+
+        controlPanelSettings,
+
+        attachments,
+      });
+
+
+    let stage2Decision;
+    let stage2Usage;
+
+    try {
+      (
+        {
+          parsed:
+            stage2Decision,
+
+          usage:
+            stage2Usage,
+        } =
+          await callRouterStage(
+            {
+              instructions,
+
+              input:
+                stage2Input,
+
+              schema:
+                buildStage2Schema(
+                  apis.map(
+                    (
+                      item,
+                    ) =>
+                      item._id.toString(),
+                  ),
+                ),
+
+              schemaName:
+                "stage2_api_decision",
+            },
+          )
+      );
+    } catch (
+      error
+    ) {
+      return protocolError(
+        2,
+        error,
+        {
+          modelId:
+            model._id.toString(),
+        },
+      );
+    }
+
+
+    await appendRouterRunTrace(
+      runId,
+      {
         stage:
           2,
 
         decision:
           stage2Decision,
-
-        usage:
-          stage2Usage,
-
-        stagesCompleted,
-
-        routeSoFar: {
-          modelId:
-            model._id.toString(),
-        },
       },
     );
 
 
-  if (
-    stage2Stop
-  ) {
-    return stage2Stop;
+    if (
+      stage2Decision.type ===
+      "maintenance_ticket"
+    ) {
+      return blocked(
+        2,
+        stage2Decision,
+        {
+          modelId:
+            model._id.toString(),
+        },
+      );
+    }
+
+
+    stagesCompleted +=
+      1;
+
+
+    const stage2Stop =
+      await reviewStageAndMaybeStop(
+        {
+          runId,
+          task,
+          controlPanelSettings,
+
+          stage:
+            2,
+
+          decision:
+            stage2Decision,
+
+          usage:
+            stage2Usage,
+
+          stagesCompleted,
+
+          routeSoFar: {
+            modelId:
+              model._id.toString(),
+          },
+        },
+      );
+
+
+    if (
+      stage2Stop
+    ) {
+      return stage2Stop;
+    }
+
+
+    api =
+      apis.find(
+        (
+          item,
+        ) =>
+          item._id.toString() ===
+          stage2Decision.apiId,
+      );
   }
-
-
-  const api =
-    apis.find(
-      (
-        item,
-      ) =>
-        item._id.toString() ===
-        stage2Decision.apiId,
-    );
 
 
   await updateRouterRun(
@@ -1047,25 +1252,69 @@ async function runRouter({
      STAGE 3: TOOL SELECTION
   ------------------------------ */
 
-  const tools =
-    await getAllTools({
-      model:
-        model._id.toString(),
-
-      api:
-        api._id.toString(),
-    });
-
-
   let selectedTools =
     [];
 
 
   if (
-    tools.length >
-    0
+    resumeStage >
+    3
   ) {
-    const stage3Input =
+    const resumeToolIds =
+      resumeState.toolIds ||
+      [];
+
+    selectedTools =
+      await Promise.all(
+        resumeToolIds.map(
+          (
+            id,
+          ) =>
+            getToolById(
+              id,
+            ),
+        ),
+      );
+
+
+    if (
+      selectedTools.some(
+        (
+          item,
+        ) =>
+          !item,
+      )
+    ) {
+      return protocolError(
+        3,
+        new Error(
+          "Resume ticket referenced a tool that no longer exists.",
+        ),
+        {
+          modelId:
+            model._id.toString(),
+
+          apiId:
+            api._id.toString(),
+        },
+      );
+    }
+  } else {
+    const tools =
+      await getAllTools({
+        model:
+          model._id.toString(),
+
+        api:
+          api._id.toString(),
+      });
+
+
+    if (
+      tools.length >
+      0
+    ) {
+      const stage3Input =
       buildStageInput({
         stageLabel:
           "3 — Tool Selection",
@@ -1101,6 +1350,8 @@ async function runRouter({
         ],
 
         controlPanelSettings,
+
+        attachments,
       });
 
 
@@ -1194,6 +1445,7 @@ async function runRouter({
         {
           runId,
           task,
+          controlPanelSettings,
 
           stage:
             3,
@@ -1224,15 +1476,16 @@ async function runRouter({
     }
 
 
-    selectedTools =
-      tools.filter(
-        (
-          item,
-        ) =>
-          stage3Decision.toolIds.includes(
-            item._id.toString(),
-          ),
-      );
+      selectedTools =
+        tools.filter(
+          (
+            item,
+          ) =>
+            stage3Decision.toolIds.includes(
+              item._id.toString(),
+            ),
+        );
+    }
   }
 
 
@@ -1260,11 +1513,71 @@ async function runRouter({
      STAGE 4: CAPABILITY CONFIGURATION
   ------------------------------ */
 
-  const toolConfigurations =
+  let toolConfigurations =
     [];
 
 
   if (
+    resumeStage >
+    4
+  ) {
+    const storedConfigurations =
+      resumeState.toolConfigurations ||
+      [];
+
+
+    for (
+      const stored
+      of storedConfigurations
+    ) {
+      const tool =
+        await getToolById(
+          stored.toolId,
+        );
+
+      const capability =
+        await getCapabilityById(
+          stored.capabilityId,
+        );
+
+
+      if (
+        !tool ||
+        !capability
+      ) {
+        return protocolError(
+          4,
+          new Error(
+            "Resume ticket referenced a tool or capability that no longer exists.",
+          ),
+          {
+            modelId:
+              model._id.toString(),
+
+            apiId:
+              api._id.toString(),
+          },
+        );
+      }
+
+
+      toolConfigurations.push(
+        {
+          toolId:
+            tool._id,
+
+          toolName:
+            tool.name,
+
+          capabilityId:
+            capability._id,
+
+          requestFragment:
+            capability.requestTemplate,
+        },
+      );
+    }
+  } else if (
     selectedTools.length >
     0
   ) {
@@ -1373,6 +1686,8 @@ async function runRouter({
         ],
 
         controlPanelSettings,
+
+        attachments,
       });
 
 
@@ -1476,6 +1791,7 @@ async function runRouter({
         {
           runId,
           task,
+          controlPanelSettings,
 
           stage:
             4,
@@ -1674,6 +1990,30 @@ async function runRouter({
      STAGE 5: FINAL REQUEST ASSEMBLY
   ------------------------------ */
 
+  let isImagesFamily;
+  let finalRequestFields;
+
+  if (
+    resumeStage >
+    5
+  ) {
+    /*
+     * A ticket filed at "executing" means every
+     * router stage already completed — the
+     * assembled request itself is what's
+     * replayed, unchanged, against the freshly
+     * re-fetched model/api docs above. Only the
+     * Temp Worker call failed, so only that call
+     * is retried.
+     */
+    isImagesFamily =
+      api.apiFamily ===
+      "images";
+
+    finalRequestFields =
+      resumeState.finalRequestFields ||
+      {};
+  } else {
   const stage5Sections =
     [
       {
@@ -1726,6 +2066,8 @@ async function runRouter({
         stage5Sections,
 
       controlPanelSettings,
+
+      attachments,
     });
 
 
@@ -1812,6 +2154,7 @@ async function runRouter({
       {
         runId,
         task,
+        controlPanelSettings,
 
         stage:
           5,
@@ -1868,12 +2211,12 @@ async function runRouter({
   }
 
 
-  const isImagesFamily =
+  isImagesFamily =
     api.apiFamily ===
     "images";
 
 
-  const finalRequestFields =
+  finalRequestFields =
     {};
 
 
@@ -1927,6 +2270,7 @@ async function runRouter({
       },
     );
   }
+  }
 
 
   await updateRouterRun(
@@ -1942,60 +2286,50 @@ async function runRouter({
 
 
   /* ------------------------------
-     EXECUTE (WORKER STEP)
+     HAND OFF TO THE TEMP WORKER
   ------------------------------ */
 
-  let workerResponse;
+  /*
+   * The Router's job ends at assembling the
+   * route. Executing it is the Temp Worker's
+   * job — a separate, unconfigured agent with
+   * no reasoning prompt of its own, which logs
+   * its own token usage to analytics.worker
+   * independently of the Router's own
+   * analytics.router stage log. This is a plain
+   * in-process function call today, not a real
+   * agent-to-agent call through any kernel —
+   * see 03-agent-organization.md.
+   */
+  const workerResult =
+    await executeRoute(
+      {
+        runId,
 
-  try {
-    if (
-      isImagesFamily
-    ) {
-      const rawImageResponse =
-        await createImage(
-          {
-            model:
-              model.name,
+        task,
 
-            prompt:
-              task,
+        model,
 
-            ...finalRequestFields,
-          },
-        );
+        apiFamily:
+          isImagesFamily
+            ? "images"
+            : "responses",
+
+        finalRequestFields,
+
+        attachments,
+      },
+    );
 
 
-      workerResponse =
-        adaptImagesResponse(
-          rawImageResponse,
-
-          finalRequestFields.outputFormat ||
-            "png",
-        );
-    } else {
-      workerResponse =
-        await createResponse(
-          {
-            model:
-              model.name,
-
-            input:
-              buildInput(
-                task,
-                attachments,
-              ),
-
-            ...finalRequestFields,
-          },
-        );
-    }
-  } catch (
-    error
+  if (
+    workerResult.status ===
+    "failed"
   ) {
     return protocolError(
       "executing",
       new Error(
-        `Worker execution failed: ${error.message}`,
+        `Worker execution failed: ${workerResult.errorMessage}`,
       ),
       {
         modelId:
@@ -2003,6 +2337,8 @@ async function runRouter({
 
         apiId:
           api._id.toString(),
+
+        finalRequestFields,
       },
     );
   }
@@ -2027,7 +2363,7 @@ async function runRouter({
     runId,
 
     response:
-      workerResponse,
+      workerResult.response,
   };
 }
 

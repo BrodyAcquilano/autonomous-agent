@@ -88,7 +88,7 @@ priorities change.
 | 2. Connect to MongoDB | Done |
 | 3. Design MongoDB ontology/collections | Substantially done for the Capabilities Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`; `maintenance.router`/`maintenance.analyst`, one collection per originating agent). Skill and ontology-version schemas remain undesigned. |
 | 4. Minimal version-awareness/indexing | Done for every collection that exists — `version`/`status` fields and stable-id indexes throughout |
-| 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 2 agent profiles (`router`, `analytics`), 12 directory documents |
+| 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 3 agent profiles (`router`, `analyst`, `worker`), 19 directory documents |
 | 6. Build the management organization | Started narrowly, not as originally sequenced — see note below |
 | 7–11 | Not started |
 
@@ -102,23 +102,42 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
 ## Current repo inventory relevant to this roadmap
 
 - **Working today:** React/Vite frontend, Console/Output pages, viewport/window infrastructure,
-  the Models page (browses the Capabilities Brain end-to-end via a branching model → API → tool →
+  the Capabilities page (browses the Capabilities Brain end-to-end via a branching model → API → tool →
   capability info modal), Express backend, Azure OpenAI Responses + Images API integration, a
   single shared `MongoClient` connected across three logical databases (`autonomous`, `analytics`,
-  `maintenance`), and a real multi-stage Router agent (`server/Services/Router/RouterAgent.js`)
-  that the Console page calls directly instead of building an Azure request itself.
+  `maintenance`), a real multi-stage Router agent (`server/Services/Router/RouterAgent.js`) that
+  the Console page calls through `POST /api/request-service/request`
+  (`server/Routes/InternalOperations/RequestService.js`, named for requesting a service from the
+  company in general rather than after the Router specifically) instead of building an Azure
+  request itself, and a separate Temp Worker (`server/Services/Router/TempWorker.js`) that the
+  Router hands its resolved route to for actual execution. The same route also restarts a blocked
+  run from a previously filed maintenance ticket (`resumeTicketId`) — see the maintenance bullet
+  below and `06-maintenance.md`. The Router, Analyst, and Worker's `agents` profile documents are
+  fetched from MongoDB exactly once, at server startup (`initAgents()` in
+  `server/Runtime/Agents.js`), and kept live in memory for the process's lifetime rather than
+  re-fetched on every request. User file attachments (images/PDFs) never reach the Router's own
+  reasoning calls — only a manifest of their names/types does — and are forwarded straight to the
+  Worker, the only place their actual bytes are used (see `01-capabilities-brain.md`).
 - **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
   (`autonomous` — Capabilities Brain); `agents`, `directory` (`autonomous` — a first slice of the
   Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling
-  structure, not yet enforced by any runtime kernel check); `router` (`analytics` — one document
-  per Router run, with a full per-stage trace, written by the server itself); `router` and
-  `analytics` (`maintenance` — one collection per *originating* agent, not per agent that
-  physically writes: the Router's own decisions land in `maintenance.router`, and tickets the
-  Analyst agent flags during review land in `maintenance.analyst` even though the Router's
-  code performs that write too, since Analytics has no database access of its own. Reviewed
-  directly by a human today, with no automated triage).
-- **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker`,
-  `server/Runtime/State/*`, `server/Runtime/Memory/*`, `server/Services/Files/FileService.js`,
+  structure, not yet enforced by any runtime kernel check); `router` and `worker` (`analytics` —
+  one document per Router run with a full per-stage trace, and one document per Worker execution
+  with token usage/model/API used, both written by the server itself, kept separate so routing
+  overhead and execution cost can be measured independently); `router`, `analyst`, and `tickets`
+  (`maintenance` — every ticket is written twice: once into a permanent, per-*originating*-agent
+  log (`maintenance.router` for the Router's own decisions, `maintenance.analyst` for ones the
+  Analyst agent flags during review — keyed by whose decision it was, not which code physically
+  writes it, since the Analyst has no database access of its own), and once more, under the same
+  `_id`, into the shared `maintenance.tickets` active-tickets queue, which is what the request-
+  service route's restart mechanism reads from and marks `"resolved"` once a ticket is consumed by
+  a restart. Reviewed directly by a human today, with no automated triage beyond that restart
+  mechanism).
+- **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker` (an empty
+  scaffold file, not to be confused with the real, separate `server/Services/Router/TempWorker.js`,
+  or with the real, populated `server/Runtime/Agents.js` described above — both live directly under
+  `server/Runtime/`, but only `Agents.js` does anything today), `server/Runtime/State/*`,
+  `server/Runtime/Memory/*`, `server/Services/Files/FileService.js`,
   `brain/commands/`, `brain/skills/`, `brain/tasks/`. `brain/models/` and `brain/apis/` are no
   longer merely unused — they are actively superseded by the MongoDB collections above and no
   route reads them anymore.

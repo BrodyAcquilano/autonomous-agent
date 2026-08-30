@@ -74,13 +74,25 @@ router.post(
       const {
         task,
         controlPanelSettings,
+        resumeTicketId,
       } = request;
 
 
+      /*
+       * A resume request restarts an in-flight
+       * run from a previously filed maintenance
+       * ticket, so the task text comes from the
+       * ticket's saved state rather than the
+       * request body. A brand-new request still
+       * requires task text up front.
+       */
       if (
-        typeof task !==
-          "string" ||
-        !task.trim()
+        !resumeTicketId &&
+        (
+          typeof task !==
+            "string" ||
+          !task.trim()
+        )
       ) {
         return res
           .status(400)
@@ -95,11 +107,16 @@ router.post(
         await runRouter(
           {
             task:
-              task.trim(),
+              typeof task ===
+              "string"
+                ? task.trim()
+                : task,
 
             controlPanelSettings,
 
             attachments,
+
+            resumeTicketId,
           },
         );
 
@@ -111,7 +128,7 @@ router.post(
       error
     ) {
       console.error(
-        "Router request failed:",
+        "Request service call failed:",
         error,
       );
 
@@ -154,7 +171,7 @@ router.post(
         .status(500)
         .json({
           error:
-            "Router request failed.",
+            "Request service call failed.",
 
           message:
             error.message,

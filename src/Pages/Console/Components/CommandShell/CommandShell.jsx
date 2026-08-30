@@ -3,7 +3,7 @@ import {
   useState,
 } from "react";
 
-import routerApi from "../../../../Services/Router/Router";
+import requestServiceApi from "../../../../Services/InternalOperations/RequestService";
 
 import "./CommandShell.css";
 
@@ -391,7 +391,7 @@ function CommandShell({
        */
       try {
         const result =
-          await routerApi.request(
+          await requestServiceApi.request(
             input,
             requestSettings,
             attachments,

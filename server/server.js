@@ -10,13 +10,29 @@ import capabilitiesRoutes from "./Routes/MongoDB/Capabilities.js";
 import modelsRoutes from "./Routes/MongoDB/Models.js";
 import toolsRoutes from "./Routes/MongoDB/Tools.js";
 
-import routerRoutes from "./Routes/Router/router.js";
+/*
+ * Routes/InternalOperations, unlike
+ * Routes/Azure and Routes/MongoDB, is not
+ * scoped to one external integration — it's
+ * the entry point for requesting a service
+ * from the company (Router -> Temp Worker),
+ * which internally decides which Azure API to
+ * call per task rather than being tied to one.
+ * Named RequestService rather than "router"
+ * since the company structure behind it may be
+ * reconfigured later.
+ */
+import requestServiceRoutes from "./Routes/InternalOperations/RequestService.js";
 
 import {
   connectAnalyticsDB,
   connectDB,
   connectMaintenanceDB,
 } from "./Services/MongoDB/MongoDB.js";
+
+import {
+  initAgents,
+} from "./Runtime/Agents.js";
 
 
 const app =
@@ -63,8 +79,8 @@ app.use(
 
 
 app.use(
-  "/api/router",
-  routerRoutes,
+  "/api/request-service",
+  requestServiceRoutes,
 );
 
 
@@ -85,6 +101,21 @@ async function start() {
 
   console.log(
     "Connected to MongoDB (autonomous).",
+  );
+
+
+  /*
+   * Load the Router/Analyst/Worker agent
+   * profiles into memory once, here, rather
+   * than having each of them fetch its own
+   * profile from MongoDB on every single API
+   * call. They stay live in server/Runtime/
+   * Agents.js for the life of the process.
+   */
+  await initAgents();
+
+  console.log(
+    "Agent runtime initialized (router, analyst, worker).",
   );
 
 

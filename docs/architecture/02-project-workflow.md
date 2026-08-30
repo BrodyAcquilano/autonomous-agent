@@ -81,13 +81,22 @@ Most of this workflow still does not exist. `server/Runtime/Supervisor`,
 `server/Runtime/State/createRunState.js` remain empty scaffold files with no implementation, and
 there is no Coordinator, Planner, or separate QC step anywhere in the runtime.
 
-The Router itself, however, is real (`server/Services/Router/RouterAgent.js`, see
-`01-capabilities-brain.md` and `03-agent-organization.md`) — the Console page now sends a task to it
-directly, and it resolves an exact Model/API/Tool/Capability route through a real multi-stage AI
-process rather than a fixed call. It currently also performs the Worker's job itself, executing
-the assembled request rather than handing it to a separate Worker role. This is the bottom-up
-fallback path described in `09-implementation-roadmap.md` — a minimal Router slice built directly
-against the Capabilities Brain before any management organization (Coordinator/Planner/CEO/HR)
-exists — though in practice it was built alongside a narrow Analyst agent (`07-analytics.md`)
-rather than in strict isolation from the management layer. Do not build a Coordinator, Planner, or
-separate Worker/QC split ahead of what `09-implementation-roadmap.md` currently calls for.
+The Router and a Worker both exist, though not the fuller Planner/Coordinator/QC roles above. The
+Router (`server/Services/Router/RouterAgent.js`, see `01-capabilities-brain.md` and
+`03-agent-organization.md`) is real — the Console page now sends a task to it directly, and it
+resolves an exact Model/API/Tool/Capability route through a real multi-stage AI process rather
+than a fixed call. It hands that resolved route to a real, separate Temp Worker
+(`server/Services/Router/TempWorker.js`) rather than executing it itself: the Worker has no
+reasoning of its own and no permanent configuration — it mechanically executes whatever the Router
+already fully resolved and logs its own token usage independently (`analytics.worker`, distinct
+from the Router's own `analytics.router` stage log). This is not the target Worker role above,
+which consumes Skills and stages output for QC — it is a much thinner, un-opinionated executor,
+matching the "temp" framing: built fresh for one task and discarded, never called through any
+kernel-enforced directory edge yet (see `03-agent-organization.md`).
+
+This is the bottom-up fallback path described in `09-implementation-roadmap.md` — a minimal
+Router/Worker slice built directly against the Capabilities Brain before any management
+organization (Coordinator/Planner/CEO/HR) exists — though in practice it was built alongside a
+narrow Analyst agent (`07-analytics.md`) rather than in strict isolation from the management
+layer. Do not build a Coordinator, Planner, or separate QC step ahead of what
+`09-implementation-roadmap.md` currently calls for.

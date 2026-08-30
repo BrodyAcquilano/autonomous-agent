@@ -73,23 +73,61 @@ authoritative place decisions are actually recorded.
 ## Current repo state vs. target architecture
 
 **No Maintenance agent exists yet — this document's Maintenance Agent, default policy, and
-backup/rollback workflow all remain target architecture.** What does exist is the ticket itself:
-a dedicated `maintenance` database (separate from `autonomous` and `analytics`, per the isolation
-principle in `07-analytics.md`), holding **one collection per agent, named after whichever agent's
-own judgment produced the ticket** — `maintenance.router` for the Router's own decisions,
-`maintenance.analyst` for ones the Analyst agent flags during its stage review — rather than
-one shared `tickets` collection, so each agent's ticket history stays its own log rather than a
-single interleaved stream. This is keyed by *whose decision it was*, not by which code physically
-writes it: the Analyst agent has no database access of its own, so the Router calls the write on
-its behalf, but the ticket still lands in `maintenance.analyst`. A ticket has `type` (`error` —
-the request can't be fulfilled as asked — or `request` — a genuine configuration gap), `message`,
-`details`, `stage`, `task`, `context`, and `status` (currently always `"open"` — nothing ever
-transitions it). A future Maintenance or Worker agent filing its own tickets would get its own
-same-named collection.
+backup/rollback workflow all remain target architecture.** What does exist is the ticket itself,
+and — new since the Router/Worker split matured — a working restart mechanism built on top of it.
 
-Because there is no Maintenance agent to route tickets to, filing one **bypasses any agent
-entirely** — today a ticket's only other visible trace is the server's own log output and, on the
+Every ticket is written **twice**, deliberately, to the `maintenance` database (separate from
+`autonomous` and `analytics`, per the isolation principle in `07-analytics.md`):
+
+1. Into **one collection per agent, named after whichever agent's own judgment produced the
+   ticket** — `maintenance.router` for the Router's own decisions, `maintenance.analyst` for ones
+   the Analyst agent flags during its stage review. This is keyed by *whose decision it was*, not
+   by which code physically writes it: the Analyst agent has no database access of its own, so the
+   Router calls the write on its behalf, but the ticket still lands in `maintenance.analyst`. This
+   collection is a permanent, append-only log — its documents never change after being written.
+2. Into one shared `maintenance.tickets` collection — the **active-tickets queue** — using the
+   *same* `_id` as the per-agent copy, so the two can always be cross-referenced. This is what a
+   future Maintenance review UI would list from, and what the restart mechanism below reads by
+   ticket id alone, without needing to already know which per-agent collection produced it.
+
+A ticket has `type` (`error` — the request can't be fulfilled as asked — or `request` — a genuine
+configuration gap), `message`, `details`, `stage`, `task`, `context`, a `state` object (see below),
+and `status`. Per-agent log copies keep `status: "open"` forever, by design, since they are a
+permanent record; only the `maintenance.tickets` copy transitions to `"resolved"`, and only when a
+restart actually consumes it (see below). A future Maintenance or Worker agent filing its own
+tickets would get its own same-named per-agent collection, mirrored into the same shared
+`maintenance.tickets` queue.
+
+**Restart/resume.** `state` holds exactly what a restart needs to pick the run back up: the
+original `task` and `controlPanelSettings`, the Router run's `runId` (so analytics keeps
+appending to the same run document instead of starting a new one), the `stage` the run was at
+when it was blocked (`1`–`5`, or `"executing"` for a Temp Worker execution failure), and whichever
+route ids were already resolved at that point (`modelId`, `apiId`, `toolIds`,
+`toolConfigurations`, and — for an execution-stage failure — the fully assembled
+`finalRequestFields`). Deliberately, `state` stores **ids and primitive values only, never full
+documents** — restarting a run always re-fetches the corresponding Model/API/Tool/Capability
+documents fresh by id (`getModelById`/`getApiById`/`getToolById`/`getCapabilityById`) rather than
+trusting anything that might have gone stale between when the ticket was filed and when a human
+acts on it. A route/API/tool that was deleted or changed in a way that breaks the resume (e.g. the
+referenced id no longer exists) surfaces as a fresh maintenance ticket rather than silently
+proceeding on bad data.
+
+A restart is just a normal call to the same request-service route
+(`POST /api/request-service/request`, `server/Routes/InternalOperations/RequestService.js`) with a
+`resumeTicketId` instead of fresh task text. `runRouter()`
+(`server/Services/Router/RouterAgent.js`) loads the ticket's `state`, immediately marks the
+`maintenance.tickets` copy `"resolved"` (a second failure during the resumed run files its own new
+ticket rather than reusing this one), and then re-enters its own stage sequence — every stage
+whose id was already resolved is skipped and rehydrated from fresh data instead of re-run, and the
+Router's own AI reasoning only runs again from whichever stage was actually in progress onward. An
+execution-stage ticket (the Temp Worker itself failed, not the Router) skips every Router stage
+entirely and goes straight back to the Worker with the previously assembled request replayed
+unchanged against the freshly re-fetched model/API — see `03-agent-organization.md` for how this
+fits into the Router/Worker split.
+
+Because there is still no Maintenance agent to route tickets to, filing one **bypasses any agent
+entirely** — a ticket's only other visible trace today is the server's own log output and, on the
 frontend, the Console's message panel (via `reportError`), which is itself expected to change once
-a dedicated Maintenance page exists (see `09-implementation-roadmap.md`). There is no triage, no
-automatic resolution, and no backup/rollback mechanism of any kind — every ticket sits in its
-agent's collection until a human reads it directly.
+a dedicated Maintenance page exists (see `09-implementation-roadmap.md`) that can list
+`maintenance.tickets` and trigger a restart directly. There is still no triage, no automatic
+resolution beyond the restart mechanism above, and no backup/rollback mechanism of any kind.
