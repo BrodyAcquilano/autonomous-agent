@@ -205,6 +205,15 @@ function LogModal({
                   ?.runId
               }
             />
+
+            <FieldRow
+              label="RESTART COUNT"
+              value={
+                log.state
+                  ?.restartCount ??
+                0
+              }
+            />
           </div>
 
 

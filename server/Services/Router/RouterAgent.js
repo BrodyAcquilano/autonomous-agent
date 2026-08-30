@@ -386,6 +386,10 @@ function buildResumeState(
     stage:
       context.stage,
 
+    restartCount:
+      context.restartCount ||
+      0,
+
     ...context.routeSoFar,
   };
 }
@@ -476,6 +480,7 @@ async function reviewStageAndMaybeStop({
   runId,
   task,
   controlPanelSettings,
+  restartCount,
   stage,
   decision,
   usage,
@@ -539,6 +544,7 @@ async function reviewStageAndMaybeStop({
               runId,
               task,
               controlPanelSettings,
+              restartCount,
               stage,
               routeSoFar,
             },
@@ -657,6 +663,31 @@ async function runRouter({
 
 
   /*
+   * How many times this exact task has been
+   * restarted, not how many Router stages have
+   * run — a fresh task starts at 0, and every
+   * ticket this task's chain ever produces
+   * carries the count forward via its own
+   * `state.restartCount`, so a future ticket
+   * always reflects "restart attempt N" without
+   * needing to reconstruct that by counting
+   * anything. Written into the analytics run
+   * document too (see below) so the Analyst can
+   * read it directly from analytics — its
+   * primary data source — without needing access
+   * to maintenance data to know a task is looping.
+   */
+  const restartCount =
+    resumeState
+      ? (
+          resumeState.restartCount ||
+          0
+        ) +
+        1
+      : 0;
+
+
+  /*
    * The Router's profile is loaded once at
    * server startup (server/Runtime/Agents.js),
    * not re-fetched from MongoDB on every call —
@@ -703,6 +734,7 @@ async function runRouter({
                 controlPanelSettings,
                 stage:
                   1,
+                restartCount,
                 routeSoFar:
                   {},
               },
@@ -736,6 +768,8 @@ async function runRouter({
 
         status:
           "resumed",
+
+        restartCount,
       },
     );
   } else {
@@ -746,6 +780,8 @@ async function runRouter({
         controlPanelSettings:
           controlPanelSettings ||
           {},
+
+        restartCount,
       });
 
 
@@ -771,6 +807,7 @@ async function runRouter({
           task,
           controlPanelSettings,
           runId,
+          restartCount,
           routeSoFar,
         },
       );
@@ -814,6 +851,7 @@ async function runRouter({
           task,
           controlPanelSettings,
           runId,
+          restartCount,
           routeSoFar,
         },
       );
@@ -976,6 +1014,7 @@ async function runRouter({
           runId,
           task,
           controlPanelSettings,
+          restartCount,
 
           stage:
             1,
@@ -1206,6 +1245,7 @@ async function runRouter({
           runId,
           task,
           controlPanelSettings,
+          restartCount,
 
           stage:
             2,
@@ -1457,6 +1497,7 @@ async function runRouter({
           runId,
           task,
           controlPanelSettings,
+          restartCount,
 
           stage:
             3,
@@ -1803,6 +1844,7 @@ async function runRouter({
           runId,
           task,
           controlPanelSettings,
+          restartCount,
 
           stage:
             4,
@@ -2166,6 +2208,7 @@ async function runRouter({
         runId,
         task,
         controlPanelSettings,
+        restartCount,
 
         stage:
           5,

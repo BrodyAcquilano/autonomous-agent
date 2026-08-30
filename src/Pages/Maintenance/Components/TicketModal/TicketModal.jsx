@@ -205,6 +205,15 @@ function TicketModal({
                   ?.runId
               }
             />
+
+            <FieldRow
+              label="RESTART COUNT"
+              value={
+                ticket.state
+                  ?.restartCount ??
+                0
+              }
+            />
           </div>
 
 
