@@ -16,12 +16,16 @@ const TABS = [
     path: "/output",
   },
   {
-    label: "Capabilities",
-    path: "/capabilities",
+    label: "Agents",
+    path: "/agents",
   },
   {
     label: "Directory",
     path: "/directory",
+  },
+  {
+    label: "Capabilities",
+    path: "/capabilities",
   },
   {
     label: "Maintenance",
@@ -57,7 +61,7 @@ function NavigationTabs() {
   return (
     <nav
       className="navigation-tabs"
-      aria-label="Terminal Man navigation"
+      aria-label="Primary navigation"
     >
       {TABS.map(
         (

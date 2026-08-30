@@ -136,6 +136,116 @@ function useRuntime() {
     );
 
 
+  /*
+   * The Agents "Team" page is unrelated to the
+   * Capabilities Brain funnel above — agent
+   * profile documents are a flat vector with no
+   * links to anything else, so this only ever
+   * needs the plain list plus which one the
+   * info modal currently has open (no branching
+   * stack like modelModalStack).
+   */
+  const [
+    agents,
+    setAgents,
+  ] =
+    useState(
+      [],
+    );
+
+
+  const [
+    agentsLoading,
+    setAgentsLoading,
+  ] =
+    useState(
+      true,
+    );
+
+
+  const [
+    agentsError,
+    setAgentsError,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    selectedAgentId,
+    setSelectedAgentId,
+  ] =
+    useState(
+      null,
+    );
+
+
+  /*
+   * The Directory ("who may call whom") is a
+   * three-layer structural tensor — Agent ->
+   * Contact -> Request Types — distinct from
+   * both the Capabilities Brain funnel above
+   * and the flat Agents "Team" roster. The
+   * server indexes the whole directory
+   * collection by type once, so this is a
+   * single object with three arrays rather than
+   * three separate top-level catalogs.
+   */
+  const [
+    directory,
+    setDirectory,
+  ] =
+    useState(
+      {
+        agents:
+          [],
+
+        contacts:
+          [],
+
+        requestTypes:
+          [],
+      },
+    );
+
+
+  const [
+    directoryLoading,
+    setDirectoryLoading,
+  ] =
+    useState(
+      true,
+    );
+
+
+  const [
+    directoryError,
+    setDirectoryError,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    selectedDirectoryAgentId,
+    setSelectedDirectoryAgentId,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    directoryModalStack,
+    setDirectoryModalStack,
+  ] =
+    useState(
+      [],
+    );
+
+
   const [
     capabilitiesCatalog,
     setCapabilitiesCatalog,
@@ -288,6 +398,33 @@ function useRuntime() {
 
     toolsCatalog,
     capabilitiesCatalog,
+
+    agents,
+    setAgents,
+
+    agentsLoading,
+    setAgentsLoading,
+
+    agentsError,
+    setAgentsError,
+
+    selectedAgentId,
+    setSelectedAgentId,
+
+    directory,
+    setDirectory,
+
+    directoryLoading,
+    setDirectoryLoading,
+
+    directoryError,
+    setDirectoryError,
+
+    selectedDirectoryAgentId,
+    setSelectedDirectoryAgentId,
+
+    directoryModalStack,
+    setDirectoryModalStack,
 
     ...widgetLayout,
 

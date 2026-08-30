@@ -1,0 +1,963 @@
+.directory-modal-backdrop {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 82px;
+
+  z-index: 45;
+
+  padding: 16px;
+
+  box-sizing: border-box;
+
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      0.78
+    );
+
+  backdrop-filter:
+    blur(12px);
+}
+
+
+.directory-modal {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(
+      119,
+      142,
+      183,
+      0.34
+    );
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #0e1015,
+      #090a0d
+    );
+
+  box-shadow:
+    0
+    30px
+    90px
+    rgba(
+      0,
+      0,
+      0,
+      0.72
+    );
+}
+
+
+/* --------------------------------
+   HEADER
+-------------------------------- */
+
+.directory-modal-header {
+  min-height: 72px;
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding:
+    13px
+    18px
+    13px
+    22px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      113,
+      132,
+      168,
+      0.2
+    );
+
+  background:
+    rgba(
+      14,
+      17,
+      23,
+      0.96
+    );
+}
+
+
+.directory-modal-heading {
+  min-width: 0;
+}
+
+
+.directory-modal-eyebrow {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color:
+    rgba(
+      127,
+      154,
+      199,
+      0.56
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 8px;
+  letter-spacing: 1.5px;
+}
+
+
+.directory-modal-heading h1 {
+  display: inline;
+
+  margin: 0;
+
+  font-size: 20px;
+  font-weight: 500;
+}
+
+
+.directory-modal-back {
+  flex-shrink: 0;
+
+  padding:
+    7px
+    12px;
+
+  border:
+    1px solid
+    rgba(
+      117,
+      145,
+      190,
+      0.32
+    );
+
+  border-radius: 6px;
+
+  background:
+    rgba(
+      31,
+      43,
+      62,
+      0.34
+    );
+
+  color:
+    rgba(
+      190,
+      211,
+      245,
+      0.82
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+
+  letter-spacing: 1px;
+
+  cursor: pointer;
+}
+
+
+.directory-modal-back:hover {
+  border-color:
+    rgba(
+      140,
+      186,
+      255,
+      0.6
+    );
+
+  color: #fff;
+}
+
+
+.directory-modal-position {
+  margin-left: 14px;
+
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.46
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9px;
+}
+
+
+.directory-modal-close {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgba(
+      230,
+      77,
+      85,
+      0.45
+    );
+
+  border-radius: 7px;
+
+  background:
+    rgba(
+      95,
+      20,
+      25,
+      0.3
+    );
+
+  color: #ff747b;
+
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.directory-modal-close:hover {
+  border-color:
+    rgba(
+      255,
+      105,
+      112,
+      0.9
+    );
+
+  background:
+    rgba(
+      143,
+      30,
+      36,
+      0.58
+    );
+}
+
+
+/* --------------------------------
+   PROFILE CARD (agent view only)
+-------------------------------- */
+
+.directory-profile-card {
+  width: 100%;
+  max-width: 980px;
+
+  margin:
+    0
+    auto
+    40px;
+
+  display: flex;
+
+  gap: 26px;
+
+  align-items: stretch;
+
+  padding: 22px;
+
+  border:
+    1px solid
+    rgba(
+      120,
+      145,
+      188,
+      0.24
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      16,
+      20,
+      28,
+      0.6
+    );
+}
+
+
+.directory-profile-card-image-frame {
+  width: 150px;
+  height: 150px;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(
+      108,
+      122,
+      151,
+      0.28
+    );
+
+  border-radius: 8px;
+
+  background: #111;
+}
+
+
+.directory-profile-card-image {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+}
+
+
+.directory-profile-card-image-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #101116,
+      #181a20
+    );
+
+  color:
+    rgba(
+      154,
+      168,
+      194,
+      0.32
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+
+.directory-profile-card-details {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+
+  gap: 7px;
+}
+
+
+.directory-profile-card-details h2 {
+  margin: 0;
+
+  color: #fff;
+
+  font-size: 21px;
+  font-weight: 500;
+}
+
+
+.directory-profile-card-name {
+  color:
+    rgba(
+      159,
+      180,
+      215,
+      0.7
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 11px;
+}
+
+
+.directory-profile-card-description {
+  margin: 4px 0 0;
+
+  color:
+    rgba(
+      226,
+      231,
+      239,
+      0.86
+    );
+
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+
+/* --------------------------------
+   DOCUMENT
+-------------------------------- */
+
+.directory-modal-document {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+
+  padding:
+    38px
+    clamp(
+      52px,
+      8vw,
+      125px
+    )
+    70px;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      100,
+      124,
+      164,
+      0.44
+    )
+    transparent;
+}
+
+
+/* --------------------------------
+   FIELD LIST (contact / requestType)
+-------------------------------- */
+
+.directory-fields {
+  width: 100%;
+  max-width: 980px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    16px
+    24px;
+
+  padding: 24px;
+
+  border:
+    1px solid
+    rgba(
+      120,
+      145,
+      188,
+      0.24
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      16,
+      20,
+      28,
+      0.6
+    );
+}
+
+
+.directory-field-row {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+
+.directory-field-label {
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.56
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9.5px;
+  letter-spacing: 1.4px;
+}
+
+
+.directory-field-value {
+  color:
+    rgba(
+      226,
+      231,
+      239,
+      0.92
+    );
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  word-break:
+    break-word;
+}
+
+
+.directory-description-block {
+  width: 100%;
+  max-width: 980px;
+
+  margin:
+    20px
+    auto
+    0;
+
+  color:
+    rgba(
+      205,
+      211,
+      223,
+      0.72
+    );
+
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+
+.directory-markdown-missing {
+  max-width: 700px;
+
+  margin: 50px auto;
+
+  color:
+    rgba(
+      220,
+      157,
+      162,
+      0.82
+    );
+}
+
+
+/* --------------------------------
+   RELATED LINKS (branching nav)
+-------------------------------- */
+
+.directory-related-links {
+  width: 100%;
+  max-width: 980px;
+
+  margin:
+    36px
+    auto
+    0;
+
+  padding-top: 26px;
+
+  border-top:
+    1px solid
+    rgba(
+      120,
+      145,
+      188,
+      0.2
+    );
+}
+
+
+.directory-related-links-title {
+  margin-bottom: 14px;
+
+  color:
+    rgba(
+      184,
+      207,
+      244,
+      0.84
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+
+  letter-spacing: 2px;
+}
+
+
+.directory-related-links-list {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 10px;
+}
+
+
+.directory-related-links-empty {
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.46
+    );
+
+  font-size: 12px;
+}
+
+
+.directory-related-link {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  padding:
+    10px
+    16px;
+
+  border:
+    1px solid
+    rgba(
+      117,
+      145,
+      190,
+      0.3
+    );
+
+  border-radius: 7px;
+
+  background:
+    rgba(
+      31,
+      43,
+      62,
+      0.34
+    );
+
+  color:
+    rgba(
+      226,
+      231,
+      239,
+      0.88
+    );
+
+  font-size: 13px;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.directory-related-link:hover {
+  border-color:
+    rgba(
+      140,
+      186,
+      255,
+      0.6
+    );
+
+  background:
+    rgba(
+      34,
+      48,
+      70,
+      0.6
+    );
+
+  color: #fff;
+}
+
+
+.directory-related-link-sub {
+  color:
+    rgba(
+      163,
+      177,
+      202,
+      0.56
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 9.5px;
+
+  letter-spacing: 0.8px;
+}
+
+
+/* --------------------------------
+   ARROWS
+-------------------------------- */
+
+.directory-modal-arrow {
+  width: 44px;
+  height: 62px;
+
+  position: absolute;
+
+  top: 50%;
+
+  z-index: 4;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  transform:
+    translateY(
+      -50%
+    );
+
+  border:
+    1px solid
+    rgba(
+      120,
+      145,
+      188,
+      0.28
+    );
+
+  border-radius: 7px;
+
+  background:
+    rgba(
+      13,
+      18,
+      27,
+      0.86
+    );
+
+  color:
+    rgba(
+      190,
+      211,
+      245,
+      0.72
+    );
+
+  font-size: 34px;
+
+  cursor: pointer;
+}
+
+
+.directory-modal-arrow:hover {
+  background:
+    rgba(
+      34,
+      48,
+      70,
+      0.92
+    );
+
+  color: #fff;
+}
+
+
+.directory-modal-arrow-left {
+  left: 14px;
+}
+
+
+.directory-modal-arrow-right {
+  right: 14px;
+}
+
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
+
+@media (
+  max-width: 768px
+) {
+  .directory-modal-backdrop {
+    bottom: 66px;
+
+    padding: 8px;
+  }
+
+
+  .directory-modal {
+    border-radius: 8px;
+  }
+
+
+  .directory-modal-header {
+    min-height: 64px;
+
+    padding:
+      10px
+      10px
+      10px
+      14px;
+  }
+
+
+  .directory-modal-heading h1 {
+    font-size: 17px;
+  }
+
+
+  .directory-modal-position {
+    margin-left: 7px;
+  }
+
+
+  .directory-modal-close {
+    width: 36px;
+    height: 36px;
+  }
+
+
+  .directory-modal-document {
+    padding:
+      28px
+      20px
+      60px;
+  }
+
+
+  .directory-profile-card {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    margin-bottom: 28px;
+  }
+
+
+  .directory-profile-card-image-frame {
+    width: 110px;
+    height: 110px;
+  }
+
+
+  .directory-fields {
+    grid-template-columns:
+      1fr;
+
+    padding: 18px;
+  }
+
+
+  .directory-related-links {
+    margin-top: 28px;
+
+    padding-top: 20px;
+  }
+
+
+  .directory-modal-arrow {
+    width: 34px;
+    height: 48px;
+
+    top: auto;
+    bottom: 8px;
+
+    transform: none;
+
+    font-size: 27px;
+  }
+
+
+  .directory-modal-arrow-left {
+    left: 12px;
+  }
+
+
+  .directory-modal-arrow-right {
+    right: 12px;
+  }
+}

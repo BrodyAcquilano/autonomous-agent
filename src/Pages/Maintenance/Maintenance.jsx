@@ -5,8 +5,6 @@ function Maintenance() {
         <div className="workspace-panel">
           <div className="workspace-panel-header">
             <span>Maintenance</span>
-
-            <span className="workspace-panel-module">TERMINAL MAN MODULE</span>
           </div>
 
           <div className="workspace-panel-content">

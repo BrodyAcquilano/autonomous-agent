@@ -1,0 +1,396 @@
+.agent-display-card {
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  padding:
+    7px
+    7px
+    0;
+
+  overflow: hidden;
+
+  position: relative;
+
+  border:
+    1px solid
+    rgba(
+      121,
+      133,
+      158,
+      0.3
+    );
+
+  border-radius: 9px;
+
+  background: #0c0d10;
+
+  color: #fff;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow:
+    0
+    10px
+    24px
+    rgba(
+      0,
+      0,
+      0,
+      0.32
+    );
+
+  transition:
+    transform
+    0.15s ease,
+    border-color
+    0.15s ease,
+    box-shadow
+    0.15s ease;
+}
+
+
+.agent-display-card:hover {
+  transform:
+    translateY(
+      -2px
+    );
+
+  border-color:
+    rgba(
+      154,
+      181,
+      229,
+      0.58
+    );
+
+  box-shadow:
+    0
+    14px
+    32px
+    rgba(
+      0,
+      0,
+      0,
+      0.46
+    );
+}
+
+
+/* --------------------------------
+   IMAGE
+-------------------------------- */
+
+.agent-display-card-image-frame {
+  width: 100%;
+
+  aspect-ratio:
+    1672 / 941;
+
+  flex-shrink: 0;
+
+  position: relative;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(
+      108,
+      122,
+      151,
+      0.24
+    );
+
+  border-radius:
+    5px
+    5px
+    2px
+    2px;
+
+  background: #111;
+}
+
+
+.agent-display-card-image {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+
+  transition:
+    transform
+    0.2s ease,
+    filter
+    0.2s ease;
+}
+
+
+.agent-display-card:hover
+.agent-display-card-image {
+  transform:
+    scale(
+      1.015
+    );
+
+  filter:
+    brightness(
+      1.04
+    );
+}
+
+
+.agent-display-card-image-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #101116,
+      #181a20
+    );
+
+  color:
+    rgba(
+      154,
+      168,
+      194,
+      0.32
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+
+.agent-display-card-status-badge {
+  position: absolute;
+
+  left: 10px;
+  bottom: 10px;
+
+  padding:
+    5px
+    7px;
+
+  border:
+    1px solid
+    rgba(
+      168,
+      191,
+      232,
+      0.28
+    );
+
+  border-radius: 4px;
+
+  background:
+    rgba(
+      4,
+      7,
+      13,
+      0.82
+    );
+
+  color:
+    rgba(
+      207,
+      222,
+      247,
+      0.86
+    );
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 8px;
+  letter-spacing: 1.1px;
+}
+
+
+/* --------------------------------
+   BOTTOM INFORMATION STRIP
+-------------------------------- */
+
+.agent-display-card-content {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  padding:
+    13px
+    11px
+    12px;
+}
+
+
+.agent-display-card-content h2 {
+  margin:
+    0
+    0
+    3px;
+
+  color: #f5f7fb;
+
+  font-size: 17px;
+  font-weight: 500;
+
+  line-height: 1.2;
+}
+
+
+.agent-display-card-content p {
+  margin: 0;
+
+  color:
+    rgba(
+      202,
+      209,
+      221,
+      0.67
+    );
+
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
+/* --------------------------------
+   FOOTER
+-------------------------------- */
+
+.agent-display-card-footer {
+  margin-top: auto;
+
+  padding-top: 9px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  border-top:
+    1px solid
+    rgba(
+      117,
+      129,
+      152,
+      0.14
+    );
+}
+
+
+.agent-display-card-footer code {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color:
+    rgba(
+      159,
+      180,
+      215,
+      0.64
+    );
+
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+.agent-display-card-prompt-status {
+  flex-shrink: 0;
+
+  font-family:
+    "Courier New",
+    Consolas,
+    monospace;
+
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+
+
+.agent-display-card-prompt-status.available {
+  color:
+    rgba(
+      105,
+      224,
+      135,
+      0.78
+    );
+}
+
+
+.agent-display-card-prompt-status.missing {
+  color:
+    rgba(
+      238,
+      103,
+      110,
+      0.82
+    );
+}
+
+
+/* --------------------------------
+   RESPONSIVE
+-------------------------------- */
+
+@media (
+  max-width: 1100px
+) {
+  .agent-display-card-content h2 {
+    font-size: 16px;
+  }
+}
+
+
+@media (
+  max-width: 720px
+) {
+  .agent-display-card {
+    padding:
+      6px
+      6px
+      0;
+  }
+
+
+  .agent-display-card-content {
+    padding:
+      11px
+      10px;
+  }
+}

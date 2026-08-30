@@ -121,7 +121,7 @@ function Capabilities({
     >
       <header className="models-page-header">
         <span className="models-page-eyebrow">
-          TERMINAL MAN / CAPABILITIES BRAIN
+          CAPABILITIES BRAIN
         </span>
 
         <h1>
@@ -130,10 +130,10 @@ function Capabilities({
 
         <p>
           Browse the models available
-          to Terminal Man and inspect
-          their capabilities,
-          deployment details, APIs,
-          tools, and capabilities.
+          and inspect their
+          capabilities, deployment
+          details, APIs, tools, and
+          capabilities.
         </p>
       </header>
 

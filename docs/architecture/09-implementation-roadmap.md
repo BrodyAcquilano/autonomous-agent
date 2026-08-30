@@ -117,7 +117,13 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
   `server/Runtime/Agents.js`), and kept live in memory for the process's lifetime rather than
   re-fetched on every request. User file attachments (images/PDFs) never reach the Router's own
   reasoning calls — only a manifest of their names/types does — and are forwarded straight to the
-  Worker, the only place their actual bytes are used (see `01-capabilities-brain.md`).
+  Worker, the only place their actual bytes are used (see `01-capabilities-brain.md`). Two more
+  frontend pages now browse live MongoDB data the same way Capabilities does: an Agents "Team"
+  page (`src/Pages/Agents/`) listing the flat, unlinked `agents` profile-card roster with card and
+  profile portraits, and a Directory page (`src/Pages/Directory/`) that browses the three-layer
+  Organizational Brain tensor — Agent → Contact → Request Types — live from the `directory`
+  collection, mirroring the Capabilities Brain's browsing pattern at one fewer layer (see
+  `03-agent-organization.md`).
 - **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
   (`autonomous` — Capabilities Brain); `agents`, `directory` (`autonomous` — a first slice of the
   Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling

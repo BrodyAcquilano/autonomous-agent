@@ -5,8 +5,10 @@ import express from "express";
 import openAIImagesRoutes from "./Routes/Azure/OpenAIImages.js";
 import openAIResponsesRoutes from "./Routes/Azure/OpenAIResponses.js";
 
+import agentsRoutes from "./Routes/MongoDB/Agents.js";
 import apisRoutes from "./Routes/MongoDB/Apis.js";
 import capabilitiesRoutes from "./Routes/MongoDB/Capabilities.js";
+import directoryRoutes from "./Routes/MongoDB/Directory.js";
 import modelsRoutes from "./Routes/MongoDB/Models.js";
 import toolsRoutes from "./Routes/MongoDB/Tools.js";
 
@@ -75,6 +77,18 @@ app.use(
 app.use(
   "/api/capabilities",
   capabilitiesRoutes,
+);
+
+
+app.use(
+  "/api/agents",
+  agentsRoutes,
+);
+
+
+app.use(
+  "/api/directory",
+  directoryRoutes,
 );
 
 
