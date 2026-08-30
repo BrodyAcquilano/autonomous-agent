@@ -102,7 +102,7 @@ function getDB() {
 
 /*
  * Analytics and Maintenance are separate
- * databases on purpose — the Analytics agent
+ * databases on purpose — the Analyst agent
  * and a future Maintenance agent should never
  * be able to interfere with each other or with
  * the autonomous capabilities-brain data, and each

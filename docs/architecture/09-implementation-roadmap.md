@@ -86,13 +86,13 @@ priorities change.
 |---|---|
 | 1. Architecture documentation | Ongoing — living document set, updated as design choices land |
 | 2. Connect to MongoDB | Done |
-| 3. Design MongoDB ontology/collections | Substantially done for the Capabilities Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`; `maintenance.router`/`maintenance.analytics`, one collection per originating agent). Skill and ontology-version schemas remain undesigned. |
+| 3. Design MongoDB ontology/collections | Substantially done for the Capabilities Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`; `maintenance.router`/`maintenance.analyst`, one collection per originating agent). Skill and ontology-version schemas remain undesigned. |
 | 4. Minimal version-awareness/indexing | Done for every collection that exists — `version`/`status` fields and stable-id indexes throughout |
 | 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 2 agent profiles (`router`, `analytics`), 12 directory documents |
 | 6. Build the management organization | Started narrowly, not as originally sequenced — see note below |
 | 7–11 | Not started |
 
-**Note on Step 6:** what actually got built is a working Analytics agent that reviews the Router's
+**Note on Step 6:** what actually got built is a working Analyst agent that reviews the Router's
 own process stage-by-stage and can flag a maintenance ticket or halt a run — a real but narrow
 slice of the Analytics role in `07-analytics.md`, not the full cross-system reporting/HR/CEO
 management organization this step describes. No Maintenance, HR, or CEO agent exists. This
@@ -114,7 +114,7 @@ sequencing below was resumed — see the note in `decisions/open-decisions.md` i
   per Router run, with a full per-stage trace, written by the server itself); `router` and
   `analytics` (`maintenance` — one collection per *originating* agent, not per agent that
   physically writes: the Router's own decisions land in `maintenance.router`, and tickets the
-  Analytics agent flags during review land in `maintenance.analytics` even though the Router's
+  Analyst agent flags during review land in `maintenance.analyst` even though the Router's
   code performs that write too, since Analytics has no database access of its own. Reviewed
   directly by a human today, with no automated triage).
 - **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker`,

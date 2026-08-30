@@ -11,12 +11,12 @@ import {
 } from "./RouterSchemas.js";
 
 import {
-  ANALYTICS_REVIEW_SCHEMA,
-} from "./AnalyticsSchemas.js";
+  ANALYST_REVIEW_SCHEMA,
+} from "./AnalystSchemas.js";
 
 
-const ANALYTICS_AGENT_NAME =
-  "analytics";
+const ANALYST_AGENT_NAME =
+  "analyst";
 
 
 /*
@@ -26,7 +26,7 @@ const ANALYTICS_AGENT_NAME =
  * every call is fully self-contained, same
  * convention as the Router stages.
  */
-const ANALYTICS_MODEL =
+const ANALYST_MODEL =
   "gpt-5.6-terra";
 
 
@@ -56,7 +56,7 @@ function fallbackVerdict(
 
 /*
  * Reviews one just-logged Router stage. The
- * Analytics agent only ever READS what the
+ * Analyst agent only ever READS what the
  * server already wrote to the analytics
  * database — it never writes there itself.
  * Its only possible side effect is asking the
@@ -78,7 +78,7 @@ async function reviewRouterStage({
 }) {
   const agent =
     await getAgentByName(
-      ANALYTICS_AGENT_NAME,
+      ANALYST_AGENT_NAME,
     );
 
 
@@ -86,7 +86,7 @@ async function reviewRouterStage({
     !agent
   ) {
     return fallbackVerdict(
-      "Analytics agent is not configured; skipping review.",
+      "Analyst agent is not configured; skipping review.",
     );
   }
 
@@ -122,7 +122,7 @@ async function reviewRouterStage({
       await createResponse(
         {
           model:
-            ANALYTICS_MODEL,
+            ANALYST_MODEL,
 
           input,
 
@@ -142,8 +142,8 @@ async function reviewRouterStage({
 
           text:
             getStageTextFormat(
-              "analytics_stage_review",
-              ANALYTICS_REVIEW_SCHEMA,
+              "analyst_stage_review",
+              ANALYST_REVIEW_SCHEMA,
             ),
         },
       );
@@ -151,7 +151,7 @@ async function reviewRouterStage({
     error
   ) {
     return fallbackVerdict(
-      `Analytics review call failed: ${error.message}`,
+      `Analyst review call failed: ${error.message}`,
     );
   }
 
@@ -171,7 +171,7 @@ async function reviewRouterStage({
     error
   ) {
     return fallbackVerdict(
-      `Analytics agent returned unparseable output: ${error.message}`,
+      `Analyst agent returned unparseable output: ${error.message}`,
     );
   }
 }

@@ -1,10 +1,10 @@
 import DisplayCard from "./Components/DisplayCard/DisplayCard";
 import ModelInfoModal from "./Components/ModelInfoModal/ModelInfoModal";
 
-import "./Models.css";
+import "./Capabilities.css";
 
 
-function Models({
+function Capabilities({
   models,
   apis,
   modelsLoading,
@@ -117,15 +117,15 @@ function Models({
     <main
       className="models-page"
       role="region"
-      aria-label="Models"
+      aria-label="Capabilities"
     >
       <header className="models-page-header">
         <span className="models-page-eyebrow">
-          TERMINAL MAN / MODEL CATALOG
+          TERMINAL MAN / CAPABILITIES BRAIN
         </span>
 
         <h1>
-          Models
+          Capabilities
         </h1>
 
         <p>
@@ -230,4 +230,4 @@ function Models({
 }
 
 
-export default Models;
+export default Capabilities;

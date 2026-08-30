@@ -125,7 +125,7 @@
 }
 
 
-.navigation-tab.models {
+.navigation-tab.capabilities {
   border-color:
     rgba(
       169,
@@ -152,7 +152,7 @@
 }
 
 
-.navigation-tab.models.active {
+.navigation-tab.capabilities.active {
   background:
     rgba(
       92,

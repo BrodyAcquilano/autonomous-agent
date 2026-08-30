@@ -16,8 +16,8 @@ const TABS = [
     path: "/output",
   },
   {
-    label: "Models",
-    path: "/models",
+    label: "Capabilities",
+    path: "/capabilities",
   },
   {
     label: "Directory",

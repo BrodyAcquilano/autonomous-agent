@@ -89,7 +89,7 @@ layers above:
 - A React/Vite frontend and Express backend exist and work today. The Console page no longer
   makes a single-shot proxy call — it now goes through a real, working Router agent
   (`01-capabilities-brain.md`, `03-agent-organization.md`) that resolves Model → API → Tool →
-  Capability and executes the result itself. A narrow Analytics agent also exists, reviewing each
+  Capability and executes the result itself. A narrow Analyst agent also exists, reviewing each
   Router stage (`07-analytics.md`). There is still no Planner, Coordinator, Worker/QC split,
   Maintenance agent, HR, or CEO agent anywhere in the runtime — see `02-project-workflow.md`,
   `06-maintenance.md`, and `08-organizational-governance.md` for what each of those still lacks.

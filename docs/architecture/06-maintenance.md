@@ -77,11 +77,11 @@ backup/rollback workflow all remain target architecture.** What does exist is th
 a dedicated `maintenance` database (separate from `autonomous` and `analytics`, per the isolation
 principle in `07-analytics.md`), holding **one collection per agent, named after whichever agent's
 own judgment produced the ticket** — `maintenance.router` for the Router's own decisions,
-`maintenance.analytics` for ones the Analytics agent flags during its stage review — rather than
+`maintenance.analyst` for ones the Analyst agent flags during its stage review — rather than
 one shared `tickets` collection, so each agent's ticket history stays its own log rather than a
 single interleaved stream. This is keyed by *whose decision it was*, not by which code physically
-writes it: the Analytics agent has no database access of its own, so the Router calls the write on
-its behalf, but the ticket still lands in `maintenance.analytics`. A ticket has `type` (`error` —
+writes it: the Analyst agent has no database access of its own, so the Router calls the write on
+its behalf, but the ticket still lands in `maintenance.analyst`. A ticket has `type` (`error` —
 the request can't be fulfilled as asked — or `request` — a genuine configuration gap), `message`,
 `details`, `stage`, `task`, `context`, and `status` (currently always `"open"` — nothing ever
 transitions it). A future Maintenance or Worker agent filing its own tickets would get its own

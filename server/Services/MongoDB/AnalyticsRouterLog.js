@@ -8,7 +8,7 @@ import { getAnalyticsDB } from "./MongoDB.js";
  * collection — the Router's own append-only
  * process log, kept separate from the
  * autonomous capabilities-brain data so an
- * Analytics agent (or a future Maintenance
+ * Analyst agent (or a future Maintenance
  * agent) can read/reason about it without any
  * access to (or risk of interfering with)
  * autonomous itself.

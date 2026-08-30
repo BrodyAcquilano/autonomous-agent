@@ -7,13 +7,13 @@ performance, routing decisions, and — once the Organizational Brain exists
 (`03-agent-organization.md`) — the delegated-call graph itself. It has two distinct consumers
 that must be kept separate:
 
-| | Frontend (raw analytics) | Analytics Agent (generated reports) |
+| | Frontend (raw analytics) | Analyst Agent (generated reports) |
 |---|---|---|
 | Answers | "Show me the data, let me filter/inspect it" | "What happened? What patterns matter? Where did the system struggle?" |
 | Form | Live dashboards, charts, filters | Narrative reports with findings and recommendations |
 
 Both read from the same underlying event data. The user should never have to manually read
-charts and then explain them to an AI — that synthesis is the Analytics Agent's job.
+charts and then explain them to an AI — that synthesis is the Analyst Agent's job.
 
 ## Initial (v1) scope
 
@@ -58,12 +58,14 @@ still target architecture, and `Pages/Analytics/Analytics.jsx` is still a placeh
 frontend dashboards or narrative reports of any kind.
 
 What's real: a dedicated `analytics` database (isolated from `autonomous` and `maintenance` on
-purpose — an Analytics or future Maintenance agent should never be able to interfere with each
+purpose — an Analyst or future Maintenance agent should never be able to interfere with each
 other or with capabilities-brain data) with a `router` collection. The **server itself** — not any
 agent — deterministically appends one entry per completed Router stage (the stage's parsed
 decision, and which model/API/tools/capabilities were selected) to that run's document as the
-Router progresses; the Analytics agent never writes to it. A real Analytics agent
-(`agents.analytics` in MongoDB) is then called after each stage, **read-only**, and returns a
+Router progresses; the Analyst agent never writes to it. A real Analyst agent
+(`agents.analyst` in MongoDB, named "Analyst" rather than "Analytics" to distinguish the agent
+from the database/discipline it works in) is then called after each stage, **read-only**, and
+returns a
 verdict: continue or stop the run, and independently, whether to file a maintenance ticket — it
 can flag a concern without stopping, or stop without filing a ticket. This is the "Agent
 performance"/"Cost" categories above in miniature (per-stage token usage, decision consistency),

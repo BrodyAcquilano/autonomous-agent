@@ -88,6 +88,6 @@ process rather than a fixed call. It currently also performs the Worker's job it
 the assembled request rather than handing it to a separate Worker role. This is the bottom-up
 fallback path described in `09-implementation-roadmap.md` — a minimal Router slice built directly
 against the Capabilities Brain before any management organization (Coordinator/Planner/CEO/HR)
-exists — though in practice it was built alongside a narrow Analytics agent (`07-analytics.md`)
+exists — though in practice it was built alongside a narrow Analyst agent (`07-analytics.md`)
 rather than in strict isolation from the management layer. Do not build a Coordinator, Planner, or
 separate Worker/QC split ahead of what `09-implementation-roadmap.md` currently calls for.

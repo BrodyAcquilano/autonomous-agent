@@ -16,10 +16,10 @@ import modelsApi from "./Services/MongoDB/Models";
 import NavigationTabs from "./Components/NavigationTabs/NavigationTabs";
 
 import Analytics from "./Pages/Analytics/Analytics";
+import Capabilities from "./Pages/Capabilities/Capabilities";
 import Console from "./Pages/Console/Console";
 import Directory from "./Pages/Directory/Directory";
 import Maintenance from "./Pages/Maintenance/Maintenance";
-import Models from "./Pages/Models/Models";
 import Output from "./Pages/Output/Output";
 
 import "./App.css";
@@ -275,9 +275,9 @@ function App() {
 
 
           <Route
-            path="/models"
+            path="/capabilities"
             element={
-              <Models
+              <Capabilities
                 models={
                   models
                 }

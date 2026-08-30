@@ -1,5 +1,5 @@
 /*
- * Structured-output schema for the Analytics
+ * Structured-output schema for the Analyst
  * agent's per-stage review. Always one flat
  * shape (no maintenance_ticket alternative
  * needed) — filing a ticket is an independent
@@ -8,7 +8,7 @@
  * stop the run without necessarily needing a
  * ticket on file.
  */
-const ANALYTICS_REVIEW_SCHEMA = {
+const ANALYST_REVIEW_SCHEMA = {
   type: "object",
 
   properties: {
@@ -72,5 +72,5 @@ const ANALYTICS_REVIEW_SCHEMA = {
 
 
 export {
-  ANALYTICS_REVIEW_SCHEMA,
+  ANALYST_REVIEW_SCHEMA,
 };

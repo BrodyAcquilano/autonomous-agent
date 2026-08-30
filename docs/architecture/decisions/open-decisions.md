@@ -22,7 +22,7 @@ remains open:
 `agents` (profile-card prompts) and `directory` (agent/contact/request-type documents — see
 `03-agent-organization.md`), plus `analytics.router` (per-run process trace) and a
 per-originating-agent collection in `maintenance` (currently `maintenance.router` and
-`maintenance.analytics` — see
+`maintenance.analyst` — see
 `07-analytics.md`, `06-maintenance.md`). What remains undesigned:
 skills/skill-version schema, ontology-version records, and — notably — the directory schema above
 is descriptive data only; a schema for the call envelope / kernel-enforcement layer that would
@@ -68,7 +68,7 @@ channel") has not been designed.
 
 **Partially resolved for the two roles that exist.** The `directory` collection's `request_types`
 documents now concretely record this for `router` (read/write on `autonomous`, plus calls to the
-`analytics` agent and the maintenance portal) and `analytics` (read-only on `analytics`, plus
+`analyst` agent and the maintenance portal) and `analyst` (read-only on `analytics`, plus
 calls to the maintenance portal) — see `03-agent-organization.md`. What CEO/HR/Maintenance may
 access once they exist, and which external research tools any role may invoke, remains open.
 
@@ -81,7 +81,7 @@ days) has been chosen.
 ## 9. First executable slice: lightweight management agent vs. Router/Worker
 
 **Resolved in practice, informally.** Neither pure strategy was followed. A working Router agent
-was built (the bottom-up path), but a narrow Analytics agent was built alongside it rather than
+was built (the bottom-up path), but a narrow Analyst agent was built alongside it rather than
 after it, because the Router needed a safety monitor to be usable at all — not because the
 top-down management-organization sequencing was deliberately resumed. No Maintenance, HR, or CEO
 agent exists. Treat this as evidence that the two strategies aren't strictly exclusive in

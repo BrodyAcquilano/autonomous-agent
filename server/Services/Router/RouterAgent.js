@@ -53,7 +53,7 @@ import {
 
 import {
   reviewRouterStage,
-} from "./AnalyticsAgent.js";
+} from "./AnalystAgent.js";
 
 
 const ROUTER_AGENT_NAME =
@@ -360,7 +360,7 @@ async function fileProtocolErrorTicket(
  * The server, not the Router, is what writes
  * the analytics log (via appendRouterRunTrace,
  * called just before this at each stage) — the
- * Analytics agent only ever reads it back and
+ * Analyst agent only ever reads it back and
  * returns a verdict. Its only side effects are
  * requested through that verdict: file a
  * ticket and/or stop the run.
@@ -395,15 +395,15 @@ async function reviewStageAndMaybeStop({
   ) {
     /*
      * This ticket exists because of the
-     * Analytics agent's own judgment, not the
+     * Analyst agent's own judgment, not the
      * Router's — it goes into that agent's own
      * maintenance collection even though the
      * server is what physically performs the
-     * write (Analytics has no database access
+     * write (the Analyst has no database access
      * of its own).
      */
     await createMaintenanceTicket(
-      "analytics",
+      "analyst",
       {
         type:
           verdict.ticketType ||
@@ -411,7 +411,7 @@ async function reviewStageAndMaybeStop({
 
         message:
           verdict.ticketMessage ||
-          "Analytics agent flagged this run.",
+          "Analyst agent flagged this run.",
 
         details:
           verdict.ticketDetails ||

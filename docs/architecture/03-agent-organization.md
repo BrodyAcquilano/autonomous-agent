@@ -155,14 +155,14 @@ A first slice of this design now exists in MongoDB, in the `autonomous` database
     "exactly what can they do" (request types), so either can change without touching the other.
 
 Today this covers two agents: `router` (contacts: the `autonomous` database read/write, the
-`analytics` agent, and the human-reviewed maintenance portal) and `analytics` (contacts: the
+`analyst` agent, and the human-reviewed maintenance portal) and `analyst` (contacts: the
 `analytics` database read-only, and the maintenance portal).
 
 ## What this does *not* yet do
 
 The directory above is currently **descriptive data, not an enforced gate**. Nothing in
 `server/Services/Router/RouterAgent.js` actually looks up the directory before querying MongoDB,
-calling the Analytics agent, or filing a maintenance ticket — those calls happen directly in code.
+calling the Analyst agent, or filing a maintenance ticket — those calls happen directly in code.
 There is no call envelope, no budget/depth/cycle enforcement, and no runtime kernel that validates
 an edge before a call is allowed to proceed. The directory exists so the structure is written down
 and machine-readable from day one (per the "anticipate this infrastructure from the beginning"
