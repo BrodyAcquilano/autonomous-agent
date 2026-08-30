@@ -310,6 +310,51 @@ function useRuntime() {
     );
 
 
+  /*
+   * Analytics logs (analytics.router/
+   * analytics.worker, generically by agent name —
+   * same convention as maintenance logs). Unlike
+   * the Maintenance page, the selected log/modal
+   * state lives here too rather than page-local,
+   * so it survives leaving and returning to
+   * /analytics.
+   */
+  const [
+    analyticsLogs,
+    setAnalyticsLogs,
+  ] =
+    useState(
+      [],
+    );
+
+
+  const [
+    analyticsLogsLoading,
+    setAnalyticsLogsLoading,
+  ] =
+    useState(
+      true,
+    );
+
+
+  const [
+    analyticsLogsError,
+    setAnalyticsLogsError,
+  ] =
+    useState(
+      null,
+    );
+
+
+  const [
+    selectedAnalyticsLogId,
+    setSelectedAnalyticsLogId,
+  ] =
+    useState(
+      null,
+    );
+
+
   const [
     capabilitiesCatalog,
     setCapabilitiesCatalog,
@@ -507,6 +552,18 @@ function useRuntime() {
 
     maintenanceLogsError,
     setMaintenanceLogsError,
+
+    analyticsLogs,
+    setAnalyticsLogs,
+
+    analyticsLogsLoading,
+    setAnalyticsLogsLoading,
+
+    analyticsLogsError,
+    setAnalyticsLogsError,
+
+    selectedAnalyticsLogId,
+    setSelectedAnalyticsLogId,
 
     ...widgetLayout,
 

@@ -1,4 +1,4 @@
-.log-modal-backdrop {
+.maintenance-log-modal-backdrop {
   position: fixed;
 
   top: 0;
@@ -30,7 +30,7 @@
 }
 
 
-.log-modal {
+.maintenance-log-modal {
   width: 100%;
   max-width: 780px;
   height: 100%;
@@ -76,7 +76,7 @@
    HEADER
 -------------------------------- */
 
-.log-modal-header {
+.maintenance-log-modal-header {
   min-height: 72px;
 
   box-sizing: border-box;
@@ -115,7 +115,7 @@
 }
 
 
-.log-modal-heading {
+.maintenance-log-modal-heading {
   min-width: 0;
 
   display: flex;
@@ -125,7 +125,7 @@
 }
 
 
-.log-modal-heading h1 {
+.maintenance-log-modal-heading h1 {
   margin: 0;
 
   font-size: 17px;
@@ -135,7 +135,7 @@
 }
 
 
-.log-modal-badge {
+.maintenance-log-modal-badge {
   display: inline-block;
 
   align-self: flex-start;
@@ -159,7 +159,7 @@
 }
 
 
-.log-modal-badge.error {
+.maintenance-log-modal-badge.error {
   border:
     1px solid
     rgba(
@@ -187,7 +187,7 @@
 }
 
 
-.log-modal-badge.request {
+.maintenance-log-modal-badge.request {
   border:
     1px solid
     rgba(
@@ -215,7 +215,7 @@
 }
 
 
-.log-modal-close {
+.maintenance-log-modal-close {
   width: 36px;
   height: 36px;
 
@@ -256,7 +256,7 @@
 }
 
 
-.log-modal-close:hover {
+.maintenance-log-modal-close:hover {
   border-color:
     rgba(
       255,
@@ -279,7 +279,7 @@
    DOCUMENT
 -------------------------------- */
 
-.log-modal-document {
+.maintenance-log-modal-document {
   flex: 1;
   min-height: 0;
 
@@ -300,7 +300,7 @@
 }
 
 
-.log-modal-fields {
+.maintenance-log-modal-fields {
   display: grid;
 
   grid-template-columns:
@@ -341,7 +341,7 @@
 }
 
 
-.log-modal-field-row {
+.maintenance-log-modal-field-row {
   min-width: 0;
 
   display: flex;
@@ -351,7 +351,7 @@
 }
 
 
-.log-modal-field-label {
+.maintenance-log-modal-field-label {
   color:
     rgba(
       163,
@@ -370,7 +370,7 @@
 }
 
 
-.log-modal-field-value {
+.maintenance-log-modal-field-value {
   color:
     rgba(
       226,
@@ -386,12 +386,12 @@
 }
 
 
-.log-modal-section {
+.maintenance-log-modal-section {
   margin-bottom: 20px;
 }
 
 
-.log-modal-section-title {
+.maintenance-log-modal-section-title {
   margin-bottom: 8px;
 
   color:
@@ -412,7 +412,7 @@
 }
 
 
-.log-modal-section p {
+.maintenance-log-modal-section p {
   margin: 0;
 
   color:
@@ -428,7 +428,7 @@
 }
 
 
-.log-modal-state {
+.maintenance-log-modal-state {
   margin: 0;
 
   padding: 14px;
@@ -470,7 +470,7 @@
    FOOTER ACTION
 -------------------------------- */
 
-.log-modal-footer {
+.maintenance-log-modal-footer {
   flex-shrink: 0;
 
   padding: 16px;
@@ -494,7 +494,7 @@
 }
 
 
-.log-modal-action {
+.maintenance-log-modal-action {
   width: 100%;
 
   padding:
@@ -541,7 +541,7 @@
 }
 
 
-.log-modal-action:hover:not(:disabled) {
+.maintenance-log-modal-action:hover:not(:disabled) {
   border-color:
     rgba(
       238,
@@ -568,7 +568,7 @@
 }
 
 
-.log-modal-action:disabled {
+.maintenance-log-modal-action:disabled {
   cursor: default;
 
   opacity: 0.4;
@@ -582,14 +582,14 @@
 @media (
   max-width: 768px
 ) {
-  .log-modal-backdrop {
+  .maintenance-log-modal-backdrop {
     bottom: 66px;
 
     padding: 8px;
   }
 
 
-  .log-modal-fields {
+  .maintenance-log-modal-fields {
     grid-template-columns:
       1fr;
   }

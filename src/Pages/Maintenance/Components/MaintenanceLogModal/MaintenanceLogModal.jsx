@@ -2,7 +2,7 @@ import {
   useEffect,
 } from "react";
 
-import "./LogModal.css";
+import "./MaintenanceLogModal.css";
 
 
 function formatTimestamp(
@@ -51,12 +51,12 @@ function FieldRow({
 
 
   return (
-    <div className="log-modal-field-row">
-      <span className="log-modal-field-label">
+    <div className="maintenance-log-modal-field-row">
+      <span className="maintenance-log-modal-field-label">
         {label}
       </span>
 
-      <span className="log-modal-field-value">
+      <span className="maintenance-log-modal-field-value">
         {String(
           value,
         )}
@@ -77,16 +77,19 @@ function FieldRow({
  * without a ticket ever needing to exist — there
  * never was one).
  *
- * Uses its own log-modal-* class names rather
- * than sharing TicketModal's maintenance-modal-*
- * ones — both components' CSS loads onto the
- * page whenever Maintenance.jsx is mounted, even
- * though only one modal renders at a time, so
- * sharing class names would let whichever
- * stylesheet happens to load last silently win
- * for both.
+ * Uses its own maintenance-log-modal-* class
+ * names rather than sharing TicketModal's
+ * maintenance-modal-* ones (both components' CSS
+ * loads onto the page whenever Maintenance.jsx is
+ * mounted, even though only one modal renders at
+ * a time) — and a distinct name/prefix from the
+ * Analytics page's own AnalyticsLogModal, since
+ * Vite bundles all component CSS globally, so two
+ * different pages' components sharing a bare
+ * class name would still collide even though only
+ * one page is ever mounted at a time.
  */
-function LogModal({
+function MaintenanceLogModal({
   log,
   actionPending,
   onClose,
@@ -127,7 +130,7 @@ function LogModal({
 
   return (
     <div
-      className="log-modal-backdrop"
+      className="maintenance-log-modal-backdrop"
       role="presentation"
       onMouseDown={(
         event,
@@ -141,15 +144,15 @@ function LogModal({
       }}
     >
       <section
-        className="log-modal"
+        className="maintenance-log-modal"
         role="dialog"
         aria-modal="true"
         aria-label="Maintenance log entry"
       >
-        <header className="log-modal-header">
-          <div className="log-modal-heading">
+        <header className="maintenance-log-modal-header">
+          <div className="maintenance-log-modal-heading">
             <span
-              className={`log-modal-badge ${log.type}`}
+              className={`maintenance-log-modal-badge ${log.type}`}
             >
               {log.type}
             </span>
@@ -162,7 +165,7 @@ function LogModal({
 
           <button
             type="button"
-            className="log-modal-close"
+            className="maintenance-log-modal-close"
             aria-label="Close log entry"
             onClick={
               onClose
@@ -173,8 +176,8 @@ function LogModal({
         </header>
 
 
-        <div className="log-modal-document">
-          <div className="log-modal-fields">
+        <div className="maintenance-log-modal-document">
+          <div className="maintenance-log-modal-fields">
             <FieldRow
               label="AGENT"
               value={
@@ -217,8 +220,8 @@ function LogModal({
           </div>
 
 
-          <div className="log-modal-section">
-            <div className="log-modal-section-title">
+          <div className="maintenance-log-modal-section">
+            <div className="maintenance-log-modal-section-title">
               TASK
             </div>
 
@@ -228,8 +231,8 @@ function LogModal({
           </div>
 
 
-          <div className="log-modal-section">
-            <div className="log-modal-section-title">
+          <div className="maintenance-log-modal-section">
+            <div className="maintenance-log-modal-section-title">
               DETAILS
             </div>
 
@@ -240,12 +243,12 @@ function LogModal({
 
 
           {log.state && (
-            <div className="log-modal-section">
-              <div className="log-modal-section-title">
+            <div className="maintenance-log-modal-section">
+              <div className="maintenance-log-modal-section-title">
                 RESUMABLE STATE (AT THE TIME)
               </div>
 
-              <pre className="log-modal-state">
+              <pre className="maintenance-log-modal-state">
                 {JSON.stringify(
                   log.state,
                   null,
@@ -257,10 +260,10 @@ function LogModal({
         </div>
 
 
-        <footer className="log-modal-footer">
+        <footer className="maintenance-log-modal-footer">
           <button
             type="button"
-            className="log-modal-action"
+            className="maintenance-log-modal-action"
             disabled={
               actionPending
             }
@@ -277,4 +280,4 @@ function LogModal({
 }
 
 
-export default LogModal;
+export default MaintenanceLogModal;

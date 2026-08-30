@@ -9,7 +9,7 @@ import maintenanceApi from "../../Services/MongoDB/Maintenance";
 import FilterPanel from "./Components/FilterPanel/FilterPanel";
 import EntryList from "./Components/EntryList/EntryList";
 import TicketModal from "./Components/TicketModal/TicketModal";
-import LogModal from "./Components/LogModal/LogModal";
+import MaintenanceLogModal from "./Components/MaintenanceLogModal/MaintenanceLogModal";
 import StatusIndicator from "./Components/StatusIndicator/StatusIndicator";
 
 import "./Maintenance.css";
@@ -714,7 +714,7 @@ function Maintenance({
 
 
       {selectedLog && (
-        <LogModal
+        <MaintenanceLogModal
           log={
             selectedLog
           }

@@ -12,6 +12,7 @@ import {
 import useRuntime from "./Runtime/Runtime";
 
 import agentsApi from "./Services/MongoDB/Agents";
+import analyticsApi from "./Services/MongoDB/Analytics";
 import apisApi from "./Services/MongoDB/Apis";
 import directoryApi from "./Services/MongoDB/Directory";
 import maintenanceApi from "./Services/MongoDB/Maintenance";
@@ -113,6 +114,18 @@ function App() {
 
     maintenanceLogsError,
     setMaintenanceLogsError,
+
+    analyticsLogs,
+    setAnalyticsLogs,
+
+    analyticsLogsLoading,
+    setAnalyticsLogsLoading,
+
+    analyticsLogsError,
+    setAnalyticsLogsError,
+
+    selectedAnalyticsLogId,
+    setSelectedAnalyticsLogId,
 
     consoleWidgetOffsets,
     setConsoleWidgetOffset,
@@ -582,6 +595,126 @@ function App() {
 
 
   /*
+   * Same pattern as maintenance logs, against the
+   * analytics database instead — analytics.router
+   * and analytics.worker have genuinely different
+   * shapes (a full per-stage trace vs. one
+   * execution record), so unlike Maintenance's
+   * tickets/logs this has no shared "type" field
+   * to filter or color-code by; the Analytics page
+   * treats each log generically.
+   */
+  const loadAnalyticsLogs =
+    useCallback(
+      async () => {
+        if (
+          agentsLoading ||
+          !agents.length
+        ) {
+          return;
+        }
+
+
+        try {
+          const results =
+            await Promise.allSettled(
+              agents.map(
+                (
+                  agent,
+                ) =>
+                  analyticsApi.getLogsForAgent(
+                    agent.name,
+                  ),
+              ),
+            );
+
+
+          const merged =
+            results
+              .filter(
+                (
+                  result,
+                ) =>
+                  result.status ===
+                  "fulfilled",
+              )
+              .flatMap(
+                (
+                  result,
+                ) =>
+                  result.value,
+              );
+
+
+          const failures =
+            results.filter(
+              (
+                result,
+              ) =>
+                result.status ===
+                "rejected",
+            );
+
+
+          if (
+            failures.length
+          ) {
+            console.error(
+              "Some agent analytics logs failed to load:",
+              failures,
+            );
+          }
+
+
+          setAnalyticsLogs(
+            merged,
+          );
+
+          setAnalyticsLogsError(
+            failures.length &&
+              !merged.length
+              ? "Failed to load analytics logs."
+              : null,
+          );
+        } catch (
+          loadError
+        ) {
+          console.error(
+            "Failed to load analytics logs:",
+            loadError,
+          );
+
+
+          setAnalyticsLogsError(
+            "Failed to load analytics logs.",
+          );
+        } finally {
+          setAnalyticsLogsLoading(
+            false,
+          );
+        }
+      },
+      [
+        agents,
+        agentsLoading,
+        setAnalyticsLogs,
+        setAnalyticsLogsError,
+        setAnalyticsLogsLoading,
+      ],
+    );
+
+
+  useEffect(
+    () => {
+      loadAnalyticsLogs();
+    },
+    [
+      loadAnalyticsLogs,
+    ],
+  );
+
+
+  /*
    * systemStatus is shared app-wide state, not
    * something only the Console page produces —
    * a normal Console request going wrong
@@ -852,7 +985,44 @@ function App() {
           <Route
             path="/analytics"
             element={
-              <Analytics />
+              <Analytics
+                agents={
+                  agents
+                }
+                logs={
+                  analyticsLogs
+                }
+                setLogs={
+                  setAnalyticsLogs
+                }
+                logsLoading={
+                  analyticsLogsLoading
+                }
+                logsError={
+                  analyticsLogsError
+                }
+                selectedLogId={
+                  selectedAnalyticsLogId
+                }
+                setSelectedLogId={
+                  setSelectedAnalyticsLogId
+                }
+                setMaintenanceTickets={
+                  setMaintenanceTickets
+                }
+                setMaintenanceLogs={
+                  setMaintenanceLogs
+                }
+                systemStatus={
+                  systemStatus
+                }
+                setSystemStatus={
+                  setSystemStatus
+                }
+                reportError={
+                  reportError
+                }
+              />
             }
           />
 

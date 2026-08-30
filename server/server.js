@@ -6,6 +6,7 @@ import openAIImagesRoutes from "./Routes/Azure/OpenAIImages.js";
 import openAIResponsesRoutes from "./Routes/Azure/OpenAIResponses.js";
 
 import agentsRoutes from "./Routes/MongoDB/Agents.js";
+import analyticsRoutes from "./Routes/MongoDB/Analytics.js";
 import apisRoutes from "./Routes/MongoDB/Apis.js";
 import capabilitiesRoutes from "./Routes/MongoDB/Capabilities.js";
 import directoryRoutes from "./Routes/MongoDB/Directory.js";
@@ -96,6 +97,12 @@ app.use(
 app.use(
   "/api/maintenance",
   maintenanceRoutes,
+);
+
+
+app.use(
+  "/api/analytics",
+  analyticsRoutes,
 );
 
 

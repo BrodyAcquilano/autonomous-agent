@@ -210,10 +210,145 @@ async function deleteTicket(
 }
 
 
+/*
+ * Every maintenance ticket/log carries the
+ * analytics.router run's own _id as
+ * `state.runId` — that is the whole point of
+ * storing it, so a restart (or a human) can pull
+ * up the full run trace. If that analytics run
+ * is deleted, a maintenance record still pointing
+ * at it is not "history" anymore, it is a dangling
+ * reference to a run nobody can inspect and a
+ * restart could never meaningfully continue — so
+ * deleting an analytics log cascades here rather
+ * than leaving orphaned tickets/logs behind.
+ *
+ * Searches every collection in the maintenance
+ * database except the shared `tickets` queue
+ * itself first (discovered dynamically, so this
+ * does not need to know agent names in advance),
+ * then the `tickets` queue, removing any document
+ * whose `state.runId` matches. Returns the ids it
+ * removed so the frontend can prune the same
+ * entries from its own local ticket/log state.
+ */
+async function deleteMaintenanceRecordsForRun(
+  runId,
+) {
+  const db =
+    getMaintenanceDB();
+
+  const filter =
+    {
+      "state.runId":
+        runId,
+    };
+
+
+  const collections =
+    await db
+      .listCollections()
+      .toArray();
+
+  const logIds =
+    [];
+
+  for (
+    const collectionInfo
+    of collections
+  ) {
+    if (
+      collectionInfo.name ===
+      "tickets"
+    ) {
+      continue;
+    }
+
+
+    const matches =
+      await db
+        .collection(
+          collectionInfo.name,
+        )
+        .find(
+          filter,
+        )
+        .project(
+          {
+            _id:
+              1,
+          },
+        )
+        .toArray();
+
+
+    if (
+      matches.length
+    ) {
+      logIds.push(
+        ...matches.map(
+          (
+            doc,
+          ) =>
+            doc._id.toString(),
+        ),
+      );
+
+
+      await db
+        .collection(
+          collectionInfo.name,
+        )
+        .deleteMany(
+          filter,
+        );
+    }
+  }
+
+
+  const matchingTickets =
+    await getTicketsCollection()
+      .find(
+        filter,
+      )
+      .project(
+        {
+          _id:
+            1,
+        },
+      )
+      .toArray();
+
+  const ticketIds =
+    matchingTickets.map(
+      (
+        doc,
+      ) =>
+        doc._id.toString(),
+    );
+
+
+  if (
+    ticketIds.length
+  ) {
+    await getTicketsCollection().deleteMany(
+      filter,
+    );
+  }
+
+
+  return {
+    ticketIds,
+    logIds,
+  };
+}
+
+
 export {
   createMaintenanceTicket,
   getActiveTicket,
   getAllActiveTickets,
   updateTicketStatus,
   deleteTicket,
+  deleteMaintenanceRecordsForRun,
 };
