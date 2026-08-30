@@ -3,7 +3,7 @@ import useResizable, {
   RESIZE_DIRECTIONS,
 } from "../../../../Hooks/useResizable";
 
-import "./RequestControlPanel.css";
+import "./SuggestedRequestSettingsPanel.css";
 
 
 const REASONING_EFFORTS = [
@@ -146,9 +146,7 @@ function getContentScale(
 }
 
 
-function RequestControlPanel({
-  model,
-
+function SuggestedRequestSettingsPanel({
   requestSettings,
   setRequestSettings,
 
@@ -179,7 +177,7 @@ function RequestControlPanel({
       onOffsetChange,
 
       ignoreSelector:
-        ".request-control-panel-content, .resize-handle",
+        ".request-control-panel-content, .request-control-panel-footer, .resize-handle",
     });
 
 
@@ -544,12 +542,7 @@ function RequestControlPanel({
         className="request-control-panel-header"
       >
         <span className="request-control-panel-title">
-          REQUEST CONTROL
-        </span>
-
-
-        <span className="request-control-panel-model">
-          {model}
+          SUGGESTED REQUEST SETTINGS*
         </span>
       </header>
 
@@ -925,6 +918,12 @@ function RequestControlPanel({
       </div>
 
 
+      <footer className="request-control-panel-footer">
+        * Suggestions only — the Router weighs these against the task and its own
+        database and may choose differently.
+      </footer>
+
+
       {RESIZE_DIRECTIONS.map(
         (
           direction,
@@ -945,4 +944,4 @@ function RequestControlPanel({
 }
 
 
-export default RequestControlPanel;
+export default SuggestedRequestSettingsPanel;

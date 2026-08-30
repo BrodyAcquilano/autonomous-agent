@@ -3,13 +3,9 @@ import ConsoleViewport from "./Components/ConsoleViewport/ConsoleViewport";
 import CommandShell from "./Components/CommandShell/CommandShell";
 import LightPanel from "./Components/LightPanel/LightPanel";
 import MessagePanel from "./Components/MessagePanel/MessagePanel";
-import RequestControlPanel from "./Components/RequestControlPanel/RequestControlPanel";
+import SuggestedRequestSettingsPanel from "./Components/SuggestedRequestSettingsPanel/SuggestedRequestSettingsPanel";
 
 import "./Console.css";
-
-
-const ROUTER_MODEL_ID =
-  "gpt-5.6-terra";
 
 
 function Console({
@@ -94,11 +90,7 @@ function Console({
               />
 
 
-              <RequestControlPanel
-                model={
-                  ROUTER_MODEL_ID
-                }
-
+              <SuggestedRequestSettingsPanel
                 requestSettings={
                   requestSettings
                 }
@@ -142,7 +134,6 @@ function Console({
                   );
                 }}
               />
-
 
               <MessagePanel
                 messages={

@@ -217,13 +217,32 @@
 }
 
 
-.request-control-panel-model {
+/* --------------------------------
+   FOOTER
+-------------------------------- */
+
+.request-control-panel-footer {
+  flex-shrink: 0;
+
+  margin-top: 10px;
+
+  padding-top: 10px;
+
+  border-top:
+    1px solid
+    rgba(
+      220,
+      239,
+      238,
+      0.16
+    );
+
   color:
     rgba(
       255,
       253,
       244,
-      0.88
+      0.55
     );
 
   font-family:
@@ -231,21 +250,22 @@
     Consolas,
     monospace;
 
-  min-width: 0;
-
-  overflow: hidden;
-
   font-size:
-    var(
-      --request-control-header-font-size,
-      14px
+    calc(
+      var(
+        --request-control-body-font-size,
+        12px
+      ) *
+      0.85
     );
 
-  letter-spacing: 1px;
+  line-height: 1.5;
 
-  white-space: nowrap;
+  letter-spacing: 0.4px;
 
-  text-overflow: ellipsis;
+  cursor: auto;
+
+  user-select: auto;
 }
 
 

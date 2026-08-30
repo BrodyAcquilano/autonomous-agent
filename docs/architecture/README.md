@@ -46,7 +46,9 @@ is intentionally still undecided.
 8. `07-analytics.md` — telemetry and reporting
 9. `08-organizational-governance.md` — HR, the Job Board, and the CEO agent
 10. `09-implementation-roadmap.md` — the build sequence and current status
-11. `decisions/open-decisions.md` — unresolved choices, tracked explicitly rather than guessed at
+11. `10-request-settings-ui.md` — the Console's advisory settings panel and its target evolution
+    into a Capabilities-Brain-driven form
+12. `decisions/open-decisions.md` — unresolved choices, tracked explicitly rather than guessed at
 
 ## Bootstrap development process
 

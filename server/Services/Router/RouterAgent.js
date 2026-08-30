@@ -237,9 +237,19 @@ function buildStageInput({
   );
 
 
+  /*
+   * Named "suggested", not "control-panel-
+   * settings", on purpose — the Router's own
+   * prompt is explicit that nothing in this
+   * file is a hard rule: an enabled tool is a
+   * candidate it's free to skip if the task
+   * doesn't need it, and a disabled tool is the
+   * user's current default preference, not a
+   * prohibition, if the task genuinely needs it.
+   */
   content.push(
     createJsonFileAttachment(
-      "control-panel-settings.json",
+      "suggested-request-settings.json",
       controlPanelSettings ||
         {},
     ),

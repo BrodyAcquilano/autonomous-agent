@@ -210,8 +210,18 @@ Every execution should be traceable back to the exact document(s) that informed 
   into model/tool selection without paying vision/document-input cost on every one of its own
   stage calls), while the actual bytes are forwarded straight to the Temp Worker, which is the only
   place they are ever embedded into a real API request (`buildInput()` in
-  `server/Services/Files/Attachments.js`). See `03-agent-organization.md` for how the Router's and
-  Worker's identities and calls are recorded, and `09-implementation-roadmap.md` for overall status.
+  `server/Services/Files/Attachments.js`). The console UI's request settings (reasoning
+  effort/mode, verbosity, max tokens, and each tool's enabled/disabled toggle and parameters) are
+  attached to every stage as `suggested-request-settings.json` — deliberately named and
+  prompted as advisory, not enforced: the Router's own prompt is explicit that a disabled tool is
+  the user's current default preference, not a prohibition, and may still be selected if the task
+  genuinely needs it, and a task-appropriate reasoning setting may override a default the same way.
+  This was a deliberate choice over hard-enforcing the toggle, to avoid needing matching per-model
+  controls and a prompt that has to be kept in sync with them. The panel producing this file is a
+  single fixed set of controls today, not yet derived from the Capabilities Brain itself — see
+  `10-request-settings-ui.md` for that limitation and its target direction. See
+  `03-agent-organization.md` for how the Router's and Worker's identities and calls are recorded,
+  and `09-implementation-roadmap.md` for overall status.
 - **Target architecture:** the Capabilities Brain is persisted in MongoDB (per the resolved decision
   in `05-ontology-versioning.md`'s scope and the overall project direction). The existing
   filesystem `brain/` content is prototype/reference material, superseded by the live MongoDB
