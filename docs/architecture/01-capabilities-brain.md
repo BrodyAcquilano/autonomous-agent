@@ -205,7 +205,24 @@ Every execution should be traceable back to the exact document(s) that informed 
   the company rather than after the Router specifically, since which agents actually handle a
   request is free to be reconfigured later. It also accepts an optional `ticketId` to restart a
   task from a previously filed maintenance ticket as a literal, full run from Stage 1 (not a
-  resume-in-place) — see `06-maintenance.md`. Any files the user
+  resume-in-place) — see `06-maintenance.md`.
+
+  **Two agents can now add to this brain, neither one freely.** The Router itself can insert a new
+  `capabilities` document (`insertCapability` in `server/Services/MongoDB/Capabilities.js`) when it
+  configures a tool no existing capability covers — this has always been true. Newer: the
+  Maintenance agent can insert new `models`/`apis`/`tools`/`capabilities` documents too, but only
+  in one narrow, deterministic circumstance — applying an already human-approved patch when a
+  ticket describing a real brain gap is restarted (`applyCapabilitiesBrainPatch` in
+  `server/Services/Maintenance/MaintenanceAgent.js`; see `06-maintenance.md`). Both writers are
+  additive only (never an edit or delete of an existing document) and both tag what they add with
+  `origin` (`"router-suggested"` or `"maintenance-authored"`) and `reviewStatus: "pending"` — new
+  documents are immediately usable (`status: "SUPPORTED"`, so the Router can select them right
+  away) but flagged distinctly for a human to review later, without that review gating anything.
+  Neither writer can provision the real external resource a genuinely new model needs (an Azure
+  deployment, a `.env` variable) or add the matching case to `getAzureConfig`'s hardcoded
+  `switch` statement mentioned above — both remain a human's job.
+
+  Any files the user
   attaches to the request (images/PDFs) never reach the Router's own reasoning calls — the Router
   only ever sees a cheap manifest of their names and types (so it can factor "a PDF is attached"
   into model/tool selection without paying vision/document-input cost on every one of its own

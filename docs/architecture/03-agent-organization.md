@@ -172,15 +172,19 @@ A first slice of this design now exists in MongoDB, in the `autonomous` database
     the other.
 
 Today this covers four agents: `router` (contacts: the `autonomous` database read/write, the
-`analyst` agent for stage review, the `worker` agent for execution, and — new since the
-Maintenance agent landed — the `maintenance` *agent* for a live error-recovery consult, plus
-`mongodb-maintenance` to permanently log its own error the moment it's reported); `analyst`
-(contacts: the `analytics` database read-only, and `mongodb-maintenance` to log a concern it
-flags during review); `maintenance` (contacts: the `autonomous` database read-only, for
-Capabilities Brain research; `mongodb-maintenance` to read the async incident-log queue and
-record its own tickets; and the human-reviewed maintenance portal, the only agent with that
-contact at all); and `worker` (contacts: the user/frontend — returning completed task output —
-and the `analytics` database, writing its own execution log independent of the Router's).
+`analyst` agent for stage review, the `worker` agent for execution, and the `maintenance` *agent*
+for a live error-recovery consult, plus `mongodb-maintenance` to permanently log its own error the
+moment it's reported); `analyst` (contacts: the `analytics` database read-only, and
+`mongodb-maintenance` to log a concern it flags during review); `maintenance` (contacts: the
+`autonomous` database — **read/write**, not read-only, since a human-approved ticket restart can
+now trigger it to write new `models`/`apis`/`tools`/`capabilities` documents, see
+`06-maintenance.md` — for Capabilities Brain research and patching; `mongodb-maintenance` to read
+the async incident-log queue and record its own tickets; and the human-reviewed maintenance
+portal, the only agent with that contact at all); and `worker` (contacts: the user/frontend —
+returning completed task output; the `analytics` database, writing its own execution log
+independent of the Router's; and — new alongside the Worker's own error attribution — the
+`maintenance` agent for a live error-recovery consult of its own execution failures, plus
+`mongodb-maintenance` to log them, mirroring the Router's equivalent pair of contacts).
 
 **Neither the Router nor the Analyst contacts the maintenance portal anymore.** Only Maintenance
 ever files a ticket a human reviews — the Router and the Analyst only ever report a problem
@@ -199,9 +203,13 @@ the Analyst."
 The directory above is currently **descriptive data, not an enforced gate**. Nothing in
 `server/Services/Router/RouterAgent.js` actually looks up the directory before querying MongoDB,
 calling the Analyst agent, handing a route to the Worker, or consulting the Maintenance agent on
-an error — those calls happen directly in code (the Router → Worker "call," and the Router error →
-Maintenance consult, are both plain in-process function calls today, not real agent-to-agent calls
-through any kernel). There is no call envelope, no
+an error — those calls happen directly in code (the Router → Worker "call," and either agent's
+error → Maintenance consult, are all plain in-process function calls today, not real agent-to-agent
+calls through any kernel). This applies just as much to Maintenance's new write access to
+`autonomous`: nothing checks the `directory` document against the actual code path before
+`applyCapabilitiesBrainPatch()` runs — the boundary (only in patch mode, only additive, only
+triggered by a ticket restart) is enforced entirely by how that function is written and called,
+not by any directory-aware kernel check. There is no call envelope, no
 budget/depth/cycle enforcement, and no runtime kernel that validates an edge before a call is
 allowed to proceed. The directory exists so the structure is written down and machine-readable
 from day one (per the "anticipate this infrastructure from the beginning" principle above), not

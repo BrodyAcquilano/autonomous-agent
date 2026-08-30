@@ -75,12 +75,18 @@ authoritative place decisions are actually recorded.
 **A first, narrow Maintenance agent now exists and is wired into the runtime** — the mature role,
 default policy, and backup/rollback workflow described above remain the target; what exists today
 is a real bootstrap of it (per the "Initial (v1) scope" section above), with one important
-authority already in place: **only the Maintenance agent may ever file a ticket.** The Router and
-the Analyst never do — they only ever *report* a problem, and it is always Maintenance's own
-decision, taken after investigating, whether that becomes a ticket for a human and what it
-recommends. This split exists specifically so each agent's own prompt can stay narrowly focused on
-its own job (routing, or reviewing) without also carrying error-handling/escalation policy that
-belongs to a specialist.
+authority already in place: **only the Maintenance agent may ever file a ticket.** The Router, the
+Analyst, and the Temp Worker never do — they only ever *report* a problem, and it is always
+Maintenance's own decision, taken after investigating, whether that becomes a ticket for a human
+and what it recommends. This split exists specifically so each agent's own prompt can stay
+narrowly focused on its own job (routing, reviewing, or executing) without also carrying
+error-handling/escalation policy that belongs to a specialist.
+
+A second authority now exists alongside the first, deliberately much more constrained: **the
+Maintenance agent can also write new documents into the Capabilities Brain itself** —
+`autonomous.models`/`apis`/`tools`/`capabilities` — but only in one narrow, deterministic
+circumstance (a human-approved ticket restart, see "Applying an approved patch" below), never on
+its own initiative, and never an edit or delete of anything that already exists.
 
 ### Logs vs. tickets
 
@@ -89,8 +95,9 @@ Two distinct kinds of document live in the `maintenance` database (separate from
 is deliberately one-directional:
 
 - **A log** is a permanent record of one agent's own problem, written into that agent's own
-  collection (`maintenance.router`, `maintenance.analyst`) with `status: "unprocessed"` and
-  `ticketId: null`. It exists whether or not anything is ever done about it.
+  collection (`maintenance.router`, `maintenance.analyst`, `maintenance.worker`) with
+  `status: "unprocessed"` and `ticketId: null`. It exists whether or not anything is ever done
+  about it.
 - **A ticket** is Maintenance's own decision that a log (or a live situation) is worth a human's
   attention, together with Maintenance's actual recommendation. Every ticket is written **twice**:
   once into `maintenance.maintenance` (Maintenance's own permanent record of every ticket it has
@@ -157,10 +164,18 @@ for a live consult before anything is decided:
    written to `maintenance.maintenance` describing that Maintenance's own suggested fix also
    didn't work, which becomes its own second ticket (`loggedBy: "maintenance"`). The intent is
    that a human reviewing these sees two distinct things to fix — the Router's original problem,
-   and a separate failure in Maintenance's own recommendation — not one conflated entry. A worker
-   (Temp Worker) execution failure and a couple of Router-side protocol errors (invalid JSON, a
-   capability chosen for the wrong tool) go through the same consult mechanism, just without the
-   retry step, since there is nothing meaningful to retry automatically in those cases.
+   and a separate failure in Maintenance's own recommendation — not one conflated entry.
+
+**The Temp Worker goes through the same consult, attributed to itself.** When the Worker's actual
+execution of a fully-resolved route fails (the real Azure call rejected it — e.g. the Capabilities
+Brain claimed a tool was available and it wasn't), that is the Worker's own failure, not the
+Router's — the Router picked a reasonable route based on what the brain claimed to support. The
+failure is logged into `maintenance.worker` (not `maintenance.router`) and consulted the same way,
+but with no retry step at all: there is no textual fix Maintenance could hand the Worker to try
+again with, so this always ends in a ticket (`loggedBy: "worker"`). A couple of Router-side
+protocol errors (invalid JSON, a capability chosen for the wrong tool) go through the same
+consult mechanism too, also without a retry step, since there is nothing meaningful to retry
+automatically in those cases either.
 
 The wire response for an ended run is `{ status: "blocked", runId, tickets: [...] }` — an array,
 since abandonment can produce one or two tickets — consumed identically by the Console's command
@@ -180,6 +195,44 @@ the same request-service route (`POST /api/request-service/request`,
 text; the ticket is deleted from the active queue immediately upon being read, and a second
 failure produces its own new ticket through the same error-recovery flow described above rather
 than reusing it.
+
+### Applying an approved patch
+
+When a ticket's `recommendedAction.actionType` is `add_model`/`add_api`/`add_tool`/
+`add_capability`, restarting it does one more thing first, silently, before the task itself runs
+again: it triggers `applyCapabilitiesBrainPatch()`
+(`server/Services/Maintenance/MaintenanceAgent.js`), which writes the new Capabilities Brain
+documents that ticket described. The human clicking **Restart Process** *is* the approval — there
+is no separate confirmation step, and the button is not renamed, because that is still exactly
+what it does; the patch is a prerequisite, not a separate user-facing action.
+
+The patch runs one layer at a time — `models` → `apis` → `tools` → `capabilities` — starting at
+whichever layer the ticket's own `actionType` names and resolving the parent model/API to attach
+to from the ticket's own `context` (the Router's `routeSoFar` at the moment it originally failed),
+so Maintenance never has to guess which model an "add a tool" request is about. Each layer is one
+separate, narrowly-scoped AI call given only the ticket's own `summary`/`instructions` (written by
+Maintenance's own earlier self when the ticket was first filed), the parent document already
+resolved, and a handful of existing sibling documents at that same layer as a structural/stylistic
+reference — never the whole brain at once. A layer can return zero new documents (stopping the
+cascade) or say `continueToNextLayer: false` itself once nothing further is needed — a simple new
+model with a working direct API and no tools of its own stops after two calls, not four.
+
+Every document this writes is inserted through `insertModel`/`insertApi`/`insertTool`
+(`server/Services/MongoDB/Models.js`/`Apis.js`/`Tools.js`, new this round) or `insertCapability`
+(`server/Services/MongoDB/Capabilities.js`, already existed for the Router's own suggestions) —
+immediately usable (`status: "SUPPORTED"`, so the very next Router stage can select it) but tagged
+`origin: "maintenance-authored"` and `reviewStatus: "pending"`, the same convention already used
+for a Router-suggested capability, distinguishing *who* authored a document from a human without
+that distinction gating anything. See `01-capabilities-brain.md` for this in the context of the
+brain itself.
+
+**What this still cannot do.** A genuinely new model needs a human to configure the real Azure
+deployment, add its `.env` variable, and add a matching `case` to `getAzureConfig()`
+(`server/Services/Azure/OpenAIResponses.js`) — none of that is a database document, so the patch
+cannot do it, and Maintenance's own `instructions` (written at ticket-filing time) are expected to
+say so explicitly. A patch failure is never fatal to the restart itself — if nothing actually got
+added, the Router simply hits the same error again and goes through the normal live-consult
+recovery above, so this fails safely rather than blocking the task.
 
 **System status is shared across pages, not just a Console concept.** The frontend's `systemStatus`
 (`"ready"`/`"busy"`/`"error"`) lives in `Runtime.jsx` and is set to `"busy"` by *either* a Console

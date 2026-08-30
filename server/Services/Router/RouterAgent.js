@@ -33,7 +33,8 @@ import {
 } from "../MongoDB/MaintenanceTickets.js";
 
 import {
-  helpRouterRecoverFromError,
+  helpRecoverFromError,
+  applyCapabilitiesBrainPatch,
 } from "../Maintenance/MaintenanceAgent.js";
 
 import {
@@ -412,6 +413,30 @@ async function runRouter({
     controlPanelSettings = ticket.state.controlPanelSettings;
     maintenanceGuidance = buildMaintenanceGuidanceText(ticket);
 
+    /*
+     * If Maintenance's own recommendation on this
+     * ticket names a real Capabilities Brain gap
+     * (a missing model/API/tool/capability), hitting
+     * Restart Process is the human's approval to go
+     * fill it in — they already did whatever real
+     * external setup the ticket described. This
+     * always happens silently before the task itself
+     * runs; the button stays "Restart Process"
+     * because that is still exactly what it does,
+     * the patch is just a prerequisite step, not a
+     * separate user-facing action. A patch failure
+     * is never fatal to the restart itself — if
+     * nothing actually got added, the Router will
+     * simply hit the same error again and go through
+     * the normal live-consult recovery below, so
+     * this can fail safely.
+     */
+    try {
+      await applyCapabilitiesBrainPatch(ticket);
+    } catch (error) {
+      console.error("Capabilities Brain patch failed during restart:", error);
+    }
+
     await deleteTicket(ticketId);
   }
 
@@ -480,7 +505,7 @@ async function runRouter({
         return { decision, usage };
       }
 
-      const consult = await helpRouterRecoverFromError({
+      const consult = await helpRecoverFromError({
         task,
         controlPanelSettings,
         runId,
@@ -878,7 +903,7 @@ async function runRouter({
         );
 
         if (!capability) {
-          const consult = await helpRouterRecoverFromError({
+          const consult = await helpRecoverFromError({
             task,
             controlPanelSettings,
             runId,
@@ -915,7 +940,7 @@ async function runRouter({
       try {
         requestFragment = JSON.parse(config.requestTemplateJson);
       } catch (error) {
-        const consult = await helpRouterRecoverFromError({
+        const consult = await helpRecoverFromError({
           task,
           controlPanelSettings,
           runId,
@@ -1036,7 +1061,7 @@ async function runRouter({
   try {
     finalRequestRaw = JSON.parse(stage5Decision.requestJson);
   } catch (error) {
-    const consult = await helpRouterRecoverFromError({
+    const consult = await helpRecoverFromError({
       task,
       controlPanelSettings,
       runId,
@@ -1095,7 +1120,7 @@ async function runRouter({
    * agent-to-agent call through any kernel —
    * see 03-agent-organization.md.
    */
-  let workerResult = await executeRoute({
+  const workerResult = await executeRoute({
     runId,
     task,
     model,
@@ -1105,25 +1130,37 @@ async function runRouter({
   });
 
   if (workerResult.status === "failed") {
-    const executionSections = [
-      { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
-      { label: "SELECTED API", body: `_id: ${api._id.toString()}\nname: ${api.name}` },
-      { label: "ASSEMBLED REQUEST THAT FAILED", body: JSON.stringify(finalRequestFields, null, 2) },
-    ];
-
-    const routeSoFar = { modelId: model._id.toString(), apiId: api._id.toString(), finalRequestFields };
-
-    let consult = await helpRouterRecoverFromError({
+    /*
+     * Unlike a Router stage error, there is no
+     * textual fix Maintenance could hand back for
+     * the Worker to retry with — the resolved route
+     * either works against the real Azure API or it
+     * doesn't. If the Capabilities Brain claimed a
+     * model/tool was available and it genuinely
+     * isn't, the real remedy is a Capabilities Brain
+     * patch a human approves and then restarts (see
+     * applyCapabilitiesBrainPatch), not an immediate
+     * retry — so this always goes straight to
+     * abandonment, attributed to the Worker (not the
+     * Router), which did its own job correctly.
+     */
+    const consult = await helpRecoverFromError({
       task,
       controlPanelSettings,
       runId,
       stage: "executing",
-      routeSoFar,
-      sections: executionSections,
+      routeSoFar: { modelId: model._id.toString(), apiId: api._id.toString(), finalRequestFields },
+      sections: [
+        { label: "SELECTED MODEL", body: `_id: ${model._id.toString()}\nname: ${model.name}` },
+        { label: "SELECTED API", body: `_id: ${api._id.toString()}\nname: ${api.name}` },
+        { label: "ASSEMBLED REQUEST THAT FAILED", body: JSON.stringify(finalRequestFields, null, 2) },
+      ],
       errorType: "error",
       errorMessage: "Worker execution failed.",
       errorDetails: workerResult.errorMessage,
-      mustAbandon: false,
+      reportedBy: "worker",
+      allowRetry: false,
+      mustAbandon: true,
     });
 
     await appendRouterRunTrace(runId, {
@@ -1134,51 +1171,13 @@ async function runRouter({
       },
     });
 
-    /*
-     * A "fix" this late can only be applied by
-     * trying execution again — there is no
-     * request-shape repair the server can do
-     * automatically from free-text guidance, so a
-     * retry here means one more attempt of the
-     * exact same assembled request (useful for a
-     * transient failure), not a re-assembly.
-     */
-    if (consult.outcome === "retry") {
-      workerResult = await executeRoute({
-        runId,
-        task,
-        model,
-        apiFamily: isImagesFamily ? "images" : "responses",
-        finalRequestFields,
-        attachments,
-      });
+    await updateRouterRun(runId, {
+      stage: "executing",
+      status: "blocked",
+      ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
+    });
 
-      if (workerResult.status === "failed") {
-        consult = await helpRouterRecoverFromError({
-          task,
-          controlPanelSettings,
-          runId,
-          stage: "executing",
-          routeSoFar,
-          sections: executionSections,
-          errorType: "error",
-          errorMessage: "Worker execution failed again after a retry.",
-          errorDetails: workerResult.errorMessage,
-          mustAbandon: true,
-          priorLog: consult.log,
-        });
-      }
-    }
-
-    if (workerResult.status === "failed") {
-      await updateRouterRun(runId, {
-        stage: "executing",
-        status: "blocked",
-        ticketIds: consult.tickets?.map((ticket) => ticket._id) || [],
-      });
-
-      return { status: "blocked", runId, tickets: consult.tickets };
-    }
+    return { status: "blocked", runId, tickets: consult.tickets };
   }
 
   await updateRouterRun(runId, { stage: "completed", status: "completed" });

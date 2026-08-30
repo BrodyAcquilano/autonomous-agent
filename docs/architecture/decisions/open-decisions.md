@@ -23,8 +23,9 @@ remains open:
 `directory` (agent/contact/request-type documents — see `03-agent-organization.md`), plus
 `analytics.router`/`analytics.worker` (per-run process trace with per-stage token usage, and
 per-execution log). In `maintenance`, the schema now distinguishes two kinds of document rather
-than one: a per-originating-agent **log** (`maintenance.router`, `maintenance.analyst`) that is
-just a permanent record of a reported problem, and a **ticket** — only ever written by the
+than one: a per-originating-agent **log** (`maintenance.router`, `maintenance.analyst`,
+`maintenance.worker`) that is just a permanent record of a reported problem, and a **ticket** —
+only ever written by the
 Maintenance agent's own decision, into `maintenance.maintenance` and mirrored under the same `_id`
 into a shared `maintenance.tickets` active-tickets queue (status `"new"`/`"reviewed"`, removed on
 ignore or restart — reviewed through a real Maintenance page). A ticket's `state` now carries only
@@ -85,16 +86,20 @@ yet.
 
 ## 7. MCP/tool access boundaries per management role
 
-**Partially resolved for the three roles that exist.** The `directory` collection's
+**Partially resolved for the four roles that exist.** The `directory` collection's
 `request_types` documents now concretely record this for `router` (read/write on `autonomous`,
 plus calls to the `analyst` agent for stage review, the `maintenance` agent for a live
 error-recovery consult, and `mongodb-maintenance` to log its own error), `analyst` (read-only on
-`analytics`, plus `mongodb-maintenance` to log a concern), and `maintenance` itself (read-only on
-`autonomous` for Capabilities Brain research, read/write on `mongodb-maintenance` for the
-incident-log queue and its own tickets, and — the only agent with this contact — the
-human-reviewed maintenance portal) — see `03-agent-organization.md`. What CEO/HR may access once
-they exist, and which external research tools any role may invoke beyond `web_search` (already
-given to the Router, Analyst, and Maintenance), remains open.
+`analytics`, plus `mongodb-maintenance` to log a concern), `worker` (write on `analytics` for its
+own execution log, output to the user, plus the same pair of `maintenance`/`mongodb-maintenance`
+contacts as the Router for its own execution failures), and `maintenance` itself — **read/write**
+on `autonomous`, not read-only: Capabilities Brain research plus, in one narrow circumstance (an
+already human-approved ticket restart), writing new `models`/`apis`/`tools`/`capabilities`
+documents — read/write on `mongodb-maintenance` for the incident-log queue and its own tickets,
+and — the only agent with this contact — the human-reviewed maintenance portal — see
+`03-agent-organization.md`, `06-maintenance.md`. What CEO/HR may access once they exist, and which
+external research tools any role may invoke beyond `web_search` (already given to the Router,
+Analyst, and Maintenance), remains open.
 
 ## 8. Backup/archive retention periods
 

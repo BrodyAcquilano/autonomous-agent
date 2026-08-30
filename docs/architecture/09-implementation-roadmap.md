@@ -140,21 +140,28 @@ be usable at all, not because the top-down sequencing below was resumed — see 
   Console submission and a Maintenance restart each lock the other's busy-sensitive controls, and
   a transition into `"error"` from either surface triggers one central tickets reload in `App.jsx`.
 - **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
-  (`autonomous` — Capabilities Brain); `agents`, `directory` (`autonomous` — a first slice of the
-  Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling
-  structure, not yet enforced by any runtime kernel check); `router` and `worker` (`analytics` —
-  one document per Router run with a full per-stage trace including token usage, and one document
-  per Worker execution with token usage/model/API used, both written by the server itself, kept
-  separate so routing overhead and execution cost can be measured independently); `router`,
-  `analyst`, `maintenance`, and `tickets` (`maintenance` — `router` and `analyst` hold each
-  agent's own permanent, append-only log of a problem it reported, never a ticket; only the
-  Maintenance agent's own decision, after investigating a log, produces an actual ticket, written
-  once into `maintenance.maintenance` and once more, under the same `_id`, into the shared
+  (`autonomous` — Capabilities Brain; `models`/`apis`/`tools`/`capabilities` are no longer
+  Router-write-only — the Maintenance agent can now insert new documents into any of them too, via
+  `insertModel`/`insertApi`/`insertTool`/`insertCapability`, but only while applying an
+  already-approved ticket patch on restart, see `06-maintenance.md`; `server/Services/MongoDB/
+  Platforms.js`, new this round, adds just enough of a read to resolve the one existing platform a
+  new Model/API document attaches to — no full platform CRUD exists); `agents`, `directory`
+  (`autonomous` — a first slice of the Organizational Brain: profile-card prompts and a
+  three-level agent/contact/request-type calling structure, not yet enforced by any runtime kernel
+  check); `router` and `worker` (`analytics` — one document per Router run with a full per-stage
+  trace including token usage, and one document per Worker execution with token usage/model/API
+  used, both written by the server itself, kept separate so routing overhead and execution cost
+  can be measured independently); `router`, `analyst`, `worker`, `maintenance`, and `tickets`
+  (`maintenance` — `router`, `analyst`, and `worker` each hold that agent's own permanent,
+  append-only log of a problem it reported, never a ticket; only the Maintenance agent's own
+  decision, after investigating a log, produces an actual ticket, written once into
+  `maintenance.maintenance` and once more, under the same `_id`, into the shared
   `maintenance.tickets` active-tickets queue — status `"new"` → `"reviewed"` → removed, via the
   Maintenance page's Mark Reviewed/Ignore/Restart actions. Deleting a log cascades to delete its
   linked ticket; deleting a ticket never touches its log — see `06-maintenance.md`). Reviewed
   directly by a human today, through the Maintenance page, with no automated triage beyond the
-  restart mechanism and the Router's own live error-recovery consult with Maintenance.
+  restart mechanism (which can now also trigger a Capabilities Brain patch, see `06-maintenance.md`)
+  and each agent's own live error-recovery consult with Maintenance.
 - **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker` (an empty
   scaffold file, not to be confused with the real, separate `server/Services/Router/TempWorker.js`,
   or with the real, populated `server/Runtime/Agents.js` described above — both live directly under

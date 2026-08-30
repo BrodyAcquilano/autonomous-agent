@@ -88,11 +88,15 @@ function adaptImagesResponse(
 /*
  * Executes one fully-resolved route and logs
  * the attempt to analytics.worker, whether it
- * succeeds or fails. Never throws — callers
- * check the returned `status` and decide what
- * to do (the Router files a maintenance
- * ticket on failure, since the Worker has no
- * maintenance-portal contact of its own).
+ * succeeds or fails. Never throws — the caller
+ * (runRouter() in RouterAgent.js) checks the
+ * returned `status` and, on failure, asks the
+ * Maintenance agent for a live consult
+ * attributed to the Worker's own execution
+ * failure (see helpRecoverFromError in
+ * MaintenanceAgent.js) — the Worker has no
+ * maintenance-portal contact of its own and
+ * never decides that part itself.
  */
 async function executeRoute({
   runId,

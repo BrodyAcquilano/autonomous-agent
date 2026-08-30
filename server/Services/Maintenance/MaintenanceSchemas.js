@@ -89,4 +89,156 @@ const MAINTENANCE_DECISION_SCHEMA = {
 };
 
 
-export { MAINTENANCE_DECISION_SCHEMA };
+/*
+ * Structured-output schemas for one LAYER of a
+ * Capabilities Brain patch (see
+ * applyCapabilitiesBrainPatch in
+ * MaintenanceAgent.js). A patch is a sequence of
+ * calls, one per layer (models -> apis -> tools ->
+ * capabilities), each returning zero or more new
+ * documents for that layer plus whether the patch
+ * should keep going to the next layer -- a new
+ * model that needs no tools of its own, for
+ * example, stops after apis. `newDocuments` empty
+ * also stops the sequence, regardless of
+ * `continueToNextLayer`.
+ *
+ * These are deliberately narrower than a real
+ * Model/API/Tool document's full schema (no
+ * pricing, rate limits, retirement dates, category,
+ * or image path) -- Maintenance's job here is to
+ * get the FUNCTIONAL brain correct (what the Router
+ * needs to select and call it), not to perfect
+ * cosmetic/display fields a human can refine later.
+ * `contentMarkdown` is still the real, complete
+ * document for each layer, same as everywhere else
+ * in this system -- an agent's entire knowledge
+ * lives in that one field, not scattered structured
+ * properties.
+ */
+
+function wrapPatchLayerResult(itemSchema) {
+  return {
+    type: "object",
+
+    properties: {
+      result: {
+        type: "object",
+
+        properties: {
+          newDocuments: {
+            type: "array",
+            items: itemSchema,
+          },
+
+          continueToNextLayer: {
+            type: "boolean",
+          },
+
+          reasoning: {
+            type: "string",
+          },
+        },
+
+        required: ["newDocuments", "continueToNextLayer", "reasoning"],
+
+        additionalProperties: false,
+      },
+    },
+
+    required: ["result"],
+
+    additionalProperties: false,
+  };
+}
+
+
+const MODEL_PATCH_SCHEMA = wrapPatchLayerResult({
+  type: "object",
+
+  properties: {
+    name: { type: "string" },
+    displayName: { type: "string" },
+    provider: { type: "string" },
+    modelVersion: { type: "string" },
+    lifecycle: { type: "string" },
+    envVar: { type: "string" },
+    expectedDeploymentName: { type: "string" },
+    deploymentType: { type: "string" },
+    contextWindowNote: { type: "string" },
+    contentMarkdown: { type: "string" },
+  },
+
+  required: [
+    "name",
+    "displayName",
+    "provider",
+    "modelVersion",
+    "lifecycle",
+    "envVar",
+    "expectedDeploymentName",
+    "deploymentType",
+    "contextWindowNote",
+    "contentMarkdown",
+  ],
+
+  additionalProperties: false,
+});
+
+
+const API_PATCH_SCHEMA = wrapPatchLayerResult({
+  type: "object",
+
+  properties: {
+    name: { type: "string" },
+    displayName: { type: "string" },
+    apiFamily: { type: "string", enum: ["responses", "images"] },
+    clientMethod: { type: "string" },
+    contentMarkdown: { type: "string" },
+  },
+
+  required: ["name", "displayName", "apiFamily", "clientMethod", "contentMarkdown"],
+
+  additionalProperties: false,
+});
+
+
+const TOOL_PATCH_SCHEMA = wrapPatchLayerResult({
+  type: "object",
+
+  properties: {
+    name: { type: "string" },
+    displayName: { type: "string" },
+    contentMarkdown: { type: "string" },
+  },
+
+  required: ["name", "displayName", "contentMarkdown"],
+
+  additionalProperties: false,
+});
+
+
+const CAPABILITY_PATCH_SCHEMA = wrapPatchLayerResult({
+  type: "object",
+
+  properties: {
+    name: { type: "string" },
+    displayName: { type: "string" },
+    description: { type: "string" },
+    requestTemplateJson: { type: "string" },
+    contentMarkdown: { type: "string" },
+  },
+
+  required: ["name", "displayName", "description", "requestTemplateJson", "contentMarkdown"],
+
+  additionalProperties: false,
+});
+
+
+export {
+  MAINTENANCE_DECISION_SCHEMA,
+  MODEL_PATCH_SCHEMA,
+  API_PATCH_SCHEMA,
+  TOOL_PATCH_SCHEMA,
+  CAPABILITY_PATCH_SCHEMA,
+};
