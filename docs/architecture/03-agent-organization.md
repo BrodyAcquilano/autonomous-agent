@@ -128,10 +128,44 @@ and must not be merged:
 | Answers | How can this be executed? | Who may call whom for what? |
 | Consumed by | Router | Every agent, via its local phone book |
 
-## Current repo state vs. target architecture
+## Concrete implementation: `agents` and `directory`
 
-Nothing in the current runtime implements agent-to-agent calling, a directory, or a kernel
-enforcement layer. `server/Runtime/Supervisor` and `server/Runtime/Worker` are empty scaffold
-files and should not be assumed to implement any part of this. This layer is built as part of
-the management organization phase (`09-implementation-roadmap.md`), before the project-execution
-roles in `02-project-workflow.md` are implemented.
+A first slice of this design now exists in MongoDB, in the `autonomous` database:
+
+- **`agents`** stores each agent's actual profile — closer to a calling card than a database
+  record: a stable `name` (e.g. `router`, `analytics`), a short `role` summary, and a
+  `contentMarkdown` field holding that agent's complete system prompt (identity, what it's called
+  with, its decision procedure, its output contract, and its escalation rules). The server loads
+  this document and sends its `contentMarkdown` as the model's `instructions` on every call — an
+  agent's entire behavior lives in this one document, not scattered across server code.
+- **`directory`** stores the structural graph itself, as three kinds of documents distinguished by
+  a `type` field rather than three separate collections (so an agent's entire directory footprint
+  can be found, audited, or removed as one small set of documents):
+  - `type: "agent"` — one identity record per agent, linking back to its `agents` profile via
+    `agentRef`.
+  - `type: "contact"` — one record per outgoing edge (`callerId` → `calleeId`), tagged with
+    `calleeType`. A callee is not always another agent — it can be a database (`calleeType:
+    "database"`, with `operation`/`database` fields) or a human review point (`calleeType:
+    "human_portal"`), matching the principle above that a missing edge means "not authorized"
+    regardless of what kind of thing sits on the other end.
+  - `type: "request_types"` — one record per edge, listing the specific request types available on
+    it, each with `operation` (`read`/`write`/`read_write`/`agent_call`), and — when the callee is
+    a database — the exact `database`, `collection`, and `fieldsAffected` that request type
+    touches. This keeps the coarse "who talks to whom" (contacts) separate from the fine-grained
+    "exactly what can they do" (request types), so either can change without touching the other.
+
+Today this covers two agents: `router` (contacts: the `autonomous` database read/write, the
+`analytics` agent, and the human-reviewed maintenance portal) and `analytics` (contacts: the
+`analytics` database read-only, and the maintenance portal).
+
+## What this does *not* yet do
+
+The directory above is currently **descriptive data, not an enforced gate**. Nothing in
+`server/Services/Router/RouterAgent.js` actually looks up the directory before querying MongoDB,
+calling the Analytics agent, or filing a maintenance ticket — those calls happen directly in code.
+There is no call envelope, no budget/depth/cycle enforcement, and no runtime kernel that validates
+an edge before a call is allowed to proceed. The directory exists so the structure is written down
+and machine-readable from day one (per the "anticipate this infrastructure from the beginning"
+principle above), not because it is wired into an enforcement layer yet — that remains target
+architecture. `server/Runtime/Supervisor` and `server/Runtime/Worker` are still empty scaffold
+files and should not be assumed to implement any part of this.

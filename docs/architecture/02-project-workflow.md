@@ -76,13 +76,18 @@ executed.
 
 ## Current repo state vs. target architecture
 
-None of this workflow exists in the current runtime. `server/Runtime/Supervisor`,
+Most of this workflow still does not exist. `server/Runtime/Supervisor`,
 `server/Runtime/Worker`, `server/Runtime/State/RunMachine.js`, and
-`server/Runtime/State/createRunState.js` are empty scaffold files with no implementation. The
-current Console page performs a single direct call from the user to a fixed router model with no
-Planner, Router, Worker, or QC involved. Under the current top-down strategy this full workflow
-is built after the management organization exists (see `09-implementation-roadmap.md`); that
-ordering is a strategic choice, not a fixed dependency — `09-implementation-roadmap.md` also
-describes a bottom-up fallback in which a minimal Router/Worker slice is built directly against
-the Execution Brain (`01-execution-brain.md`) before any management agent exists. Do not build
-ahead of whichever ordering is currently active.
+`server/Runtime/State/createRunState.js` remain empty scaffold files with no implementation, and
+there is no Coordinator, Planner, or separate QC step anywhere in the runtime.
+
+The Router itself, however, is real (`server/Services/Router/RouterAgent.js`, see
+`01-execution-brain.md` and `03-agent-organization.md`) — the Console page now sends a task to it
+directly, and it resolves an exact Model/API/Tool/Capability route through a real multi-stage AI
+process rather than a fixed call. It currently also performs the Worker's job itself, executing
+the assembled request rather than handing it to a separate Worker role. This is the bottom-up
+fallback path described in `09-implementation-roadmap.md` — a minimal Router slice built directly
+against the Execution Brain before any management organization (Coordinator/Planner/CEO/HR)
+exists — though in practice it was built alongside a narrow Analytics agent (`07-analytics.md`)
+rather than in strict isolation from the management layer. Do not build a Coordinator, Planner, or
+separate Worker/QC split ahead of what `09-implementation-roadmap.md` currently calls for.

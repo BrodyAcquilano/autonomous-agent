@@ -17,14 +17,14 @@ remains open:
 
 ## 1. Concrete MongoDB collection schemas
 
-**Partially resolved.** The Execution Brain slice is designed and implemented: `models`, `apis`,
-`tools`, `capabilities`, and `platforms` collections exist in MongoDB, following the
-one-directional Model → API → Tool → Capability funnel described in `01-execution-brain.md`, and
-are read live by `server/Routes/{Models,Apis,Tools,Capabilities}` and browsable from the frontend
-Models page. Field-level schema for agents, directory edges, request types, skills, skill
-versions, ontology versions, maintenance tickets, and analytics events (the Organizational Brain
-and governance layer) has not been designed yet — that remains open, to happen when those systems
-are actually built per `09-implementation-roadmap.md`.
+**Further resolved.** Beyond the Execution Brain slice (`models`, `apis`, `tools`, `capabilities`,
+`platforms` — see `01-execution-brain.md`), a first Organizational Brain schema now also exists:
+`agents` (profile-card prompts) and `directory` (agent/contact/request-type documents — see
+`03-agent-organization.md`), plus `analytics.router` (per-run process trace) and
+`maintenance.tickets` (see `07-analytics.md`, `06-maintenance.md`). What remains undesigned:
+skills/skill-version schema, ontology-version records, and — notably — the directory schema above
+is descriptive data only; a schema for the call envelope / kernel-enforcement layer that would
+actually validate an edge before a call happens has not been designed.
 
 ## 2. Migration timing/mechanics for the filesystem `brain/` prototype
 
@@ -64,9 +64,11 @@ channel") has not been designed.
 
 ## 7. MCP/tool access boundaries per management role
 
-`09-implementation-roadmap.md` Step 7 calls for giving CEO/HR/Maintenance/Analytics "controlled
-access" to MongoDB knowledge and research tools, but which specific MongoDB operations and
-external research tools each role may invoke has not been defined.
+**Partially resolved for the two roles that exist.** The `directory` collection's `request_types`
+documents now concretely record this for `router` (read/write on `autonomous`, plus calls to the
+`analytics` agent and the maintenance portal) and `analytics` (read-only on `analytics`, plus
+calls to the maintenance portal) — see `03-agent-organization.md`. What CEO/HR/Maintenance may
+access once they exist, and which external research tools any role may invoke, remains open.
 
 ## 8. Backup/archive retention periods
 
@@ -76,8 +78,10 @@ days) has been chosen.
 
 ## 9. First executable slice: lightweight management agent vs. Router/Worker
 
-Top-down (start with a lightweight management organization) and the bottom-up fallback (start
-with a minimal Router/Worker slice against the Execution Brain) are both viable next steps after
-MongoDB schema design — see `09-implementation-roadmap.md` for the reasoning behind each. Which
-one comes first has not been decided; the plan is to choose based on implementation complexity
-and expected leverage once the schema design work is underway.
+**Resolved in practice, informally.** Neither pure strategy was followed. A working Router agent
+was built (the bottom-up path), but a narrow Analytics agent was built alongside it rather than
+after it, because the Router needed a safety monitor to be usable at all — not because the
+top-down management-organization sequencing was deliberately resumed. No Maintenance, HR, or CEO
+agent exists. Treat this as evidence that the two strategies aren't strictly exclusive in
+practice, not as a decision that the top-down sequencing in `09-implementation-roadmap.md` has
+been abandoned.

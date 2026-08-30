@@ -10,10 +10,14 @@ project-execution organization underneath it. The current frontend/server implem
 treated as a useful scaffold to return to later, not a foundation to keep extending in the
 meantime.
 
-**The application runtime is currently treated as paused.** Do not refactor the existing
-frontend/server to match the target architecture described in this documentation set until the
-roadmap explicitly reaches that phase (Step 10 below). Changes driven purely by "this doesn't
-match the target architecture yet" are out of scope until then.
+**The application runtime was treated as paused, and that has since been deliberately broken for
+one slice of it: a real Router agent now exists and the Console page calls it directly** (see
+Steps 2–5 below and `01-execution-brain.md`/`03-agent-organization.md`). That was a conscious
+choice to prove the Execution Brain design end-to-end, not a general reopening of the frontend/
+server — do not refactor the rest of the existing frontend/server (Coordinator/Planner/Worker/QC,
+Maintenance page, Analytics dashboards) to match target architecture beyond what Steps 2–6 below
+already describe as done. Changes driven purely by "this doesn't match the target architecture
+yet" are still out of scope until the roadmap explicitly reaches that phase (Step 10 below).
 
 ## This is a strategy, not a locked commitment
 
@@ -80,19 +84,46 @@ priorities change.
 
 | Step | Status |
 |---|---|
-| 1. Architecture documentation | In progress (this document set) |
-| 2–11 | Not started |
+| 1. Architecture documentation | Ongoing — living document set, updated as design choices land |
+| 2. Connect to MongoDB | Done |
+| 3. Design MongoDB ontology/collections | Substantially done for the Execution Brain (`models`, `apis`, `tools`, `capabilities`, `platforms`) and a first slice of the Organizational Brain (`agents`, `directory`) and the Analytics/Maintenance data stores (`analytics.router`, `maintenance.tickets`). Skill and ontology-version schemas remain undesigned. |
+| 4. Minimal version-awareness/indexing | Done for every collection that exists — `version`/`status` fields and stable-id indexes throughout |
+| 5. Populate foundational knowledge | Done for a deliberately tiny seed set: 3 models, 1 platform, 3 model-scoped APIs, 3 tools, 3 seeded capabilities (plus router-suggested ones as they're proposed), 2 agent profiles (`router`, `analytics`), 12 directory documents |
+| 6. Build the management organization | Started narrowly, not as originally sequenced — see note below |
+| 7–11 | Not started |
+
+**Note on Step 6:** what actually got built is a working Analytics agent that reviews the Router's
+own process stage-by-stage and can flag a maintenance ticket or halt a run — a real but narrow
+slice of the Analytics role in `07-analytics.md`, not the full cross-system reporting/HR/CEO
+management organization this step describes. No Maintenance, HR, or CEO agent exists. This
+happened because the Router needed a safety monitor to be usable at all, not because the top-down
+sequencing below was resumed — see the note in `decisions/open-decisions.md` item 9.
 
 ## Current repo inventory relevant to this roadmap
 
-- Working today: React/Vite frontend, Console/Output pages, viewport/window infrastructure,
-  Express backend, Azure OpenAI Responses API integration, Microsoft Foundry model
-  configuration, filesystem-served model/API reference Markdown (`brain/`).
-- Present but empty/unused: `server/Runtime/Supervisor`, `server/Runtime/Worker`,
+- **Working today:** React/Vite frontend, Console/Output pages, viewport/window infrastructure,
+  the Models page (browses the Execution Brain end-to-end via a branching model → API → tool →
+  capability info modal), Express backend, Azure OpenAI Responses + Images API integration, a
+  single shared `MongoClient` connected across three logical databases (`autonomous`, `analytics`,
+  `maintenance`), and a real multi-stage Router agent (`server/Services/Router/RouterAgent.js`)
+  that the Console page calls directly instead of building an Azure request itself.
+- **Populated MongoDB collections:** `models`, `apis`, `tools`, `capabilities`, `platforms`
+  (`autonomous` — Execution Brain); `agents`, `directory` (`autonomous` — a first slice of the
+  Organizational Brain: profile-card prompts and a three-level agent/contact/request-type calling
+  structure, not yet enforced by any runtime kernel check); `router` (`analytics` — one document
+  per Router run, with a full per-stage trace, written by the server itself); `tickets`
+  (`maintenance` — filed by the Router and the Analytics agent, reviewed directly by a human
+  today, with no automated triage).
+- **Present but empty/unused:** `server/Runtime/Supervisor`, `server/Runtime/Worker`,
   `server/Runtime/State/*`, `server/Runtime/Memory/*`, `server/Services/Files/FileService.js`,
-  `brain/commands/`, `brain/skills/`, `brain/tools/`, `brain/memory/`, `brain/tasks/`.
-- Not present at all: MongoDB connection/driver, any agent role beyond the single fixed router
-  model call, any directory/kernel enforcement, any ontology-versioning mechanism.
+  `brain/commands/`, `brain/skills/`, `brain/tasks/`. `brain/models/` and `brain/apis/` are no
+  longer merely unused — they are actively superseded by the MongoDB collections above and no
+  route reads them anymore.
+- **Not present at all:** a runtime kernel that validates a directory edge/request type before a
+  call happens (today's `directory` documents structure but doesn't gate anything), any
+  Maintenance/HR/CEO agent, any Project Coordinator/Planner/Worker-as-a-separate-role/QC role,
+  any frontend dashboard or report built from analytics data, and any numeric call-depth/budget/
+  cycle limits.
 
 ## Superseded historical material
 

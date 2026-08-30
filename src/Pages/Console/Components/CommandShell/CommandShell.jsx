@@ -3,7 +3,7 @@ import {
   useState,
 } from "react";
 
-import openAIResponsesApi from "../../../../Services/Azure/OpenAIResponses";
+import routerApi from "../../../../Services/Router/Router";
 
 import "./CommandShell.css";
 
@@ -79,8 +79,6 @@ function formatFileSize(
 
 
 function CommandShell({
-  model,
-
   requestSettings,
 
   setMessages,
@@ -383,142 +381,51 @@ function CommandShell({
       );
 
 
-      const tools =
-        [];
-
-
       /*
-       * Image Generation
+       * The Console no longer builds an Azure
+       * request directly. requestSettings is
+       * sent to the Router as control-panel
+       * hints (an attached file) — the Router
+       * decides model/API/tools/capabilities
+       * and assembles the actual request itself.
        */
-      const imageGeneration =
-        requestSettings
-          .tools
-          ?.image_generation;
-
-
-      if (
-        imageGeneration?.enabled
-      ) {
-        const imageGenerationTool = {
-          type:
-            "image_generation",
-        };
-
-
-        if (
-          imageGeneration.quality
-        ) {
-          imageGenerationTool.quality =
-            imageGeneration.quality;
-        }
-
-
-        if (
-          imageGeneration.size
-        ) {
-          imageGenerationTool.size =
-            imageGeneration.size;
-        }
-
-
-        tools.push(
-          imageGenerationTool,
-        );
-      }
-
-
-      /*
-       * Code Interpreter
-       */
-      const codeInterpreter =
-        requestSettings
-          .tools
-          ?.code_interpreter;
-
-
-      if (
-        codeInterpreter?.enabled
-      ) {
-        tools.push({
-          type:
-            "code_interpreter",
-
-          container: {
-            type:
-              "auto",
-          },
-        });
-      }
-
-
-      /*
-       * Web Search
-       */
-      const webSearch =
-        requestSettings
-          .tools
-          ?.web_search;
-
-
-      if (
-        webSearch?.enabled
-      ) {
-        tools.push({
-          type:
-            "web_search",
-        });
-      }
-
-
-      const request = {
-        model,
-
-        input,
-
-        reasoning: {
-          effort:
-            requestSettings
-              .reasoning
-              .effort,
-
-          mode:
-            requestSettings
-              .reasoning
-              .mode,
-        },
-
-        max_output_tokens:
-          requestSettings
-            .max_output_tokens,
-
-        text: {
-          verbosity:
-            requestSettings
-              .text
-              .verbosity,
-        },
-      };
-
-
-      if (
-        tools.length >
-        0
-      ) {
-        request.tools =
-          tools;
-      }
-
-
       try {
-        const response =
-          await openAIResponsesApi.request(
-            request,
+        const result =
+          await routerApi.request(
+            input,
+            requestSettings,
             attachments,
           );
 
 
+        if (
+          result.status ===
+          "blocked"
+        ) {
+          const ticket =
+            result.ticket;
+
+
+          reportError(
+            `${ticket
+              ?.type
+              ?.toUpperCase() ||
+              "MAINTENANCE"} TICKET: ${
+              ticket?.message ||
+              "The Router could not complete this task."
+            }\n${
+              ticket?.details ||
+              ""
+            }`.trim(),
+          );
+
+
+          return;
+        }
+
+
         setResponse(
-          response,
+          result.response,
         );
 
 

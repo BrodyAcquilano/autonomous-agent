@@ -56,7 +56,7 @@ function useRuntime() {
 
         web_search: {
           enabled:
-            false,
+            true,
         },
       },
     });

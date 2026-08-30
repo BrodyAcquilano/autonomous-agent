@@ -195,10 +195,12 @@ Every execution should be traceable back to the exact document(s) that informed 
   capability info modal). `brain/models/*.md` and `brain/apis/**/*.md` are no longer read by any
   route — retained only as historical reference pending deletion. Model→deployment mapping is
   still a hardcoded `switch` statement in `server/Services/Azure/OpenAIResponses.js`
-  (`getAzureConfig`), unrelated to the new browsing routes. There is still no Router agent —
-  routing today is still a single fixed router model (`gpt-5.6-terra`) driven directly by the
-  Console page; the MongoDB collections exist to be read by a future Router, not by anything that
-  calls Azure yet.
+  (`getAzureConfig`), unrelated to the new browsing routes. A working Router agent now exists and
+  reads these collections live (`server/Services/Router/RouterAgent.js`, mounted at
+  `/api/router/request`, called directly from the Console page) — it is not yet embedded in the
+  fuller Planner/Coordinator/Worker/QC pipeline described in `02-project-workflow.md`, and for now
+  performs both routing and execution itself. See `03-agent-organization.md` for how the Router's
+  own identity and calls are recorded, and `09-implementation-roadmap.md` for overall status.
 - **Target architecture:** the Execution Brain is persisted in MongoDB (per the resolved decision
   in `05-ontology-versioning.md`'s scope and the overall project direction). The existing
   filesystem `brain/` content is prototype/reference material, superseded by the live MongoDB

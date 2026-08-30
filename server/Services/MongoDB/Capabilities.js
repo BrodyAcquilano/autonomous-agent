@@ -37,7 +37,39 @@ async function getCapabilityById(id) {
 }
 
 
+/*
+ * Used when the Router configures a tool in a
+ * way no existing capability covers. Router-
+ * suggested capabilities are saved so the
+ * library grows over time, but are flagged
+ * distinctly so Maintenance can later review
+ * them separately from human-authored ones.
+ */
+async function insertCapability(capability) {
+  const document = {
+    ...capability,
+
+    status: "SUPPORTED",
+    version: 1,
+
+    origin: "router-suggested",
+    reviewStatus: "pending",
+
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const result = await getCollection().insertOne(document);
+
+  return {
+    ...document,
+    _id: result.insertedId,
+  };
+}
+
+
 export {
   getAllCapabilities,
   getCapabilityById,
+  insertCapability,
 };

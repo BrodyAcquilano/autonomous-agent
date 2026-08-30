@@ -10,7 +10,13 @@ import capabilitiesRoutes from "./Routes/MongoDB/Capabilities.js";
 import modelsRoutes from "./Routes/MongoDB/Models.js";
 import toolsRoutes from "./Routes/MongoDB/Tools.js";
 
-import { connectDB } from "./Services/MongoDB/MongoDB.js";
+import routerRoutes from "./Routes/Router/router.js";
+
+import {
+  connectAnalyticsDB,
+  connectDB,
+  connectMaintenanceDB,
+} from "./Services/MongoDB/MongoDB.js";
 
 
 const app =
@@ -57,6 +63,12 @@ app.use(
 
 
 app.use(
+  "/api/router",
+  routerRoutes,
+);
+
+
+app.use(
   "/api/azure/openai-responses",
   openAIResponsesRoutes,
 );
@@ -72,8 +84,46 @@ async function start() {
   await connectDB();
 
   console.log(
-    "Connected to MongoDB.",
+    "Connected to MongoDB (autonomous).",
   );
+
+
+  /*
+   * Analytics/Maintenance are separate
+   * databases the user provisions on their
+   * own schedule — a missing env var here
+   * should not take down the whole server,
+   * since Models/Router already work fully
+   * on the autonomous database alone.
+   */
+  try {
+    await connectAnalyticsDB();
+
+    console.log(
+      "Connected to MongoDB (analytics).",
+    );
+  } catch (
+    error
+  ) {
+    console.warn(
+      `Analytics database not connected: ${error.message}`,
+    );
+  }
+
+
+  try {
+    await connectMaintenanceDB();
+
+    console.log(
+      "Connected to MongoDB (maintenance).",
+    );
+  } catch (
+    error
+  ) {
+    console.warn(
+      `Maintenance database not connected: ${error.message}`,
+    );
+  }
 
 
   app.listen(

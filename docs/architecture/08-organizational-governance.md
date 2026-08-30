@@ -118,4 +118,9 @@ specification for the team's own job, written so it can eventually be handed off
 None of CEO, HR, or the Job Board exist today. This is target architecture, and per the roadmap
 (`09-implementation-roadmap.md`) is one of the first agent roles built — but only after
 foundational operational knowledge (Execution Brain, directory, request types) has been
-populated, and initially in Advisory mode only.
+populated, and initially in Advisory mode only. That precondition is now partially met: the
+Execution Brain and a first Organizational Brain slice (`agents`, `directory`, request types for
+the `router` and `analytics` agents) exist per `01-execution-brain.md` and
+`03-agent-organization.md` — but this does not mean CEO/HR are next. A narrow Analytics agent
+exists (`07-analytics.md`), built out of the Router's own need for a safety monitor rather than as
+part of this governance layer; see `decisions/open-decisions.md` item 9.

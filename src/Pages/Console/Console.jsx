@@ -197,10 +197,6 @@ function Console({
 
       <div className="console-lower-interface">
         <CommandShell
-          model={
-            ROUTER_MODEL_ID
-          }
-
           requestSettings={
             requestSettings
           }

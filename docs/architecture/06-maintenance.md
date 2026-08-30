@@ -72,7 +72,18 @@ authoritative place decisions are actually recorded.
 
 ## Current repo state vs. target architecture
 
-No Maintenance agent, ticketing, or backup mechanism exists today. This is target architecture,
-built as part of the management-organization phase, before the project-execution roles in
-`02-project-workflow.md`. Concrete MongoDB collections for tickets and backups are a Phase 3
-design task and intentionally not specified here.
+**No Maintenance agent exists yet — this document's Maintenance Agent, default policy, and
+backup/rollback workflow all remain target architecture.** What does exist is the ticket itself:
+a dedicated `maintenance` database (separate from `autonomous` and `analytics`, per the isolation
+principle in `07-analytics.md`) with a `tickets` collection. A ticket has `type` (`error` — the
+request can't be fulfilled as asked — or `request` — a genuine configuration gap), `message`,
+`details`, `stage`, `task`, `context`, `source` (`router` or `analytics-agent`, recording who
+filed it), and `status` (currently always `"open"` — nothing ever transitions it).
+
+Because there is no Maintenance agent to route tickets to, the Router and Analytics agent both
+file directly into this collection, **bypassing any agent entirely** — today a ticket's only other
+visible trace is the server's own log output and, on the frontend, the Console's message panel
+(via `reportError`), which is itself expected to change once a dedicated Maintenance page exists
+(see `09-implementation-roadmap.md`). There is no triage, no automatic resolution, and no
+backup/rollback mechanism of any kind — every ticket sits in `maintenance.tickets` until a human
+reads it directly.

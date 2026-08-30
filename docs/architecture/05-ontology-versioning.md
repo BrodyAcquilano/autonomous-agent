@@ -86,7 +86,10 @@ mirrors the human-authority principle in `00-overview.md` and the Maintenance ad
 
 ## Current repo state vs. target architecture
 
-No ontology-versioning mechanism exists today; the current filesystem `brain/` content has no
-versioning, snapshotting, or rollback of any kind. This entire document describes target
-architecture. Concrete MongoDB collections for ontology versions and migration/change records are
-a Phase 3 design task (`09-implementation-roadmap.md`) and are intentionally not specified here.
+The full governance lifecycle in this document (propose/validate/snapshot/migrate/activate/
+measure/rollback, ontology-version records) does not exist — that remains target architecture.
+What has landed is exactly the reduced "initial scope" described above: every collection now built
+(`models`, `apis`, `tools`, `capabilities`, `agents`, `directory`, and the analytics/maintenance
+collections) carries a plain `version` integer and a `status` field, and stable ids throughout —
+see `01-execution-brain.md` and `03-agent-organization.md`. There is still no snapshotting, no
+candidate/active version pointer, and no rollback mechanism of any kind.

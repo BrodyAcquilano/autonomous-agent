@@ -86,21 +86,27 @@ future design or implementation work in this area:
 The application currently in this repository is a **scaffold**, not an implementation of the
 layers above:
 
-- A React/Vite frontend and Express backend exist and work today, but they implement only a
-  single-shot proxy from a Console page to Azure OpenAI's Responses API — there is no Planner,
-  Router, Worker, Quality Control, Maintenance, Analytics, HR, or CEO agent anywhere in the
-  runtime.
+- A React/Vite frontend and Express backend exist and work today. The Console page no longer
+  makes a single-shot proxy call — it now goes through a real, working Router agent
+  (`01-execution-brain.md`, `03-agent-organization.md`) that resolves Model → API → Tool →
+  Capability and executes the result itself. A narrow Analytics agent also exists, reviewing each
+  Router stage (`07-analytics.md`). There is still no Planner, Coordinator, Worker/QC split,
+  Maintenance agent, HR, or CEO agent anywhere in the runtime — see `02-project-workflow.md`,
+  `06-maintenance.md`, and `08-organizational-governance.md` for what each of those still lacks.
 - `server/Runtime/` (`Supervisor`, `Worker`, `State/RunMachine`, `State/createRunState`,
-  `Memory/*`) and `server/Services/Files/FileService.js` are empty (0-byte) files left over from
-  an earlier bottom-up plan. They do not currently do anything and should not be assumed to
+  `Memory/*`) and `server/Services/Files/FileService.js` are still empty (0-byte) files left over
+  from an earlier bottom-up plan. They do not currently do anything and should not be assumed to
   implement any part of the architecture described here.
-- The filesystem `brain/` directory (`brain/models/*.md`, `brain/apis/**/*.md`) is read directly
-  by Express routes and served to the frontend. It is prototype/reference content, not the
-  target persistent brain — MongoDB is (see `01-execution-brain.md` and
-  `05-ontology-versioning.md`).
-- Per current direction, this runtime is treated as **paused** while the architecture and
-  operational knowledge base are established. Do not refactor it to match this target
-  architecture until the roadmap in `09-implementation-roadmap.md` reaches that phase.
+- The filesystem `brain/` directory (`brain/models/*.md`, `brain/apis/**/*.md`) is no longer read
+  by any route — it is retained only as historical reference pending deletion. MongoDB (the
+  `autonomous`, `analytics`, and `maintenance` databases) is now the persistent brain in practice,
+  not just in target design (see `01-execution-brain.md`, `03-agent-organization.md`,
+  `06-maintenance.md`, `07-analytics.md`).
+- The "paused runtime" framing has been superseded in practice for the pieces just described —
+  Console/Runtime.jsx were deliberately modified to call the real Router. The broader
+  project-execution pipeline (Coordinator/Planner/Worker/QC in `02-project-workflow.md`) remains
+  unbuilt, and refactoring toward *that* specifically should still wait for
+  `09-implementation-roadmap.md` to reach that phase.
 
 ## Glossary
 
