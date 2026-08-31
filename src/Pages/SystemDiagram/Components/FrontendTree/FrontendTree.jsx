@@ -1,5 +1,3 @@
-import { useLayoutEffect, useRef, useState } from "react";
-
 import useTreeGeometry from "../../useTreeGeometry";
 
 import "./FrontendTree.css";
@@ -21,69 +19,211 @@ import "./FrontendTree.css";
  * the call (a caller, or a hook) regardless of how many
  * boxes it's nested inside.
  *
- * Inside App.jsx, the pages row is NOT split evenly: Console
- * and Output (caller-driven, not loaded by an App.jsx hook)
- * sit alone in the left flank; every other page — the ones
- * App.jsx loads data for on mount, plus System Diagram,
- * which loads nothing — sits in the right flank. That split
- * opens a center gap exactly as wide as the loading-hooks
- * row below it (the same shared `auto` column trick used
- * everywhere else on this page): each hook can draw a
- * straight line down through that gap to its own server API
- * route without crossing anything.
+ * Inside App.jsx, the pages row is NOT split evenly, and NOT
+ * into just two flanks either — it's five columns, matching
+ * five columns in the loading-hooks row directly beneath, and
+ * every column has content in EXACTLY ONE of the two rows:
+ *   Pages: [Console, Output] [ gap ] [Analytics] [ gap ] [the rest of the pages]
+ *   Hooks: [  gap  ] [directory, agents, capabilities, analytics] [ gap ] [maintenance] [ gap ]
+ * Console/Output aren't App.jsx-loaded, so their column has no
+ * hook beneath it. The first four hooks share one column with
+ * nothing above them. Maintenance's own loading hook is pulled
+ * out into its own column, alone, so ITS column's pages-row cell
+ * is a real gap — clearance for its connection line to rise
+ * straight up through the pages row without crossing a page box
+ * that would otherwise sit there. Analytics.jsx's page is
+ * likewise pulled out of "the rest of the pages" into that same
+ * gap column, rather than leaving it an unused blank space.
+ * Since every column only ever has real content in one row,
+ * each `auto` column naturally sizes to whichever row's content
+ * needs it — no measuring across rows required, same as
+ * everywhere else on this page.
  *
- * Page (and nested caller) boxes don't flex to fill their
- * flank — every page box is pinned to the SAME fixed width,
- * measured from whichever page's own content (label, plus
- * its caller if it has one) is actually the widest (no
- * hardcoding: see the two-pass measurement below). With
- * every page box a fixed width, `justify-content: space-
- * between` on the flank does the rest: any room left over
- * becomes even gaps between the boxes, natively. Pages are
- * ordered left-to-right exactly as they appear in the app's
- * own navigation tabs.
+ * Every page box also nests the real UI components that page
+ * renders (see `PAGE_COMPONENTS` below), one level deeper still
+ * — same "title, then what it owns" pattern, and nested exactly
+ * how those components actually render relative to each other,
+ * not just listed flat:
+ *   - A component that itself renders further sub-components
+ *     (Output's ViewportWindow choosing one of six type-specific
+ *     renderers, itself rendered INSIDE Viewport — possibly more
+ *     than one at a time) nests those the same way, via `nested`.
+ *   - Whichever component is the one that actually MAKES the
+ *     page's own API call gets that call nested one level deeper
+ *     inside IT specifically, via `caller` — Console's CommandShell
+ *     is a real rendered component, so its handler lives nested
+ *     inside CommandShell's own box, at the same row-level as
+ *     every other component Console renders, not stacked above
+ *     them as if it were something separate.
+ *   - Where the caller ISN'T attributable to any one specific
+ *     child component — Output's `useResponseOutput` hook is
+ *     presumed to live in Output.jsx itself, not inside Viewport
+ *     or any component under it; Analytics.jsx's `handleDelete()`
+ *     is likewise defined in the PAGE itself and merely passed
+ *     down to AnalyticsLogModal as an `onDelete` prop, rather
+ *     than being defined inside that modal — it's listed as its
+ *     own entry directly in `PAGE_COMPONENTS`, a plain SIBLING of
+ *     whatever it sits beside, never stacked above the row:
+ *     stacking would wrongly imply sequencing (call, THEN render),
+ *     when really they're just two different things that exist
+ *     at the same time.
+ * Pages with no caller of their own (Agents, Directory,
+ * Capabilities) just have no caller entry anywhere in their list.
+ * There's no longer any "one caller box stacked above the
+ * components row" shape anywhere — every caller this page draws
+ * is confirmed to live directly in ITS OWN page component (never
+ * in a modal/panel it's merely passed down to), so every one of
+ * them is a sibling entry in `PAGE_COMPONENTS`, not a separate
+ * box above the row.
+ *
+ * Maintenance has FIVE separate callers, all confirmed defined in
+ * Maintenance.jsx and passed down as props (`onSubmitMaintenanceRequest`
+ * to FilterPanel; `onMarkReviewed`/`onIgnore`/`onRestart` to
+ * TicketModal; `onDelete` to MaintenanceLogModal) rather than
+ * defined inside any of those components themselves:
+ *   - `handleSubmitMaintenanceRequest()` calls `requestMaintenanceApi`
+ *     (`request-maintenance`).
+ *   - `handleMarkReviewed()` and `handleIgnore()` both call
+ *     `maintenanceApi` (`maintenance-crud`).
+ *   - `handleRestart()` calls `requestServiceApi` — `request-service`,
+ *     NOT `request-maintenance`; the connections layer still draws
+ *     a `caller-maintenance-handlers` box on that route, which no
+ *     longer exists now that this box is broken into its real
+ *     named callers, so that line needs its own pass next.
+ *   - `handleDeleteLog()` calls `maintenanceApi` (`maintenance-crud`).
+ * System Diagram isn't listed at all — it's this diagram itself,
+ * not a real feature page to document.
+ *
+ * No page box is pinned to a shared width anymore: now that
+ * every page nests a different amount of content, forcing them
+ * all to one common width would either pad out the small ones
+ * for no reason or clip the large ones — each just sizes to its
+ * own natural content instead, same as every other box on this
+ * page.
  */
-const CALLERS_BY_PAGE_ID = {
-  console: { id: "caller-console-shell", lines: ["CommandShell", "(Console)"] },
-  output: { id: "caller-output-hook", lines: ["useResponseOutput", "hook (Output)"] },
-  analytics: { id: "caller-analytics-handler", lines: ["Analytics.jsx", "action handler"] },
-  maintenance: { id: "caller-maintenance-handlers", lines: ["Maintenance.jsx", "action handlers"] },
+const PAGE_COMPONENTS = {
+  console: [
+    { label: "ConsoleViewport" },
+    { label: "LightPanel" },
+    { label: "SuggestedRequestSettingsPanel" },
+    { label: "MessagePanel" },
+    { label: "CommandShell", caller: { id: "caller-console-shell", lines: ["handleSubmit()"] } },
+  ],
+  output: [
+    { id: "caller-output-hook", lines: ["useResponseOutput", "hook (Output)"] },
+    {
+      label: "Viewport",
+      nested: [
+        {
+          label: "ViewportWindow",
+          nested: [
+            { label: "ImageRenderer" },
+            { label: "PdfRenderer" },
+            { label: "MarkdownRenderer" },
+            { label: "CodeRenderer" },
+            { label: "TextRenderer" },
+            { label: "UnknownRenderer" },
+          ],
+        },
+      ],
+    },
+  ],
+  analytics: [
+    { label: "StatusIndicator" },
+    { label: "FilterPanel" },
+    { label: "EntryList" },
+    { label: "AnalyticsLogModal" },
+    { id: "caller-analytics-handler", lines: ["handleDelete()"] },
+  ],
+  maintenance: [
+    { label: "StatusIndicator" },
+    { label: "FilterPanel" },
+    { label: "EntryList" },
+    { label: "TicketModal" },
+    { label: "MaintenanceLogModal" },
+    { id: "caller-maintenance-restart", lines: ["handleRestart()"] },
+    { id: "caller-maintenance-delete-log", lines: ["handleDeleteLog()"] },
+    { id: "caller-maintenance-mark-reviewed", lines: ["handleMarkReviewed()"] },
+    { id: "caller-maintenance-ignore", lines: ["handleIgnore()"] },
+    { id: "caller-maintenance-submit-request", lines: ["handleSubmitMaintenanceRequest()"] },
+  ],
+  agents: [
+    { label: "AgentCard" },
+    { label: "AgentInfoModal" },
+  ],
+  directory: [
+    { label: "DisplayCard" },
+    { label: "DirectoryInfoModal" },
+  ],
+  capabilities: [
+    { label: "DisplayCard" },
+    { label: "ModelInfoModal" },
+  ],
 };
 
-function PageBox({ id, label, width, registerPageBox, registerBox }) {
-  const caller = CALLERS_BY_PAGE_ID[id];
-
+function CallerBox({ id, lines, registerBox }) {
   return (
-    <div
-      ref={registerPageBox(id)}
-      className="sysdiag-frontend-page"
-      style={width ? { flex: `0 0 ${width}px` } : undefined}
-    >
-      <div className="sysdiag-frontend-page-title">{label}</div>
-
-      {caller && (
-        <div ref={registerBox(caller.id)} className="sysdiag-frontend-caller">
-          {caller.lines.map((line) => (
-            <div key={line}>{line}</div>
-          ))}
-        </div>
-      )}
+    <div ref={registerBox(id)} className="sysdiag-frontend-caller">
+      {lines.map((line) => (
+        <div key={line}>{line}</div>
+      ))}
     </div>
   );
 }
 
-function PagesFlank({ pages, width, registerPageBox, registerBox }) {
+function ComponentBox({ label, nested, caller, registerBox }) {
+  return (
+    <div className="sysdiag-frontend-component">
+      <div className="sysdiag-frontend-component-title">{label}</div>
+      {caller && <CallerBox id={caller.id} lines={caller.lines} registerBox={registerBox} />}
+      {nested && <ComponentsRow components={nested} registerBox={registerBox} />}
+    </div>
+  );
+}
+
+/*
+ * A row can mix two kinds of entry: a plain component (has its
+ * own `label`) and a bare caller sitting as a direct sibling
+ * rather than nested inside any one component (has `id`/`lines`
+ * instead — see the `output` entry in PAGE_COMPONENTS).
+ */
+function ComponentsRow({ components, registerBox }) {
+  return (
+    <div className="sysdiag-frontend-components-row">
+      {components.map((component) => (
+        component.id ? (
+          <CallerBox key={component.id} id={component.id} lines={component.lines} registerBox={registerBox} />
+        ) : (
+          <ComponentBox
+            key={component.label}
+            label={component.label}
+            nested={component.nested}
+            caller={component.caller}
+            registerBox={registerBox}
+          />
+        )
+      ))}
+    </div>
+  );
+}
+
+function PageBox({ id, label, registerBox }) {
+  const components = PAGE_COMPONENTS[id];
+
+  return (
+    <div className="sysdiag-frontend-page">
+      <div className="sysdiag-frontend-page-title">{label}</div>
+
+      {components && <ComponentsRow components={components} registerBox={registerBox} />}
+    </div>
+  );
+}
+
+function PagesFlank({ pages, registerBox }) {
   return (
     <div className="sysdiag-frontend-pages-flank">
       {pages.map((page) => (
-        <PageBox
-          key={page.id}
-          id={page.id}
-          label={page.label}
-          width={width}
-          registerPageBox={registerPageBox}
-          registerBox={registerBox}
-        />
+        <PageBox key={page.id} id={page.id} label={page.label} registerBox={registerBox} />
       ))}
     </div>
   );
@@ -120,10 +260,10 @@ function HookBox({ id, lines, registerBox }) {
   );
 }
 
-function HooksRow({ registerBox }) {
+function HooksRow({ hooks, registerBox }) {
   return (
     <div className="sysdiag-frontend-hooks-row">
-      {HOOKS.map((hook) => (
+      {hooks.map((hook) => (
         <HookBox key={hook.id} id={hook.id} lines={hook.lines} registerBox={registerBox} />
       ))}
     </div>
@@ -141,72 +281,15 @@ const PAGES = [
   { id: "system-diagram", label: "SystemDiagram.jsx" },
 ];
 
-const LEFT_PAGES = PAGES.slice(0, 2);
-const RIGHT_PAGES = PAGES.slice(2);
+const PAGES_COLUMN_1 = PAGES.slice(0, 2); // Console, Output
+const PAGES_COLUMN_3 = PAGES.slice(2, 3); // Analytics, alone
+const PAGES_COLUMN_5 = PAGES.slice(3); // Maintenance, Agents, Directory, Capabilities, SystemDiagram
+
+const HOOKS_COLUMN_2 = HOOKS.slice(0, 4); // directory, agents, capabilities, analytics
+const HOOKS_COLUMN_4 = HOOKS.slice(4); // maintenance, alone
 
 function FrontendTree({ onGeometryChange }) {
   const { contentRef, registerBox } = useTreeGeometry(onGeometryChange);
-
-  const pageElementsRef = useRef(new Map());
-  const hasMeasuredPageWidthRef = useRef(false);
-
-  const [pageBoxWidth, setPageBoxWidth] = useState(null);
-
-
-  function registerPageBox(id) {
-    return (element) => {
-      registerBox(`page-${id}`)(element);
-
-      if (element) {
-        pageElementsRef.current.set(id, element);
-      } else {
-        pageElementsRef.current.delete(id);
-      }
-    };
-  }
-
-
-  /*
-   * Measures every page box's own natural (unpinned) width
-   * — including any caller nested inside it — and takes the
-   * max, which becomes the fixed width applied to every page
-   * box. `hasMeasuredPageWidthRef` captures it exactly once;
-   * the ResizeObserver exists so this stays correct if a
-   * label's rendered width ever changes for external reasons
-   * (e.g. a font finishing its own async load) rather than
-   * assuming a single measurement on mount is always final.
-   */
-  useLayoutEffect(() => {
-    function measurePageWidth() {
-      if (hasMeasuredPageWidthRef.current) {
-        return;
-      }
-
-      let maxWidth = 0;
-
-      pageElementsRef.current.forEach((element) => {
-        maxWidth = Math.max(maxWidth, element.offsetWidth);
-      });
-
-      if (maxWidth > 0) {
-        hasMeasuredPageWidthRef.current = true;
-        setPageBoxWidth(maxWidth);
-      }
-    }
-
-    measurePageWidth();
-
-    if (typeof ResizeObserver === "undefined") {
-      return undefined;
-    }
-
-    const observer = new ResizeObserver(measurePageWidth);
-
-    pageElementsRef.current.forEach((element) => observer.observe(element));
-
-    return () => observer.disconnect();
-  }, []);
-
 
   return (
     <div ref={contentRef} className="sysdiag-frontend-tree">
@@ -216,17 +299,29 @@ function FrontendTree({ onGeometryChange }) {
         <div className="sysdiag-frontend-app-title">App.jsx</div>
 
         <div className="sysdiag-frontend-app-grid">
-          <div className="sysdiag-frontend-center-spacer" />
           <div className="sysdiag-frontend-app-gap" aria-hidden="true" />
-          <div className="sysdiag-frontend-center-spacer" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
 
-          <PagesFlank pages={LEFT_PAGES} width={pageBoxWidth} registerPageBox={registerPageBox} registerBox={registerBox} />
-          <div className="sysdiag-frontend-pages-gap" aria-hidden="true" />
-          <PagesFlank pages={RIGHT_PAGES} width={pageBoxWidth} registerPageBox={registerPageBox} registerBox={registerBox} />
+          <PagesFlank pages={PAGES_COLUMN_1} registerBox={registerBox} />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <PagesFlank pages={PAGES_COLUMN_3} registerBox={registerBox} />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <PagesFlank pages={PAGES_COLUMN_5} registerBox={registerBox} />
 
-          <div className="sysdiag-frontend-center-spacer" />
-          <HooksRow registerBox={registerBox} />
-          <div className="sysdiag-frontend-center-spacer" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <HooksRow hooks={HOOKS_COLUMN_2} registerBox={registerBox} />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <HooksRow hooks={HOOKS_COLUMN_4} registerBox={registerBox} />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+
+          <div className="sysdiag-frontend-app-bottom-gap" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
+          <div className="sysdiag-frontend-gap-cell" aria-hidden="true" />
         </div>
       </div>
     </div>

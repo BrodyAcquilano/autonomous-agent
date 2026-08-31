@@ -29,7 +29,13 @@
  * The ownership box: everything App.jsx owns (the pages row
  * and its own loading-hooks row) is nested directly inside
  * this same border, instead of being separate sibling rows
- * merely aligned to it.
+ * merely aligned to it. Left padding is widened past the usual
+ * 14px specifically as routing margin: `handleRestart()`'s
+ * connection line (see FrontendToServerConnections.jsx) is the
+ * one line on this page that can't just go straight up — it
+ * has to drop down, travel left, and go back up outside every
+ * other box's column, and this margin is the lane it travels
+ * through.
  */
 .sysdiag-frontend-app-box {
   flex: 1;
@@ -39,7 +45,7 @@
   flex-direction: column;
   gap: 14px;
 
-  padding: 14px;
+  padding: 14px 14px 14px 70px;
 
   border: 1.5px solid #e05a5a;
   border-radius: 10px;
@@ -63,39 +69,51 @@
 }
 
 /*
- * The gap row (top), pages, and App.jsx's own loading
- * hooks (bottom) share this 3-column grid. The left/right
- * columns are `auto`, not `1fr`: the split is deliberately
- * asymmetric (2 pages left, 6 right), so each column has to
- * size to its OWN flank's real content rather than being
- * forced equal to the other. The center column is `auto`-
- * sized to the hooks row alone (the only row that actually
- * puts content there) — the gap row's and pages row's empty
- * center cells share that exact same column, so they come
- * out that same width too: a clear, hooks-row-width
- * vertical channel a future straight connection line from
- * each hook can pass through on its way down to its own
- * server API route.
+ * A second blank spacer row, this one BELOW the hooks row —
+ * `handleRestart()`'s connection line drops down into this row
+ * before turning left (see `.sysdiag-frontend-app-box`'s left
+ * padding, and the custom path in FrontendToServerConnections.jsx).
+ */
+.sysdiag-frontend-app-bottom-gap {
+  height: 60px;
+}
+
+/*
+ * The gap row (top), pages, App.jsx's own loading hooks, and
+ * the bottom gap row share this 5-column grid — and every
+ * column has content in EXACTLY ONE of the pages/hooks rows,
+ * never both:
+ *   Pages: [Console, Output] [empty] [Analytics] [empty] [rest of the pages]
+ *   Hooks: [empty] [directory, agents, capabilities, analytics] [empty] [maintenance] [empty]
+ * Whichever row is empty in a column is a real gap: room for
+ * the OTHER row's box in that same column to rise straight up
+ * without anything crossing it. Columns are `auto`, not `1fr`:
+ * since only one row ever occupies a column, each `auto`
+ * column naturally sizes to whichever row's box needs it — no
+ * measuring across rows required. The gap rows' five cells
+ * each share those same five columns purely so their shared
+ * vertical clearance (`.sysdiag-frontend-app-gap` /
+ * `.sysdiag-frontend-app-bottom-gap`'s height) applies across
+ * the whole row, regardless of which specific cell declares it.
  */
 .sysdiag-frontend-app-grid {
   flex: 1;
   min-height: 0;
 
   display: grid;
-  grid-template-columns: auto auto auto;
-  grid-template-rows: auto auto auto;
+  grid-template-columns: auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto;
   row-gap: 40px;
   column-gap: 16px;
 }
 
 /*
- * Boxes don't flex: each page box is pinned (via inline
- * style, once FrontendTree.jsx measures the widest one) to
- * one shared fixed width. `justify-content: space-between`
- * then spreads whatever's left of the flank's own width
- * evenly between the boxes, natively — `gap` underneath is
- * just a floor, so boxes are never closer than that even if
- * the flank were ever exactly as wide as its content.
+ * Every page box sizes to its own natural content — none are
+ * pinned to a shared width. `justify-content: space-between`
+ * spreads whatever's left of the flank's own width evenly
+ * between the boxes, natively — `gap` underneath is just a
+ * floor, so boxes are never closer than that even if the flank
+ * were ever exactly as wide as its content.
  */
 .sysdiag-frontend-pages-flank {
   display: flex;
@@ -124,10 +142,15 @@
 }
 
 /*
- * Nested one level deeper than the page it belongs to —
- * fills the page box's own width rather than being aligned
- * to any external slot, since it no longer needs to line up
- * with a separate sibling row.
+ * Fills its own container's width by default — right when it's
+ * stacked directly inside a page or component box (both flex
+ * columns), so it lines up with the border around it rather
+ * than shrinking to its own text. When it's instead a plain
+ * SIBLING inside a components row (Output's caller, sitting
+ * beside Viewport rather than stacked above it), that row is a
+ * flex ROW, not a column — filling "100% width" there would mean
+ * the whole row's width, so the override below drops back to
+ * sizing on its own content like every other item in that row.
  */
 .sysdiag-frontend-caller {
   width: 100%;
@@ -144,12 +167,16 @@
   text-align: center;
 }
 
+.sysdiag-frontend-components-row > .sysdiag-frontend-caller {
+  width: auto;
+}
+
 /*
- * Evenly spaced and centered as a group within the shared
- * center column (see `.sysdiag-frontend-app-grid`) —
- * `space-evenly` puts equal room around every hook,
- * including before the first and after the last, rather
- * than only between them.
+ * Evenly spaced and centered as a group within its own column
+ * (see `.sysdiag-frontend-app-grid`) — `space-evenly` puts
+ * equal room around every hook, including before the first and
+ * after the last, rather than only between them. Works the same
+ * whether the group has four hooks or just one.
  */
 .sysdiag-frontend-hooks-row {
   display: flex;
@@ -167,4 +194,41 @@
   color: #f5b8b8;
   font-size: 10px;
   text-align: center;
+}
+
+/*
+ * A page's own rendered component tree, nested one level
+ * deeper than the page box itself — same "title, then what it
+ * owns" pattern as everywhere else on this page (see
+ * `PAGE_COMPONENTS` in FrontendTree.jsx). `flex-wrap: wrap`
+ * lets a page with a lot of components (Console, Maintenance)
+ * spill onto a second line rather than forcing the whole page
+ * box arbitrarily wide.
+ */
+.sysdiag-frontend-components-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  margin-top: 4px;
+}
+
+.sysdiag-frontend-component {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  padding: 5px 8px;
+
+  border: 1px dashed #c9695a;
+  border-radius: 5px;
+  background: rgba(201, 105, 90, 0.08);
+
+  color: #f0a89a;
+  font-size: 8.5px;
+  text-align: center;
+}
+
+.sysdiag-frontend-component-title {
+  font-weight: bold;
 }

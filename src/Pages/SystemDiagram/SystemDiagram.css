@@ -67,6 +67,16 @@
   background: rgba(255, 255, 255, 0.015);
 
   cursor: grab;
+
+  /*
+   * Dragging to pan constantly caught the text inside the
+   * trees in a selection instead — this disables text
+   * selection for the whole viewport, canvas, and every
+   * tree inside it (an unset `user-select` inherits from
+   * here down), so a drag always pans and never selects.
+   */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .system-diagram-viewport.is-panning {
