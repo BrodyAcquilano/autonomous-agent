@@ -1,13 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-} from "react";
+import { useCallback, useEffect } from "react";
 
-import {
-  Navigate,
-  Route,
-  Routes,
-} from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 
 import useRuntime from "./Runtime/Runtime";
 
@@ -27,9 +20,9 @@ import Console from "./Pages/Console/Console";
 import Directory from "./Pages/Directory/Directory";
 import Maintenance from "./Pages/Maintenance/Maintenance";
 import Output from "./Pages/Output/Output";
+import SystemDiagram from "./Pages/SystemDiagram/SystemDiagram";
 
 import "./App.css";
-
 
 function App() {
   const {
@@ -144,9 +137,7 @@ function App() {
 
     outputViewportView,
     setOutputViewportView,
-  } =
-    useRuntime();
-
+  } = useRuntime();
 
   /*
    * Models/APIs are Capabilities Brain
@@ -155,89 +146,46 @@ function App() {
    * state, also owned by Runtime) survives
    * navigating away and back.
    */
-  useEffect(
-    () => {
-      let mounted =
-        true;
+  useEffect(() => {
+    let mounted = true;
 
+    const loadModelsAndApis = async () => {
+      try {
+        const [loadedModels, loadedApis] = await Promise.all([
+          modelsApi.getAll(),
+          apisApi.getAll(),
+        ]);
 
-      const loadModelsAndApis =
-        async () => {
-          try {
-            const [
-              loadedModels,
-              loadedApis,
-            ] =
-              await Promise.all([
-                modelsApi.getAll(),
-                apisApi.getAll(),
-              ]);
+        if (mounted) {
+          setModels(loadedModels);
 
+          setApis(loadedApis);
 
-            if (
-              mounted
-            ) {
-              setModels(
-                loadedModels,
-              );
+          setModelsError(null);
+        }
+      } catch (loadError) {
+        console.error("Failed to load model documentation:", loadError);
 
-              setApis(
-                loadedApis,
-              );
+        if (mounted) {
+          setModelsError(
+            loadError.response?.data?.message ||
+              loadError.message ||
+              "Failed to load model documentation.",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setModelsLoading(false);
+        }
+      }
+    };
 
-              setModelsError(
-                null,
-              );
-            }
-          } catch (
-            loadError
-          ) {
-            console.error(
-              "Failed to load model documentation:",
-              loadError,
-            );
+    loadModelsAndApis();
 
-
-            if (
-              mounted
-            ) {
-              setModelsError(
-                loadError
-                  .response
-                  ?.data
-                  ?.message ||
-                loadError.message ||
-                "Failed to load model documentation.",
-              );
-            }
-          } finally {
-            if (
-              mounted
-            ) {
-              setModelsLoading(
-                false,
-              );
-            }
-          }
-        };
-
-
-      loadModelsAndApis();
-
-
-      return () => {
-        mounted =
-          false;
-      };
-    },
-    [
-      setModels,
-      setApis,
-      setModelsError,
-      setModelsLoading,
-    ],
-  );
-
+    return () => {
+      mounted = false;
+    };
+  }, [setModels, setApis, setModelsError, setModelsLoading]);
 
   /*
    * The Agents "Team" page has nothing to do
@@ -249,78 +197,41 @@ function App() {
    * for the same reason: survive navigating away
    * from /agents and back.
    */
-  useEffect(
-    () => {
-      let mounted =
-        true;
+  useEffect(() => {
+    let mounted = true;
 
+    const loadAgents = async () => {
+      try {
+        const loadedAgents = await agentsApi.getAll();
 
-      const loadAgents =
-        async () => {
-          try {
-            const loadedAgents =
-              await agentsApi.getAll();
+        if (mounted) {
+          setAgents(loadedAgents);
 
+          setAgentsError(null);
+        }
+      } catch (loadError) {
+        console.error("Failed to load agent profiles:", loadError);
 
-            if (
-              mounted
-            ) {
-              setAgents(
-                loadedAgents,
-              );
+        if (mounted) {
+          setAgentsError(
+            loadError.response?.data?.message ||
+              loadError.message ||
+              "Failed to load agent profiles.",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setAgentsLoading(false);
+        }
+      }
+    };
 
-              setAgentsError(
-                null,
-              );
-            }
-          } catch (
-            loadError
-          ) {
-            console.error(
-              "Failed to load agent profiles:",
-              loadError,
-            );
+    loadAgents();
 
-
-            if (
-              mounted
-            ) {
-              setAgentsError(
-                loadError
-                  .response
-                  ?.data
-                  ?.message ||
-                loadError.message ||
-                "Failed to load agent profiles.",
-              );
-            }
-          } finally {
-            if (
-              mounted
-            ) {
-              setAgentsLoading(
-                false,
-              );
-            }
-          }
-        };
-
-
-      loadAgents();
-
-
-      return () => {
-        mounted =
-          false;
-      };
-    },
-    [
-      setAgents,
-      setAgentsError,
-      setAgentsLoading,
-    ],
-  );
-
+    return () => {
+      mounted = false;
+    };
+  }, [setAgents, setAgentsError, setAgentsLoading]);
 
   /*
    * The Directory ("who may call whom") is its
@@ -330,78 +241,41 @@ function App() {
    * loaded once here so it survives navigating
    * away from /directory and back.
    */
-  useEffect(
-    () => {
-      let mounted =
-        true;
+  useEffect(() => {
+    let mounted = true;
 
+    const loadDirectory = async () => {
+      try {
+        const loadedDirectory = await directoryApi.getAll();
 
-      const loadDirectory =
-        async () => {
-          try {
-            const loadedDirectory =
-              await directoryApi.getAll();
+        if (mounted) {
+          setDirectory(loadedDirectory);
 
+          setDirectoryError(null);
+        }
+      } catch (loadError) {
+        console.error("Failed to load directory:", loadError);
 
-            if (
-              mounted
-            ) {
-              setDirectory(
-                loadedDirectory,
-              );
+        if (mounted) {
+          setDirectoryError(
+            loadError.response?.data?.message ||
+              loadError.message ||
+              "Failed to load directory.",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setDirectoryLoading(false);
+        }
+      }
+    };
 
-              setDirectoryError(
-                null,
-              );
-            }
-          } catch (
-            loadError
-          ) {
-            console.error(
-              "Failed to load directory:",
-              loadError,
-            );
+    loadDirectory();
 
-
-            if (
-              mounted
-            ) {
-              setDirectoryError(
-                loadError
-                  .response
-                  ?.data
-                  ?.message ||
-                loadError.message ||
-                "Failed to load directory.",
-              );
-            }
-          } finally {
-            if (
-              mounted
-            ) {
-              setDirectoryLoading(
-                false,
-              );
-            }
-          }
-        };
-
-
-      loadDirectory();
-
-
-      return () => {
-        mounted =
-          false;
-      };
-    },
-    [
-      setDirectory,
-      setDirectoryError,
-      setDirectoryLoading,
-    ],
-  );
-
+    return () => {
+      mounted = false;
+    };
+  }, [setDirectory, setDirectoryError, setDirectoryLoading]);
 
   /*
    * Maintenance tickets/logs are wrapped in
@@ -414,61 +288,33 @@ function App() {
    * simpler and more trustworthy than predicting
    * the new state locally.
    */
-  const loadMaintenanceTickets =
-    useCallback(
-      async () => {
-        try {
-          const loadedTickets =
-            await maintenanceApi.getTickets();
+  const loadMaintenanceTickets = useCallback(async () => {
+    try {
+      const loadedTickets = await maintenanceApi.getTickets();
 
+      setMaintenanceTickets(loadedTickets);
 
-          setMaintenanceTickets(
-            loadedTickets,
-          );
+      setMaintenanceTicketsError(null);
+    } catch (loadError) {
+      console.error("Failed to load maintenance tickets:", loadError);
 
-          setMaintenanceTicketsError(
-            null,
-          );
-        } catch (
-          loadError
-        ) {
-          console.error(
-            "Failed to load maintenance tickets:",
-            loadError,
-          );
+      setMaintenanceTicketsError(
+        loadError.response?.data?.message ||
+          loadError.message ||
+          "Failed to load maintenance tickets.",
+      );
+    } finally {
+      setMaintenanceTicketsLoading(false);
+    }
+  }, [
+    setMaintenanceTickets,
+    setMaintenanceTicketsError,
+    setMaintenanceTicketsLoading,
+  ]);
 
-
-          setMaintenanceTicketsError(
-            loadError
-              .response
-              ?.data
-              ?.message ||
-            loadError.message ||
-            "Failed to load maintenance tickets.",
-          );
-        } finally {
-          setMaintenanceTicketsLoading(
-            false,
-          );
-        }
-      },
-      [
-        setMaintenanceTickets,
-        setMaintenanceTicketsError,
-        setMaintenanceTicketsLoading,
-      ],
-    );
-
-
-  useEffect(
-    () => {
-      loadMaintenanceTickets();
-    },
-    [
-      loadMaintenanceTickets,
-    ],
-  );
-
+  useEffect(() => {
+    loadMaintenanceTickets();
+  }, [loadMaintenanceTickets]);
 
   /*
    * One maintenance log collection per agent
@@ -484,115 +330,51 @@ function App() {
    * its own tickets) simply comes back empty
    * rather than erroring.
    */
-  const loadMaintenanceLogs =
-    useCallback(
-      async () => {
-        if (
-          agentsLoading ||
-          !agents.length
-        ) {
-          return;
-        }
+  const loadMaintenanceLogs = useCallback(async () => {
+    if (agentsLoading || !agents.length) {
+      return;
+    }
 
+    try {
+      const results = await Promise.allSettled(
+        agents.map((agent) => maintenanceApi.getLogsForAgent(agent.name)),
+      );
 
-        try {
-          const results =
-            await Promise.allSettled(
-              agents.map(
-                (
-                  agent,
-                ) =>
-                  maintenanceApi.getLogsForAgent(
-                    agent.name,
-                  ),
-              ),
-            );
+      const merged = results
+        .filter((result) => result.status === "fulfilled")
+        .flatMap((result) => result.value);
 
+      const failures = results.filter((result) => result.status === "rejected");
 
-          const merged =
-            results
-              .filter(
-                (
-                  result,
-                ) =>
-                  result.status ===
-                  "fulfilled",
-              )
-              .flatMap(
-                (
-                  result,
-                ) =>
-                  result.value,
-              );
+      if (failures.length) {
+        console.error("Some agent maintenance logs failed to load:", failures);
+      }
 
+      setMaintenanceLogs(merged);
 
-          const failures =
-            results.filter(
-              (
-                result,
-              ) =>
-                result.status ===
-                "rejected",
-            );
+      setMaintenanceLogsError(
+        failures.length && !merged.length
+          ? "Failed to load maintenance logs."
+          : null,
+      );
+    } catch (loadError) {
+      console.error("Failed to load maintenance logs:", loadError);
 
+      setMaintenanceLogsError("Failed to load maintenance logs.");
+    } finally {
+      setMaintenanceLogsLoading(false);
+    }
+  }, [
+    agents,
+    agentsLoading,
+    setMaintenanceLogs,
+    setMaintenanceLogsError,
+    setMaintenanceLogsLoading,
+  ]);
 
-          if (
-            failures.length
-          ) {
-            console.error(
-              "Some agent maintenance logs failed to load:",
-              failures,
-            );
-          }
-
-
-          setMaintenanceLogs(
-            merged,
-          );
-
-          setMaintenanceLogsError(
-            failures.length &&
-              !merged.length
-              ? "Failed to load maintenance logs."
-              : null,
-          );
-        } catch (
-          loadError
-        ) {
-          console.error(
-            "Failed to load maintenance logs:",
-            loadError,
-          );
-
-
-          setMaintenanceLogsError(
-            "Failed to load maintenance logs.",
-          );
-        } finally {
-          setMaintenanceLogsLoading(
-            false,
-          );
-        }
-      },
-      [
-        agents,
-        agentsLoading,
-        setMaintenanceLogs,
-        setMaintenanceLogsError,
-        setMaintenanceLogsLoading,
-      ],
-    );
-
-
-  useEffect(
-    () => {
-      loadMaintenanceLogs();
-    },
-    [
-      loadMaintenanceLogs,
-    ],
-  );
-
+  useEffect(() => {
+    loadMaintenanceLogs();
+  }, [loadMaintenanceLogs]);
 
   /*
    * Same pattern as maintenance logs, against the
@@ -604,115 +386,51 @@ function App() {
    * to filter or color-code by; the Analytics page
    * treats each log generically.
    */
-  const loadAnalyticsLogs =
-    useCallback(
-      async () => {
-        if (
-          agentsLoading ||
-          !agents.length
-        ) {
-          return;
-        }
+  const loadAnalyticsLogs = useCallback(async () => {
+    if (agentsLoading || !agents.length) {
+      return;
+    }
 
+    try {
+      const results = await Promise.allSettled(
+        agents.map((agent) => analyticsApi.getLogsForAgent(agent.name)),
+      );
 
-        try {
-          const results =
-            await Promise.allSettled(
-              agents.map(
-                (
-                  agent,
-                ) =>
-                  analyticsApi.getLogsForAgent(
-                    agent.name,
-                  ),
-              ),
-            );
+      const merged = results
+        .filter((result) => result.status === "fulfilled")
+        .flatMap((result) => result.value);
 
+      const failures = results.filter((result) => result.status === "rejected");
 
-          const merged =
-            results
-              .filter(
-                (
-                  result,
-                ) =>
-                  result.status ===
-                  "fulfilled",
-              )
-              .flatMap(
-                (
-                  result,
-                ) =>
-                  result.value,
-              );
+      if (failures.length) {
+        console.error("Some agent analytics logs failed to load:", failures);
+      }
 
+      setAnalyticsLogs(merged);
 
-          const failures =
-            results.filter(
-              (
-                result,
-              ) =>
-                result.status ===
-                "rejected",
-            );
+      setAnalyticsLogsError(
+        failures.length && !merged.length
+          ? "Failed to load analytics logs."
+          : null,
+      );
+    } catch (loadError) {
+      console.error("Failed to load analytics logs:", loadError);
 
+      setAnalyticsLogsError("Failed to load analytics logs.");
+    } finally {
+      setAnalyticsLogsLoading(false);
+    }
+  }, [
+    agents,
+    agentsLoading,
+    setAnalyticsLogs,
+    setAnalyticsLogsError,
+    setAnalyticsLogsLoading,
+  ]);
 
-          if (
-            failures.length
-          ) {
-            console.error(
-              "Some agent analytics logs failed to load:",
-              failures,
-            );
-          }
-
-
-          setAnalyticsLogs(
-            merged,
-          );
-
-          setAnalyticsLogsError(
-            failures.length &&
-              !merged.length
-              ? "Failed to load analytics logs."
-              : null,
-          );
-        } catch (
-          loadError
-        ) {
-          console.error(
-            "Failed to load analytics logs:",
-            loadError,
-          );
-
-
-          setAnalyticsLogsError(
-            "Failed to load analytics logs.",
-          );
-        } finally {
-          setAnalyticsLogsLoading(
-            false,
-          );
-        }
-      },
-      [
-        agents,
-        agentsLoading,
-        setAnalyticsLogs,
-        setAnalyticsLogsError,
-        setAnalyticsLogsLoading,
-      ],
-    );
-
-
-  useEffect(
-    () => {
-      loadAnalyticsLogs();
-    },
-    [
-      loadAnalyticsLogs,
-    ],
-  );
-
+  useEffect(() => {
+    loadAnalyticsLogs();
+  }, [loadAnalyticsLogs]);
 
   /*
    * systemStatus is shared app-wide state, not
@@ -727,21 +445,11 @@ function App() {
    * rather than duplicating a reload call at
    * every place that can produce an error.
    */
-  useEffect(
-    () => {
-      if (
-        systemStatus ===
-        "error"
-      ) {
-        loadMaintenanceTickets();
-      }
-    },
-    [
-      systemStatus,
-      loadMaintenanceTickets,
-    ],
-  );
-
+  useEffect(() => {
+    if (systemStatus === "error") {
+      loadMaintenanceTickets();
+    }
+  }, [systemStatus, loadMaintenanceTickets]);
 
   return (
     <div className="app">
@@ -751,308 +459,135 @@ function App() {
             path="/console"
             element={
               <Console
-                messages={
-                  messages
-                }
-                setMessages={
-                  setMessages
-                }
-                setResponse={
-                  setResponse
-                }
-
-                systemStatus={
-                  systemStatus
-                }
-                setSystemStatus={
-                  setSystemStatus
-                }
-
-                reportError={
-                  reportError
-                }
-
-                requestSettings={
-                  requestSettings
-                }
-                setRequestSettings={
-                  setRequestSettings
-                }
-
-                consoleWidgetOffsets={
-                  consoleWidgetOffsets
-                }
-                setConsoleWidgetOffset={
-                  setConsoleWidgetOffset
-                }
-
-                consoleWidgetSizes={
-                  consoleWidgetSizes
-                }
-                setConsoleWidgetSize={
-                  setConsoleWidgetSize
-                }
-
-                viewportView={
-                  consoleViewportView
-                }
-                setViewportView={
-                  setConsoleViewportView
-                }
+                messages={messages}
+                setMessages={setMessages}
+                setResponse={setResponse}
+                systemStatus={systemStatus}
+                setSystemStatus={setSystemStatus}
+                reportError={reportError}
+                requestSettings={requestSettings}
+                setRequestSettings={setRequestSettings}
+                consoleWidgetOffsets={consoleWidgetOffsets}
+                setConsoleWidgetOffset={setConsoleWidgetOffset}
+                consoleWidgetSizes={consoleWidgetSizes}
+                setConsoleWidgetSize={setConsoleWidgetSize}
+                viewportView={consoleViewportView}
+                setViewportView={setConsoleViewportView}
               />
             }
           />
-
 
           <Route
             path="/output"
             element={
               <Output
-                outputFiles={
-                  outputFiles
-                }
-
-                fileTypes={
-                  outputFileTypes
-                }
-
-                widgetOffsets={
-                  outputWidgetOffsets
-                }
-                setWidgetOffset={
-                  setOutputWidgetOffset
-                }
-
-                widgetSizes={
-                  outputWidgetSizes
-                }
-                setWidgetSize={
-                  setOutputWidgetSize
-                }
-
-                viewportView={
-                  outputViewportView
-                }
-                setViewportView={
-                  setOutputViewportView
-                }
+                outputFiles={outputFiles}
+                fileTypes={outputFileTypes}
+                widgetOffsets={outputWidgetOffsets}
+                setWidgetOffset={setOutputWidgetOffset}
+                widgetSizes={outputWidgetSizes}
+                setWidgetSize={setOutputWidgetSize}
+                viewportView={outputViewportView}
+                setViewportView={setOutputViewportView}
               />
             }
           />
-
 
           <Route
             path="/agents"
             element={
               <Agents
-                agents={
-                  agents
-                }
-                agentsLoading={
-                  agentsLoading
-                }
-                agentsError={
-                  agentsError
-                }
-                selectedAgentId={
-                  selectedAgentId
-                }
-                setSelectedAgentId={
-                  setSelectedAgentId
-                }
+                agents={agents}
+                agentsLoading={agentsLoading}
+                agentsError={agentsError}
+                selectedAgentId={selectedAgentId}
+                setSelectedAgentId={setSelectedAgentId}
               />
             }
           />
-
 
           <Route
             path="/directory"
             element={
               <Directory
-                directory={
-                  directory
-                }
-                directoryLoading={
-                  directoryLoading
-                }
-                directoryError={
-                  directoryError
-                }
-                selectedAgentId={
-                  selectedDirectoryAgentId
-                }
-                setSelectedAgentId={
-                  setSelectedDirectoryAgentId
-                }
-                modalStack={
-                  directoryModalStack
-                }
-                setModalStack={
-                  setDirectoryModalStack
-                }
+                directory={directory}
+                directoryLoading={directoryLoading}
+                directoryError={directoryError}
+                selectedAgentId={selectedDirectoryAgentId}
+                setSelectedAgentId={setSelectedDirectoryAgentId}
+                modalStack={directoryModalStack}
+                setModalStack={setDirectoryModalStack}
               />
             }
           />
-
 
           <Route
             path="/capabilities"
             element={
               <Capabilities
-                models={
-                  models
-                }
-                apis={
-                  apis
-                }
-                modelsLoading={
-                  modelsLoading
-                }
-                modelsError={
-                  modelsError
-                }
-                selectedModelId={
-                  selectedModelId
-                }
-                setSelectedModelId={
-                  setSelectedModelId
-                }
-                modelModalStack={
-                  modelModalStack
-                }
-                setModelModalStack={
-                  setModelModalStack
-                }
-                toolsCatalog={
-                  toolsCatalog
-                }
-                capabilitiesCatalog={
-                  capabilitiesCatalog
-                }
+                models={models}
+                apis={apis}
+                modelsLoading={modelsLoading}
+                modelsError={modelsError}
+                selectedModelId={selectedModelId}
+                setSelectedModelId={setSelectedModelId}
+                modelModalStack={modelModalStack}
+                setModelModalStack={setModelModalStack}
+                toolsCatalog={toolsCatalog}
+                capabilitiesCatalog={capabilitiesCatalog}
               />
             }
           />
-
 
           <Route
             path="/maintenance"
             element={
               <Maintenance
-                agents={
-                  agents
-                }
-                tickets={
-                  maintenanceTickets
-                }
-                setTickets={
-                  setMaintenanceTickets
-                }
-                ticketsLoading={
-                  maintenanceTicketsLoading
-                }
-                ticketsError={
-                  maintenanceTicketsError
-                }
-                logs={
-                  maintenanceLogs
-                }
-                logsLoading={
-                  maintenanceLogsLoading
-                }
-                logsError={
-                  maintenanceLogsError
-                }
-                reloadLogs={
-                  loadMaintenanceLogs
-                }
-                reloadTickets={
-                  loadMaintenanceTickets
-                }
-                systemStatus={
-                  systemStatus
-                }
-                setSystemStatus={
-                  setSystemStatus
-                }
-                setResponse={
-                  setResponse
-                }
-                reportError={
-                  reportError
-                }
+                agents={agents}
+                tickets={maintenanceTickets}
+                setTickets={setMaintenanceTickets}
+                ticketsLoading={maintenanceTicketsLoading}
+                ticketsError={maintenanceTicketsError}
+                logs={maintenanceLogs}
+                logsLoading={maintenanceLogsLoading}
+                logsError={maintenanceLogsError}
+                reloadLogs={loadMaintenanceLogs}
+                reloadTickets={loadMaintenanceTickets}
+                systemStatus={systemStatus}
+                setSystemStatus={setSystemStatus}
+                setResponse={setResponse}
+                reportError={reportError}
               />
             }
           />
-
 
           <Route
             path="/analytics"
             element={
               <Analytics
-                agents={
-                  agents
-                }
-                logs={
-                  analyticsLogs
-                }
-                setLogs={
-                  setAnalyticsLogs
-                }
-                logsLoading={
-                  analyticsLogsLoading
-                }
-                logsError={
-                  analyticsLogsError
-                }
-                selectedLogId={
-                  selectedAnalyticsLogId
-                }
-                setSelectedLogId={
-                  setSelectedAnalyticsLogId
-                }
-                setMaintenanceTickets={
-                  setMaintenanceTickets
-                }
-                setMaintenanceLogs={
-                  setMaintenanceLogs
-                }
-                systemStatus={
-                  systemStatus
-                }
-                setSystemStatus={
-                  setSystemStatus
-                }
-                reportError={
-                  reportError
-                }
+                agents={agents}
+                logs={analyticsLogs}
+                setLogs={setAnalyticsLogs}
+                logsLoading={analyticsLogsLoading}
+                logsError={analyticsLogsError}
+                selectedLogId={selectedAnalyticsLogId}
+                setSelectedLogId={setSelectedAnalyticsLogId}
+                setMaintenanceTickets={setMaintenanceTickets}
+                setMaintenanceLogs={setMaintenanceLogs}
+                systemStatus={systemStatus}
+                setSystemStatus={setSystemStatus}
+                reportError={reportError}
               />
             }
           />
 
+          <Route path="/system-diagram" element={<SystemDiagram />} />
 
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/console"
-                replace
-              />
-            }
-          />
+          <Route path="/" element={<Navigate to="/console" replace />} />
 
-
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to="/console"
-                replace
-              />
-            }
-          />
+          <Route path="*" element={<Navigate to="/console" replace />} />
         </Routes>
       </div>
-
 
       <div className="app-navigation">
         <NavigationTabs />
@@ -1060,6 +595,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

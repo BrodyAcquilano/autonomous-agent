@@ -1,0 +1,125 @@
+.sysdiag-server-tree {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+
+  border: 1px dashed #3a4358;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+
+  color: #ffdca6;
+  font-family: "Courier New", Consolas, monospace;
+}
+
+.sysdiag-server-label {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #e8a94a;
+}
+
+.sysdiag-server-columns {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  gap: 14px;
+}
+
+.sysdiag-server-column {
+  flex: 1;
+  min-width: 150px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* clients (top) — the specific decisions/calls this route's code makes */
+.sysdiag-server-clients {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sysdiag-server-client {
+  padding: 8px;
+
+  border: 1px solid #c98a2e;
+  border-radius: 6px;
+  background: #241a08;
+
+  color: #f2c98a;
+  font-size: 10px;
+  text-align: center;
+}
+
+/* the Express route itself (bottom) — what the client above lives inside */
+.sysdiag-server-route {
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 10px;
+
+  border: 1.5px solid #e8a94a;
+  border-radius: 8px;
+  background: #3a2a10;
+
+  color: #ffdca6;
+  font-size: 10.5px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/*
+ * A labeled boundary box holding several one-API-per-
+ * collection columns — the server-side mirror of the
+ * Mongo tree's own collection-group boxes. Deliberately
+ * NOT min-width: 0 — this needs the opposite of the fix
+ * on `.system-diagram-cell`: a flex row (unlike a grid's
+ * auto track) shrinks its items by default, so this has
+ * to keep its default auto min-width to actually refuse
+ * to shrink narrower than its own columns need, rather
+ * than silently letting them spill past its right edge.
+ */
+.sysdiag-server-group {
+  flex: 2;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 10px;
+
+  border: 1px solid #c98a2e;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sysdiag-server-group-title {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-align: center;
+  color: #f2c98a;
+}
+
+.sysdiag-server-group-columns {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  gap: 10px;
+}

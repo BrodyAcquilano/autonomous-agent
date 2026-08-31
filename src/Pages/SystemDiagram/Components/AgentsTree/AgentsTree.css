@@ -1,0 +1,101 @@
+.sysdiag-agents-tree {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+
+  border: 1px dashed #3a4358;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+
+  color: #e3d8ff;
+  font-family: "Courier New", Consolas, monospace;
+}
+
+.sysdiag-agents-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #a586f0;
+}
+
+.sysdiag-agents-label-sub {
+  font-size: 9.5px;
+  font-weight: normal;
+  letter-spacing: normal;
+  color: #9f8fcf;
+}
+
+/* Layer 2 (Analyst/Maintenance) — a centered pair occupying the SAME
+   width as layer 1's gap below, so a straight vertical line from
+   either box down to the Server passes right through that gap. */
+.sysdiag-agents-layer2 {
+  flex: 1;
+
+  width: 58%;
+  margin: 0 auto;
+
+  display: flex;
+  gap: 16px;
+}
+
+.sysdiag-agents-layer2 .sysdiag-agents-box {
+  flex: 1;
+}
+
+/* Layer 1 (Router/Worker) — flanks a gap sized to match layer 2's
+   width (58%) above, split evenly across the two flanks (21% each). */
+.sysdiag-agents-layer1 {
+  flex: 1;
+
+  display: flex;
+}
+
+.sysdiag-agents-layer1 .sysdiag-agents-box {
+  flex: 0 0 21%;
+}
+
+.sysdiag-agents-gap {
+  flex: 0 0 58%;
+}
+
+.sysdiag-agents-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+
+  padding: 10px;
+
+  border: 1px solid #8f76d6;
+  border-radius: 8px;
+  background: #2a1f45;
+
+  color: #d3c8f5;
+  text-align: center;
+}
+
+.sysdiag-agents-box-management {
+  border-color: #a586f0;
+}
+
+.sysdiag-agents-box-title {
+  font-size: 11.5px;
+  font-weight: bold;
+}
+
+.sysdiag-agents-box-line {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #b7a6ef;
+}

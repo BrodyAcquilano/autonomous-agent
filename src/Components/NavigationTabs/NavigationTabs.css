@@ -401,6 +401,52 @@
 }
 
 
+.navigation-tab.system-diagram {
+  border-color:
+    rgba(
+      79,
+      214,
+      196,
+      0.44
+    );
+
+  background:
+    rgba(
+      18,
+      95,
+      86,
+      0.22
+    );
+
+  color:
+    rgba(
+      158,
+      240,
+      226,
+      0.84
+    );
+}
+
+
+.navigation-tab.system-diagram.active {
+  background:
+    rgba(
+      24,
+      118,
+      107,
+      0.44
+    );
+
+  border-color:
+    rgba(
+      120,
+      235,
+      216,
+      0.9
+    );
+}
+
+
 @media (
   max-width: 720px
 ) {

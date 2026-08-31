@@ -1,0 +1,89 @@
+.sysdiag-azure-tree {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+
+  border: 1px dashed #3a4358;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+
+  color: #c7e4ff;
+  font-family: "Courier New", Consolas, monospace;
+}
+
+.sysdiag-azure-label {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #5aa9e6;
+}
+
+.sysdiag-azure-row {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  gap: 14px;
+}
+
+/*
+ * A labeled boundary box, same pattern as the Mongo tree's
+ * own collection groups — `flexShare` (3 for deployments,
+ * 1 for containers) approximates 4 equal-width item spots
+ * across the two groups without needing to measure
+ * anything: 3 items sharing a 3-wide group and 1 item
+ * alone in a 1-wide group land close to the same per-item
+ * width.
+ */
+.sysdiag-azure-group {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 10px;
+
+  border: 1px solid #3f80b8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sysdiag-azure-group-title {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-align: center;
+  color: #a9cdec;
+}
+
+.sysdiag-azure-group-items {
+  flex: 1;
+
+  display: flex;
+  gap: 8px;
+}
+
+.sysdiag-azure-item {
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px;
+
+  border: 1px solid #5aa9e6;
+  border-radius: 6px;
+  background: #102640;
+
+  color: #c7e4ff;
+  font-size: 10.5px;
+  text-align: center;
+}

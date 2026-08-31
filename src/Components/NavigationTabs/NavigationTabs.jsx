@@ -35,6 +35,10 @@ const TABS = [
     label: "Capabilities",
     path: "/capabilities",
   },
+  {
+    label: "System Diagram",
+    path: "/system-diagram",
+  },
 ];
 
 
