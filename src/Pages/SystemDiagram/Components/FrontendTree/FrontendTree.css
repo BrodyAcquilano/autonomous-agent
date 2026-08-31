@@ -3,7 +3,7 @@
 
   display: flex;
   flex-direction: column;
-  gap: 90px;
+  gap: 20px;
 
   width: 100%;
   height: 100%;
@@ -26,69 +26,88 @@
 }
 
 /*
- * Three rows share this 3-column grid — callers (top),
- * pages, App.jsx's loading hooks — plus a fourth row
- * (App.jsx itself) that ignores the columns entirely and
- * spans the full width. The left/right columns are `auto`,
- * not `1fr`: the split is deliberately asymmetric (2 pages
- * left, 6 right), so each column has to size to its OWN
- * flank's real content rather than being forced equal to
- * the other. The center column is `auto`-sized to the
- * hooks row alone (the only row that actually puts content
- * there) — the caller row's and pages row's empty center
- * cells share that exact same column, so they come out
- * that same width too: a clear, hooks-row-width vertical
- * channel running through all three rows, wide enough for
- * a future straight connection line from each hook down to
- * its own server API route.
+ * The ownership box: everything App.jsx owns (the pages row
+ * and its own loading-hooks row) is nested directly inside
+ * this same border, instead of being separate sibling rows
+ * merely aligned to it.
  */
-.sysdiag-frontend-center-grid {
+.sysdiag-frontend-app-box {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  padding: 14px;
+
+  border: 1.5px solid #e05a5a;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sysdiag-frontend-app-title {
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  color: #f5b8b8;
+}
+
+/*
+ * A blank spacer row above the pages row — pure vertical
+ * room inside App.jsx's own box, not tied to any content,
+ * for connection lines to have space to work with.
+ */
+.sysdiag-frontend-app-gap {
+  height: 130px;
+}
+
+/*
+ * The gap row (top), pages, and App.jsx's own loading
+ * hooks (bottom) share this 3-column grid. The left/right
+ * columns are `auto`, not `1fr`: the split is deliberately
+ * asymmetric (2 pages left, 6 right), so each column has to
+ * size to its OWN flank's real content rather than being
+ * forced equal to the other. The center column is `auto`-
+ * sized to the hooks row alone (the only row that actually
+ * puts content there) — the gap row's and pages row's empty
+ * center cells share that exact same column, so they come
+ * out that same width too: a clear, hooks-row-width
+ * vertical channel a future straight connection line from
+ * each hook can pass through on its way down to its own
+ * server API route.
+ */
+.sysdiag-frontend-app-grid {
   flex: 1;
   min-height: 0;
 
   display: grid;
   grid-template-columns: auto auto auto;
-  grid-template-rows: auto auto auto auto;
-  row-gap: 90px;
+  grid-template-rows: auto auto auto;
+  row-gap: 40px;
   column-gap: 16px;
 }
 
 /*
- * The caller row uses the exact same 4-slot layout as
- * `.sysdiag-frontend-pages-flank` below it, so each caller
- * box lands at exactly the same width as the page slot it
- * sits above — a caller belongs to a component, and a
- * component belongs to a page, so this is what lets a
- * future straight line be drawn page -> caller.
- *
- * Boxes don't flex: each is pinned (via inline style, once
- * FrontendTree.jsx measures the longest page label) to one
- * shared fixed width. `justify-content: space-between`
+ * Boxes don't flex: each page box is pinned (via inline
+ * style, once FrontendTree.jsx measures the widest one) to
+ * one shared fixed width. `justify-content: space-between`
  * then spreads whatever's left of the flank's own width
  * evenly between the boxes, natively — `gap` underneath is
- * just a floor, so boxes are never closer than that even
- * if the flank were ever exactly as wide as its content.
+ * just a floor, so boxes are never closer than that even if
+ * the flank were ever exactly as wide as its content.
  */
-.sysdiag-frontend-callers-flank,
 .sysdiag-frontend-pages-flank {
   display: flex;
   justify-content: space-between;
   gap: 8px;
 }
 
-.sysdiag-frontend-caller {
-  padding: 8px;
-
-  border: 1px solid #c9695a;
-  border-radius: 6px;
-  background: #2a1010;
-
-  color: #f0a89a;
-  font-size: 10px;
-  text-align: center;
-}
-
 .sysdiag-frontend-page {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
   padding: 6px 10px;
 
   border: 1px solid #e05a5a;
@@ -100,9 +119,34 @@
   text-align: center;
 }
 
+.sysdiag-frontend-page-title {
+  font-weight: bold;
+}
+
+/*
+ * Nested one level deeper than the page it belongs to —
+ * fills the page box's own width rather than being aligned
+ * to any external slot, since it no longer needs to line up
+ * with a separate sibling row.
+ */
+.sysdiag-frontend-caller {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 6px;
+
+  border: 1px solid #c9695a;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.25);
+
+  color: #f0a89a;
+  font-size: 9px;
+  text-align: center;
+}
+
 /*
  * Evenly spaced and centered as a group within the shared
- * center column (see `.sysdiag-frontend-center-grid`) —
+ * center column (see `.sysdiag-frontend-app-grid`) —
  * `space-evenly` puts equal room around every hook,
  * including before the first and after the last, rather
  * than only between them.
@@ -122,29 +166,5 @@
 
   color: #f5b8b8;
   font-size: 10px;
-  text-align: center;
-}
-
-/*
- * Spans the full width of the grid — App.jsx isn't part of
- * the flank/gap system above it, it's the foundation
- * everything above sits on.
- */
-.sysdiag-frontend-app-full {
-  grid-column: 1 / -1;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 10px;
-
-  border: 1.5px solid #e05a5a;
-  border-radius: 8px;
-  background: #2a1010;
-
-  color: #f5b8b8;
-  font-size: 12px;
-  font-weight: bold;
   text-align: center;
 }

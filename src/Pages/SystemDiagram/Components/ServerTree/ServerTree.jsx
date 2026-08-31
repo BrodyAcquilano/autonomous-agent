@@ -3,19 +3,22 @@ import useTreeGeometry from "../../useTreeGeometry";
 import "./ServerTree.css";
 
 /*
- * Drawn upside down on purpose: clients (the actual
- * decisions/calls a route makes) sit on TOP, and the
- * Express route each one lives inside sits BELOW it —
- * "clients down to routes," not the other way around. A
- * connection to the database targets the CLIENT box, not
- * the route label beneath it — the client is what makes
- * the decision to call, the route is just what it lives
- * inside (see the directory-attribution convention this
- * whole app follows). Most agent-facing routes sit on the
- * left (near the Agents tree) and database-facing routes
- * on the right (near the Database tree); `request-
- * maintenance` is the one exception, pushed to the very
- * end since nothing else needs to connect to it.
+ * An ownership box, not a stack of separately-aligned
+ * boxes: the client functions a route calls are drawn
+ * NESTED inside that route's own box, with the route's
+ * path as the box's title — the same "title, then what it
+ * owns, nested inside the same border" pattern the Mongo
+ * and Azure trees already use. A connection to the
+ * database still targets the CLIENT box specifically, not
+ * the route box's own title — the client is what makes the
+ * decision to call, the route is just what it lives inside
+ * (see the directory-attribution convention this whole app
+ * follows) — it's just nested now instead of stacked
+ * beside it. Most agent-facing routes sit on the left (near
+ * the Agents tree) and database-facing routes on the right
+ * (near the Database tree); `request-maintenance` is the
+ * one exception, pushed to the very end since nothing else
+ * needs to connect to it.
  *
  * One API, one collection: the routes that read the
  * Capabilities Brain and Organizational Brain used to be
@@ -64,7 +67,12 @@ const REQUEST_MAINTENANCE_ROUTE = {
 
 function RouteColumn({ route, registerBox }) {
   return (
-    <div className={`sysdiag-server-column sysdiag-server-column-${route.id}`}>
+    <div
+      ref={registerBox(`route-${route.id}`)}
+      className={`sysdiag-server-route sysdiag-server-route-${route.id}`}
+    >
+      <div className="sysdiag-server-route-title">{route.label}</div>
+
       <div ref={registerBox(`clients-${route.id}`)} className="sysdiag-server-clients">
         {route.clients.map((client) => (
           <div key={client} ref={registerBox(`client-${route.id}-${client}`)} className="sysdiag-server-client">
@@ -72,8 +80,6 @@ function RouteColumn({ route, registerBox }) {
           </div>
         ))}
       </div>
-
-      <div ref={registerBox(`route-${route.id}`)} className="sysdiag-server-route">{route.label}</div>
     </div>
   );
 }

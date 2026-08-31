@@ -5,84 +5,44 @@ import useTreeGeometry from "../../useTreeGeometry";
 import "./FrontendTree.css";
 
 /*
- * A single shared 3-column grid, 4 rows deep: callers
- * (top), pages, App.jsx's own loading hooks, App.jsx itself
- * (bottom, spanning the full row — it isn't part of the
- * flank/gap system, it's the foundation everything above
- * sits on). Runtime.jsx isn't drawn at all: its state is
- * just App.jsx's own behavior injected at runtime, not a
- * separate structural entity with any external caller of
- * its own.
+ * An ownership box, not several separately-aligned sibling
+ * rows: App.jsx is the one outer box, and everything it
+ * owns — the pages row and its own loading-hooks row — is
+ * nested directly inside that same border. A caller
+ * (CommandShell, useResponseOutput, a page's own action
+ * handler) is nested one level deeper still, inside the
+ * specific page box it belongs to — a caller belongs to a
+ * component, a component belongs to a page, a page belongs
+ * to App.jsx, so that's exactly how the boxes nest.
+ * Runtime.jsx isn't drawn at all: its state is just App.jsx's
+ * own behavior injected at runtime, not a separate
+ * structural entity with any external caller of its own.
+ * Connections still attach to whichever box actually makes
+ * the call (a caller, or a hook) regardless of how many
+ * boxes it's nested inside.
  *
- * The pages row is NOT split evenly: Console and Output
- * (which get their data from direct user action via the
- * caller row, not from an App.jsx loading hook) sit alone
- * in the left flank; every other page — the ones App.jsx
- * loads data for on mount, plus System Diagram, which loads
- * nothing — sits in the right flank. That split is what
- * opens up a center gap exactly as wide as the loading-
- * hooks row below it (same shared `auto` column trick used
+ * Inside App.jsx, the pages row is NOT split evenly: Console
+ * and Output (caller-driven, not loaded by an App.jsx hook)
+ * sit alone in the left flank; every other page — the ones
+ * App.jsx loads data for on mount, plus System Diagram,
+ * which loads nothing — sits in the right flank. That split
+ * opens a center gap exactly as wide as the loading-hooks
+ * row below it (the same shared `auto` column trick used
  * everywhere else on this page): each hook can draw a
  * straight line down through that gap to its own server API
- * route without crossing anything, and the hooks row itself
- * reads as sitting "underneath" the wide space between
- * Console/Output and the rest.
+ * route without crossing anything.
  *
- * The caller row mirrors the pages row's exact split for
- * the same reason as always — a caller belongs to a
- * component, a component belongs to a page, so a caller has
- * to move with its page's slot. Console/Output/Analytics/
- * Maintenance are the only pages with a modeled caller;
- * Analytics and Maintenance's callers now sit in the first
- * two slots of the (six-wide) right flank, since that's
- * where those two pages themselves now are.
- *
- * Page (and caller) boxes don't flex to fill their flank —
- * every one is pinned to the SAME fixed width, measured from
- * whichever page label is actually longest (no hardcoding:
- * see the two-pass measurement below). With every box a
- * fixed width, `justify-content: space-between` on the flank
- * does the rest: any room left over becomes even gaps
- * between the boxes, natively — no manual gap math needed.
- * Pages are ordered left-to-right exactly as they appear in
- * the app's own navigation tabs.
+ * Page (and nested caller) boxes don't flex to fill their
+ * flank — every page box is pinned to the SAME fixed width,
+ * measured from whichever page's own content (label, plus
+ * its caller if it has one) is actually the widest (no
+ * hardcoding: see the two-pass measurement below). With
+ * every page box a fixed width, `justify-content: space-
+ * between` on the flank does the rest: any room left over
+ * becomes even gaps between the boxes, natively. Pages are
+ * ordered left-to-right exactly as they appear in the app's
+ * own navigation tabs.
  */
-function CallerBox({ id, lines, width, registerBox }) {
-  return (
-    <div
-      ref={registerBox(id)}
-      className="sysdiag-frontend-caller"
-      style={width ? { flex: `0 0 ${width}px` } : undefined}
-    >
-      {lines.map((line) => (
-        <div key={line}>{line}</div>
-      ))}
-    </div>
-  );
-}
-
-function PageBox({ id, label, width, registerPageBox }) {
-  return (
-    <div
-      ref={registerPageBox(id)}
-      className="sysdiag-frontend-page"
-      style={width ? { flex: `0 0 ${width}px` } : undefined}
-    >
-      {label}
-    </div>
-  );
-}
-
-function PagesFlank({ pages, width, registerPageBox }) {
-  return (
-    <div className="sysdiag-frontend-pages-flank">
-      {pages.map((page) => (
-        <PageBox key={page.id} id={page.id} label={page.label} width={width} registerPageBox={registerPageBox} />
-      ))}
-    </div>
-  );
-}
-
 const CALLERS_BY_PAGE_ID = {
   console: { id: "caller-console-shell", lines: ["CommandShell", "(Console)"] },
   output: { id: "caller-output-hook", lines: ["useResponseOutput", "hook (Output)"] },
@@ -90,25 +50,41 @@ const CALLERS_BY_PAGE_ID = {
   maintenance: { id: "caller-maintenance-handlers", lines: ["Maintenance.jsx", "action handlers"] },
 };
 
-function CallersFlank({ pages, width, registerBox }) {
+function PageBox({ id, label, width, registerPageBox, registerBox }) {
+  const caller = CALLERS_BY_PAGE_ID[id];
+
   return (
-    <div className="sysdiag-frontend-callers-flank">
-      {pages.map((page) => {
-        const caller = CALLERS_BY_PAGE_ID[page.id];
+    <div
+      ref={registerPageBox(id)}
+      className="sysdiag-frontend-page"
+      style={width ? { flex: `0 0 ${width}px` } : undefined}
+    >
+      <div className="sysdiag-frontend-page-title">{label}</div>
 
-        if (!caller) {
-          return (
-            <div
-              key={page.id}
-              className="sysdiag-frontend-caller-empty"
-              style={width ? { flex: `0 0 ${width}px` } : undefined}
-              aria-hidden="true"
-            />
-          );
-        }
+      {caller && (
+        <div ref={registerBox(caller.id)} className="sysdiag-frontend-caller">
+          {caller.lines.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        return <CallerBox key={page.id} id={caller.id} lines={caller.lines} width={width} registerBox={registerBox} />;
-      })}
+function PagesFlank({ pages, width, registerPageBox, registerBox }) {
+  return (
+    <div className="sysdiag-frontend-pages-flank">
+      {pages.map((page) => (
+        <PageBox
+          key={page.id}
+          id={page.id}
+          label={page.label}
+          width={width}
+          registerPageBox={registerPageBox}
+          registerBox={registerBox}
+        />
+      ))}
     </div>
   );
 }
@@ -121,12 +97,17 @@ function CallersFlank({ pages, width, registerBox }) {
  * and System Diagram is a static, hand-curated page with no
  * data to load at all.
  */
+/*
+ * Ordered left-to-right to match their respective routes'
+ * own order in the Server tree's row, to keep the
+ * hook -> route connection lines from crossing.
+ */
 const HOOKS = [
-  { id: "hook-capabilities", lines: ["loadModelsAndApis()", "+ tools/capabilities"] },
-  { id: "hook-agents", lines: ["loadAgents()"] },
   { id: "hook-directory", lines: ["loadDirectory()"] },
-  { id: "hook-maintenance", lines: ["loadMaintenanceTickets()", "loadMaintenanceLogs()"] },
+  { id: "hook-agents", lines: ["loadAgents()"] },
+  { id: "hook-capabilities", lines: ["loadModelsAndApis()", "+ tools/capabilities"] },
   { id: "hook-analytics", lines: ["loadAnalyticsLogs()"] },
+  { id: "hook-maintenance", lines: ["loadMaintenanceTickets()", "loadMaintenanceLogs()"] },
 ];
 
 function HookBox({ id, lines, registerBox }) {
@@ -187,13 +168,13 @@ function FrontendTree({ onGeometryChange }) {
 
   /*
    * Measures every page box's own natural (unpinned) width
-   * and takes the max — that becomes the fixed width
-   * applied to every page/caller box. `hasMeasuredPageWidthRef`
-   * captures it exactly once; the ResizeObserver exists so
-   * this stays correct if a label's rendered width ever
-   * changes for external reasons (e.g. a font finishing
-   * its own async load) rather than assuming a single
-   * measurement on mount is always final.
+   * — including any caller nested inside it — and takes the
+   * max, which becomes the fixed width applied to every page
+   * box. `hasMeasuredPageWidthRef` captures it exactly once;
+   * the ResizeObserver exists so this stays correct if a
+   * label's rendered width ever changes for external reasons
+   * (e.g. a font finishing its own async load) rather than
+   * assuming a single measurement on mount is always final.
    */
   useLayoutEffect(() => {
     function measurePageWidth() {
@@ -231,20 +212,22 @@ function FrontendTree({ onGeometryChange }) {
     <div ref={contentRef} className="sysdiag-frontend-tree">
       <div className="sysdiag-frontend-label">REACT (frontend root)</div>
 
-      <div className="sysdiag-frontend-center-grid">
-        <CallersFlank pages={LEFT_PAGES} width={pageBoxWidth} registerBox={registerBox} />
-        <div className="sysdiag-frontend-pages-gap" aria-hidden="true" />
-        <CallersFlank pages={RIGHT_PAGES} width={pageBoxWidth} registerBox={registerBox} />
+      <div ref={registerBox("app")} className="sysdiag-frontend-app-box">
+        <div className="sysdiag-frontend-app-title">App.jsx</div>
 
-        <PagesFlank pages={LEFT_PAGES} width={pageBoxWidth} registerPageBox={registerPageBox} />
-        <div className="sysdiag-frontend-pages-gap" aria-hidden="true" />
-        <PagesFlank pages={RIGHT_PAGES} width={pageBoxWidth} registerPageBox={registerPageBox} />
+        <div className="sysdiag-frontend-app-grid">
+          <div className="sysdiag-frontend-center-spacer" />
+          <div className="sysdiag-frontend-app-gap" aria-hidden="true" />
+          <div className="sysdiag-frontend-center-spacer" />
 
-        <div className="sysdiag-frontend-center-spacer" />
-        <HooksRow registerBox={registerBox} />
-        <div className="sysdiag-frontend-center-spacer" />
+          <PagesFlank pages={LEFT_PAGES} width={pageBoxWidth} registerPageBox={registerPageBox} registerBox={registerBox} />
+          <div className="sysdiag-frontend-pages-gap" aria-hidden="true" />
+          <PagesFlank pages={RIGHT_PAGES} width={pageBoxWidth} registerPageBox={registerPageBox} registerBox={registerBox} />
 
-        <div ref={registerBox("app")} className="sysdiag-frontend-app-full">App.jsx</div>
+          <div className="sysdiag-frontend-center-spacer" />
+          <HooksRow registerBox={registerBox} />
+          <div className="sysdiag-frontend-center-spacer" />
+        </div>
       </div>
     </div>
   );

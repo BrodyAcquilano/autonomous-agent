@@ -33,22 +33,39 @@
   gap: 14px;
 }
 
-.sysdiag-server-column {
+/*
+ * An ownership box: the route's own path is the title, and
+ * the client functions it calls are nested directly inside
+ * the same border — same "title, then what it owns" pattern
+ * as the Mongo tree's databases and the Azure tree's groups.
+ */
+.sysdiag-server-route {
   flex: 1;
   min-width: 150px;
 
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+
+  padding: 10px;
+
+  border: 1.5px solid #e8a94a;
+  border-radius: 8px;
+  background: #3a2a10;
 }
 
-/* clients (top) — the specific decisions/calls this route's code makes */
+.sysdiag-server-route-title {
+  color: #ffdca6;
+  font-size: 10.5px;
+  font-weight: bold;
+  text-align: center;
+}
+
 .sysdiag-server-clients {
   flex: 1;
 
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -64,29 +81,9 @@
   text-align: center;
 }
 
-/* the Express route itself (bottom) — what the client above lives inside */
-.sysdiag-server-route {
-  flex: 1;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 10px;
-
-  border: 1.5px solid #e8a94a;
-  border-radius: 8px;
-  background: #3a2a10;
-
-  color: #ffdca6;
-  font-size: 10.5px;
-  font-weight: bold;
-  text-align: center;
-}
-
 /*
  * A labeled boundary box holding several one-API-per-
- * collection columns — the server-side mirror of the
+ * collection route boxes — the server-side mirror of the
  * Mongo tree's own collection-group boxes. Deliberately
  * NOT min-width: 0 — this needs the opposite of the fix
  * on `.system-diagram-cell`: a flex row (unlike a grid's
